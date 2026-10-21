@@ -69,12 +69,22 @@ jobs:
       DATABASE_AUTHENTICATED_URL: postgresql://app_authenticated:secret@localhost:5432/kejasha?sslmode=disable
       REDIS_URL: redis://localhost:6379
       BETTER_AUTH_SECRET: ci-only-secret-ci-only-secret-0123456789
+      S3_ENDPOINT: http://localhost:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_BUCKET_FILES: kejasha-files
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      # Object storage, as in `make up` (presigned uploads; health checks the bucket).
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio:latest server /data
+          for i in $(seq 1 30); do docker exec minio mc ready local && break; sleep 1; done
+          docker exec minio sh -c 'mc alias set local http://localhost:9000 minioadmin minioadmin && mc mb --ignore-existing local/kejasha-files'
       - name: Provision tenant login role + migrate
         run: |
           PGPASSWORD=secret psql -h localhost -U app_owner -d kejasha -c "CREATE ROLE app_authenticated LOGIN NOBYPASSRLS PASSWORD 'secret'"
