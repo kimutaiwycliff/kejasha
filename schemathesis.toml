@@ -1,5 +1,10 @@
 # Contract-test settings (make test-contract, CI). Schemathesis fuzzes every operation in openapi.json.
 
+[checks]
+# The server cuts off stalled request bodies after its 15 s request timeout (→ 408). That is the
+# slowest legitimate answer; real handlers must stay far below it.
+max_response_time = 20
+
 [checks.positive_data_acceptance]
 # A schema-valid request may still be refused for business reasons: 422 means "valid shape, but not
 # allowed in the current state" (archived record, cross-field rule, unknown cursor). 400 is reserved

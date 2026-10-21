@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { createServer } from 'node:http';
 import Fastify, { LogController, type FastifyInstance, type FastifyServerOptions } from 'fastify';
 import {
   serializerCompiler,
@@ -9,6 +10,7 @@ import type { AppDeps } from './deps';
 import { registerModules } from './modules';
 import { errorsPlugin } from './plugins/errors';
 import { authPlugin } from './plugins/auth';
+import { dateRangePlugin } from './plugins/date-range';
 import { idempotencyPlugin } from './plugins/idempotency';
 import { observabilityPlugin } from './plugins/observability';
 import { openapiPlugin } from './plugins/openapi';
@@ -33,7 +35,10 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     trustProxy: deps.config.api.trustProxy as FastifyServerOptions['trustProxy'],
     bodyLimit: 1024 * 1024,
     // A client that announces a body and never sends it must not hold a socket open (slowloris).
-    requestTimeout: 15_000,
+    // Node only enforces requestTimeout every connectionsCheckingInterval (default 30 s), so the
+    // server is created here with a 2 s check.
+    serverFactory: (handler) =>
+      createServer({ requestTimeout: 15_000, connectionsCheckingInterval: 2_000 }, handler),
     // Strip prototype-polluting keys rather than rejecting otherwise valid requests.
     onProtoPoisoning: 'remove',
     onConstructorPoisoning: 'remove',
@@ -48,6 +53,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(securityPlugin, deps);
   // Before openapi: its onRoute hook stamps security onto each route schema.
   await app.register(authPlugin, deps);
+  await app.register(dateRangePlugin);
   await app.register(openapiPlugin);
   await app.register(idempotencyPlugin, { db: deps.db });
   await registerModules(app, deps);

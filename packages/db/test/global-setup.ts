@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import { RedisContainer } from '@testcontainers/redis';
+import { GenericContainer, Wait } from 'testcontainers';
 import pg from 'pg';
 import type { TestProject } from 'vitest/node';
 import '../src/testing';
@@ -11,14 +12,25 @@ const AUTH_PASSWORD = 'test-authenticated';
 
 /** One Postgres 17 + Redis per test run; migrations applied with the real dbmate files. */
 export default async function setup(project: TestProject) {
-  const [postgres, redis] = await Promise.all([
+  const [postgres, redis, s3] = await Promise.all([
     new PostgreSqlContainer('postgres:17-alpine')
       .withUsername('app_owner')
       .withPassword('test-owner')
       .withDatabase('kejasha')
       .start(),
     new RedisContainer('redis:7-alpine').start(),
+    // S3 API (ADR-019): SeaweedFS with the same identity file as compose.
+    new GenericContainer('chrislusf/seaweedfs:latest')
+      .withCommand(['server', '-s3', '-s3.config=/etc/seaweedfs/s3.json', '-dir=/data'])
+      .withCopyFilesToContainer([
+        { source: resolve(ROOT, 'infra/seaweedfs/s3.json'), target: '/etc/seaweedfs/s3.json' },
+      ])
+      .withExposedPorts(8333)
+      .withWaitStrategy(Wait.forHttp('/', 8333).forStatusCodeMatching(() => true))
+      .withStartupTimeout(120_000)
+      .start(),
   ]);
+  await s3.exec(['sh', '-c', 'echo "s3.bucket.create -name kejasha-files" | weed shell']);
 
   const ownerUrl = `${postgres.getConnectionUri()}?sslmode=disable`;
   execFileSync(
@@ -39,8 +51,9 @@ export default async function setup(project: TestProject) {
   project.provide('databaseOwnerUrl', ownerUrl);
   project.provide('databaseAuthenticatedUrl', authUrl.toString());
   project.provide('redisUrl', redis.getConnectionUrl());
+  project.provide('s3Endpoint', `http://${s3.getHost()}:${s3.getMappedPort(8333)}`);
 
   return async () => {
-    await Promise.all([postgres.stop(), redis.stop()]);
+    await Promise.all([postgres.stop(), redis.stop(), s3.stop()]);
   };
 }

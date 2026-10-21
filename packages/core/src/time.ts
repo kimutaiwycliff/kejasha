@@ -21,10 +21,17 @@ const offsetFmt = new Intl.DateTimeFormat('en-US', {
   timeZoneName: 'longOffset',
 });
 
+/** Date.UTC maps years 0–99 to 1900–1999; build dates with setUTCFullYear so every year works. */
+function utc(y: number, monthIndex: number, day: number): Date {
+  const d = new Date(0);
+  d.setUTCFullYear(y, monthIndex, day);
+  return d;
+}
+
 export function isIsoDate(value: string): boolean {
   const m = DATE_RE.exec(value);
   if (!m) return false;
-  const d = new Date(Date.UTC(+m[1]!, +m[2]! - 1, +m[3]!));
+  const d = utc(+m[1]!, +m[2]! - 1, +m[3]!);
   return d.toISOString().slice(0, 10) === value;
 }
 
@@ -79,7 +86,7 @@ export function diffDays(a: IsoDate, b: IsoDate): number {
 
 export function daysInMonth(period: Period): number {
   const [y, m] = parsePeriod(period);
-  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return utc(y, m, 0).getUTCDate();
 }
 
 export function periodOf(date: IsoDate): Period {
@@ -98,7 +105,7 @@ export function monthEnd(period: Period): IsoDate {
 
 export function addPeriods(period: Period, months: number): Period {
   const [y, m] = parsePeriod(period);
-  const d = new Date(Date.UTC(y, m - 1 + months, 1));
+  const d = utc(y, m - 1 + months, 1);
   return fmtUtc(d).slice(0, 7);
 }
 

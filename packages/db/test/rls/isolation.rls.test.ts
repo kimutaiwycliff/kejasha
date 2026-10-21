@@ -25,7 +25,7 @@ describe.each(tenantTableFixtures)('RLS isolation: $table', (f) => {
       `SELECT count(*)::int AS n FROM ${f.table} WHERE org_id = $1`,
       [orgA],
     );
-    expect(rows[0].n).toBe(1);
+    expect(rows[0].n).toBe(f.rowsPerInsert ?? 1);
   });
 
   it('cannot insert a row for another org', async () => {
@@ -78,7 +78,7 @@ describe.each(tenantTableFixtures)('RLS isolation: $table', (f) => {
       `SELECT count(*)::int AS n FROM ${f.table} WHERE org_id = $1`,
       [orgA],
     );
-    expect(rows[0].n).toBe(1);
+    expect(rows[0].n).toBe(f.rowsPerInsert ?? 1);
   });
 
   it.runIf(f.grants.select)('owner org sees only its own rows', async () => {

@@ -77,7 +77,7 @@ Every PR must respect these. If you cannot, open an ADR first.
 | Migrations | dbmate (raw SQL) | Hand-written RLS policies, constraints |
 | Auth | Better Auth (organization, bearer, phone-number plugins) | Orgs = tenants (ADR-004) |
 | Jobs | BullMQ + Redis (ioredis) + transactional outbox | (ADR-014) |
-| Object storage | S3-compatible (MinIO self-hosted) | Leases, photos, statements |
+| Object storage | S3 API: Cloudflare R2 (prod), SeaweedFS (dev/CI) | Leases, photos, statements, backups (ADR-019) |
 | PDFs | `@react-pdf/renderer` | Receipts, invoices, owner statements |
 | Email | Resend | |
 | SMS / WhatsApp | Africa's Talking | Reminders, OTP, receipts (ADR-015) |
@@ -121,10 +121,10 @@ kejasha/
 │     ├─ africastalking/      # SMS + WhatsApp + OTP
 │     ├─ paystack/            # SaaS subscription billing
 │     ├─ resend/              # Email (React Email templates)
-│     ├─ storage/             # S3/MinIO client
+│     ├─ storage/             # S3 client (R2 / SeaweedFS)
 │     └─ ical/                # iCal (RFC 5545) fetch + parse, read-only
 ├─ infra/
-│  ├─ compose.yml             # postgres, redis, minio, caddy, api, worker, web
+│  ├─ compose.yml             # postgres, redis, seaweedfs (S3), caddy, api, worker
 │  ├─ compose.ci.yml          # throwaway services for CI
 │  ├─ Caddyfile
 │  ├─ migrations/             # dbmate SQL (YYYYMMDDHHMMSS_*.sql)
@@ -320,6 +320,7 @@ task plans live in `docs/plans/phase-<id>.md`, written before each phase starts.
 | 016 | Domain is configuration (`APP_DOMAIN`); domain-change runbook |
 | 017 | Android: native Kotlin (Compose, Room, WorkManager); generated Kotlin client; sync protocol |
 | 018 | Backend-first sequencing; journey tests; contract freeze before clients |
+| 019 | Object storage: Cloudflare R2 in production, SeaweedFS for dev/CI |
 
 ---
 

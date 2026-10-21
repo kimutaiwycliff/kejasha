@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { createAuth } from '@kejasha/auth';
 import { loadConfig, type Config } from '@kejasha/config';
-import { phone } from '@kejasha/core';
+import { phone, time } from '@kejasha/core';
 import { createDb, withAdmin } from '@kejasha/db';
 import { createSmsSender, type SmsSender } from '@kejasha/integrations-africastalking';
 import { createStorage } from '@kejasha/integrations-storage';
 import { enqueueInTx } from '@kejasha/jobs';
 import { Redis } from 'ioredis';
-import type { AppDeps } from './deps';
+import type { AppDeps, Clock } from './deps';
 import { passwordResetEmail } from './modules/identity/messages';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
@@ -15,9 +15,11 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url),
 };
 
 /** Real dependencies from config. Connections are lazy, so this is also safe for spec generation. */
+export const systemClock: Clock = { today: () => time.nairobiDate(), now: () => new Date() };
+
 export function createDeps(
   config: Config = loadConfig(),
-  overrides: { sms?: SmsSender } = {},
+  overrides: { sms?: SmsSender; clock?: Clock } = {},
 ): AppDeps {
   const db = createDb({
     ownerUrl: config.db.ownerUrl,
@@ -47,6 +49,7 @@ export function createDeps(
   });
   return {
     config,
+    clock: overrides.clock ?? systemClock,
     version: process.env.GIT_SHA ?? pkg.version,
     db,
     redis: new Redis(config.redis.url, {

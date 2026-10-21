@@ -1,5 +1,6 @@
 import { schema, type Tx } from '@kejasha/db';
 import type { FastifyRequest } from 'fastify';
+import { ctxOf, type Ctx } from './ctx';
 
 export interface AuditEntry {
   action: string;
@@ -10,17 +11,21 @@ export interface AuditEntry {
 
 /** Append an audit row in the same transaction as the change (RLS scopes it to the org). */
 export async function audit(tx: Tx, req: FastifyRequest, entry: AuditEntry): Promise<void> {
-  const actor = req.actor;
-  if (!actor?.orgId) throw new Error('audit() needs an org-scoped actor');
+  if (!req.actor?.orgId) throw new Error('audit() needs an org-scoped actor');
+  await record(tx, ctxOf(req), entry);
+}
+
+/** Transport-independent audit write (HTTP or scheduled job). */
+export async function record(tx: Tx, ctx: Ctx, entry: AuditEntry): Promise<void> {
   await tx.insert(schema.auditLog).values({
-    orgId: actor.orgId,
-    actorKind: 'user',
-    actorUserId: actor.userId,
+    orgId: ctx.orgId,
+    actorKind: ctx.actorKind,
+    actorUserId: ctx.userId ?? null,
     action: entry.action,
     entityType: entry.entityType,
     entityId: entry.entityId ?? null,
     diff: entry.diff ? jsonSafe(entry.diff) : null,
-    requestId: req.id,
+    requestId: ctx.requestId ?? null,
   });
 }
 

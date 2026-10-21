@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import type { AppDeps } from '../deps';
 import { accountsRoutes, createAccountsService } from './accounts';
 import { createIdentityService, identityRoutes, toUser } from './identity';
+import { createLeasing, leasingRoutes } from './leasing';
 import { platformRoutes } from './platform';
 
 /**
@@ -31,4 +32,5 @@ export async function registerModules(app: FastifyInstance, deps: AppDeps): Prom
   await app.register(platformRoutes, deps);
   await app.register(identityRoutes(identity), deps);
   await app.register(accountsRoutes(accounts), deps);
+  await app.register(leasingRoutes(createLeasing(deps)), deps);
 }

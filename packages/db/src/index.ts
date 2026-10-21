@@ -10,6 +10,7 @@ export {
   gt,
   gte,
   inArray,
+  isNotNull,
   isNull,
   lt,
   lte,
@@ -19,3 +20,4 @@ export {
   type SQL,
 } from 'drizzle-orm';
 export { pgError, PG, type PgErrorInfo } from './errors';
+export type { LedgerAccountKind, LedgerSource } from './schema/ledger';

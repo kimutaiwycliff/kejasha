@@ -8,14 +8,14 @@ beforeAll(async () => {
 afterAll(() => api.close());
 
 describe('GET /v1/health', () => {
-  it('reports db and redis up; storage skipped when S3 is not configured', async () => {
+  it('reports db, redis and storage up', async () => {
     const res = await api.app.inject({ method: 'GET', url: '/v1/health' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.status).toBe('ok');
     expect(body.checks.db.status).toBe('up');
     expect(body.checks.redis.status).toBe('up');
-    expect(body.checks.storage.status).toBe('skipped');
+    expect(body.checks.storage.status).toBe('up');
   });
 
   it('echoes a safe incoming x-request-id and generates one otherwise', async () => {
@@ -115,5 +115,13 @@ describe('transport hardening', () => {
     });
     expect(res.statusCode).toBe(202);
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+});
+
+describe('business date range', () => {
+  it('refuses dates outside 1900–2199 with 422 before any handler runs', async () => {
+    const res = await api.app.inject({ method: 'GET', url: '/v1/health?asOf=0020-02-29' });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().code).toBe('date_out_of_range');
   });
 });

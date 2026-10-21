@@ -7,6 +7,7 @@ declare module 'vitest' {
     databaseOwnerUrl: string;
     databaseAuthenticatedUrl: string;
     redisUrl: string;
+    s3Endpoint: string;
   }
 }
 
@@ -31,6 +32,10 @@ export function testEnv(): Record<string, string> {
     BETTER_AUTH_SECRET: 'test-secret-test-secret-test-secret-0123',
     // Tests simulate distinct client IPs via X-Forwarded-For.
     TRUST_PROXY: 'true',
+    S3_ENDPOINT: inject('s3Endpoint'),
+    S3_ACCESS_KEY: 'kejasha-dev',
+    S3_SECRET_KEY: 'kejasha-dev-secret',
+    S3_BUCKET_FILES: 'kejasha-files',
   };
 }
 

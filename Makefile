@@ -11,10 +11,10 @@ DBMATE  := pnpm exec dbmate --no-dump-schema --migrations-dir infra/migrations
         test test-unit test-int test-rls test-journeys test-contract test-e2e \
         typecheck lint build build-image deploy rollback daraja-reregister
 
-up: ## start postgres, redis, minio, create buckets, apply migrations
-	$(COMPOSE) up -d --wait postgres redis minio
-	$(COMPOSE) exec -T minio sh -c 'mc alias set local http://localhost:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null && \
-	  mc mb --ignore-existing local/$(or $(S3_BUCKET_FILES),kejasha-files) local/$(or $(S3_BUCKET_BACKUPS),kejasha-backups)'
+up: ## start postgres, redis, seaweedfs (S3), create buckets, apply migrations
+	$(COMPOSE) up -d --wait postgres redis seaweedfs
+	for b in $(or $(S3_BUCKET_FILES),kejasha-files) $(or $(S3_BUCKET_BACKUPS),kejasha-backups); do \
+	  echo "s3.bucket.create -name $$b" | $(COMPOSE) exec -T seaweedfs weed shell >/dev/null; done
 	$(MAKE) db-migrate
 
 down:

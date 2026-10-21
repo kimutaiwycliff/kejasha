@@ -47,6 +47,15 @@ export const Money = z
 export const IsoDate = z.iso
   .date()
   .meta({ description: 'Africa/Nairobi business date (YYYY-MM-DD)' });
+
+/**
+ * Business-date input. Years outside 1900–2199 answer 422 `date_out_of_range` (enforced centrally
+ * by the API), keeping the schema simple enough for clients and fuzzers.
+ */
+export const BusinessDateInput = z.iso.date().meta({
+  description: 'Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199',
+  example: '2026-10-21',
+});
 export const Timestamp = z.iso.datetime({ offset: true }).meta({ description: 'RFC 3339 instant' });
 
 export const FieldError = z
