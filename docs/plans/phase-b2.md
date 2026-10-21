@@ -1,6 +1,6 @@
 # Phase B2 — Leasing & ledger
 
-> Status: **DONE locally — awaiting CI** · drafted 2026-10-21 · ADR-006, ADR-007, ADR-014, ADR-015
+> Status: **DONE** · DoD green locally and in CI (PR #3, 2026-10-21) · drafted 2026-10-21 · ADR-006, ADR-007, ADR-014, ADR-015
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 
 ## Goal
