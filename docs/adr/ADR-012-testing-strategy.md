@@ -11,8 +11,9 @@
 | Spec | Redocly lint, oasdiff vs `main` | No accidental breaking changes |
 | Integrations | Recorded fixtures (Daraja callbacks, statements, iCal feeds) + sandbox smoke | Parsers and idempotency |
 | E2E web | Playwright | One happy path per user journey |
-| E2E Android | Maestro | Login, offline caretaker shift, tenant pay |
+| Journeys (API) | Vitest + generated `packages/api-client` against a booted API | One scenario per user journey per phase (ADR-018) |
+| Android | JUnit5, MockK, Turbine, Room in-memory, Compose UI, Maestro | Sync, offline caretaker shift, tenant pay (ADR-017) |
 
 Rules: tests ship with the feature; money paths (ledger, payments, invoicing) target ~100% branch
 coverage; never mock the database for anything touching SQL; never weaken an assertion to pass.
-CI gate: typecheck → lint → unit → integration + RLS → spec checks → contract → build.
+CI gate: typecheck → lint → unit → integration + RLS → journeys → spec checks → contract → build.

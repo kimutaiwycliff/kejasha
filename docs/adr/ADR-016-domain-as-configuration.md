@@ -15,7 +15,7 @@ Launch domain is `kejasha.co.ke`, but the owner wants to be able to change it la
 - Caddyfile uses env placeholders: `api.{$APP_DOMAIN}`, `app.{$APP_DOMAIN}`.
 - `LEGACY_DOMAINS` (optional) keeps old domains accepted (CORS + Caddy 301 redirects) during a
   migration window.
-- The Android app gets `API_URL` at build time (EAS env) **and** checks a tiny remote config
+- The Android app gets `API_URL` at build time (Gradle `buildConfigField`, ADR-017) **and** checks a tiny remote config
   (`GET ${API_URL}/v1/meta/config` → canonical API URL) so installed apps follow a move while the
   old domain still redirects.
 - Guard: a CI test greps source (excluding `.env*`, docs, deploy config) for the literal domain and fails.
