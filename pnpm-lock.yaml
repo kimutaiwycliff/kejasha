@@ -248,6 +248,8 @@ importers:
 
   packages/integrations/africastalking: {}
 
+  packages/integrations/daraja: {}
+
   packages/integrations/resend: {}
 
   packages/integrations/storage:

@@ -43,6 +43,8 @@ const accounts = (orgId: string) =>
   sql`INSERT INTO ledger_account (id, org_id, kind) VALUES (${uid(orgId, 'a1')}, ${orgId}, 'income_rent'), (${uid(orgId, 'a2')}, ${orgId}, 'income_other') ON CONFLICT DO NOTHING`;
 const invoice = (orgId: string) =>
   sql`INSERT INTO invoice (id, org_id, lease_id, number, kind, issued_on, due_on, total_cents, ledger_entry_id) VALUES (${uid(orgId, 'inv')}, ${orgId}, ${orgId}, 'FX-1', 'manual', '2026-01-01', '2026-01-01', 100, ${uid(orgId, 'entry')}) ON CONFLICT DO NOTHING`;
+const channel = (orgId: string) =>
+  sql`INSERT INTO payment_channel (id, org_id, kind, shortcode, display_name, channel_token) VALUES (${uid(orgId, 'ch')}, ${orgId}, 'paybill', '600000', 'Fixture', ${`tok-${orgId}`}) ON CONFLICT DO NOTHING`;
 const portfolio = [org, landlord, property, unit, tenant];
 
 const all =
@@ -230,5 +232,45 @@ export const tenantTableFixtures: TenantTableFixture[] = [
       sql`INSERT INTO lease_inspection (id, org_id, lease_id, kind, inspected_on) VALUES (gen_random_uuid(), ${o}, ${o}, 'move_in', '2026-01-01')`,
     grants: { select: true, update: true, delete: true },
     updateSet: sql`notes = 'hijacked'`,
+  },
+  {
+    table: 'payment_channel',
+    prepare: all(org),
+    insert: (o) =>
+      sql`INSERT INTO payment_channel (id, org_id, kind, shortcode, display_name, channel_token) VALUES (gen_random_uuid(), ${o}, 'till', (100000 + floor(random() * 899999))::text, 'Till', gen_random_uuid()::text)`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`display_name = 'hijacked'`,
+  },
+  {
+    table: 'payment',
+    prepare: all(org, channel),
+    insert: (o) =>
+      sql`INSERT INTO payment (id, org_id, channel_id, source, provider_ref, amount_cents, paid_at) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'ch')}, 'c2b', gen_random_uuid()::text, 100, now())`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`notes = 'hijacked'`,
+  },
+  {
+    table: 'payment_callback',
+    prepare: all(org, channel),
+    insert: (o) =>
+      sql`INSERT INTO payment_callback (id, org_id, channel_id, kind, body) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'ch')}, 'c2b_confirmation', '{}'::jsonb)`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`outcome = 'hijacked'`,
+  },
+  {
+    table: 'stk_request',
+    prepare: all(org, channel),
+    insert: (o) =>
+      sql`INSERT INTO stk_request (id, org_id, channel_id, msisdn, amount_cents, account_ref) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'ch')}, '+254712345678', 100, 'A1')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`result_desc = 'hijacked'`,
+  },
+  {
+    table: 'statement_import',
+    prepare: all(org),
+    insert: (o) =>
+      sql`INSERT INTO statement_import (id, org_id, file_key, format, status) VALUES (gen_random_uuid(), ${o}, 'k', 'mpesa_business_csv', 'parsed')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`error = 'hijacked'`,
   },
 ];
