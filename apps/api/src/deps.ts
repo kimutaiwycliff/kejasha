@@ -2,6 +2,7 @@ import type { Auth } from '@kejasha/auth';
 import type { Config } from '@kejasha/config';
 import type { Db } from '@kejasha/db';
 import type { SmsSender } from '@kejasha/integrations-africastalking';
+import type { DarajaClient } from '@kejasha/integrations-daraja';
 import type { Storage } from '@kejasha/integrations-storage';
 import type { Redis } from 'ioredis';
 
@@ -21,5 +22,6 @@ export interface AppDeps {
   storage: Storage;
   auth: Auth;
   sms: SmsSender;
+  daraja: DarajaClient;
   version: string;
 }

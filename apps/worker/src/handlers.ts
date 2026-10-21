@@ -26,7 +26,7 @@ export function buildHandlers(config: Config, log: Logger): Record<QueueName, To
     default: {},
     notifications: notificationHandlers({ email, sms }),
     invoicing: jobs.invoicing,
-    payments: {},
+    payments: jobs.payments,
     ical: {},
     reports: {},
   };

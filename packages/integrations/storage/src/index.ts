@@ -1,6 +1,7 @@
 import {
   GetObjectCommand,
   HeadBucketCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -23,6 +24,8 @@ export interface Storage {
   /** Presigned PUT the client uploads to directly (bytes never pass through the API). */
   presignPut(key: string, contentType: string, expiresInSeconds?: number): Promise<string>;
   presignGet(key: string, expiresInSeconds?: number): Promise<string>;
+  getObject(key: string): Promise<Uint8Array | null>;
+  putObject(key: string, body: Uint8Array, contentType: string): Promise<void>;
   close(): void;
 }
 
@@ -55,6 +58,25 @@ export function createStorage(cfg: StorageConfig): Storage {
         {
           expiresIn: expiresInSeconds,
         },
+      );
+    },
+    async getObject(key) {
+      try {
+        await client.send(new HeadObjectCommand({ Bucket: cfg.bucketFiles, Key: key }));
+      } catch {
+        return null;
+      }
+      const res = await client.send(new GetObjectCommand({ Bucket: cfg.bucketFiles, Key: key }));
+      return res.Body ? await res.Body.transformToByteArray() : null;
+    },
+    async putObject(key, body, contentType) {
+      await client.send(
+        new PutObjectCommand({
+          Bucket: cfg.bucketFiles,
+          Key: key,
+          Body: body,
+          ContentType: contentType,
+        }),
       );
     },
     presignGet(key, expiresInSeconds = 3600) {
