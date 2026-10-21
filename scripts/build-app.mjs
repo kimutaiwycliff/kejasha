@@ -12,6 +12,10 @@ const pkg = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf8'));
 const direct = Object.keys(pkg.dependencies ?? {}).filter((d) => !d.startsWith('@kejasha/'));
 // Optional native bindings that libraries require lazily inside try/catch.
 const optional = ['pg-native'];
+// Heavy PDF libraries with runtime asset/subpath resolution: never bundled, always loaded lazily
+// (dynamic import) by the code paths that render/parse PDFs. Apps that call those paths (the API)
+// depend on them directly; apps that only bundle the code (the worker) never load them.
+const lazyOnly = ['@react-pdf/renderer', 'react', 'pdfjs-dist'];
 
 await build({
   entryPoints: [join(appDir, entry)],
@@ -21,9 +25,10 @@ await build({
   target: 'node22',
   format: 'esm',
   sourcemap: true,
-  external: [...direct, ...optional].flatMap((d) => [d, `${d}/*`]),
+  external: [...new Set([...direct, ...optional, ...lazyOnly])].flatMap((d) => [d, `${d}/*`]),
+  // Aliased so bundled code may import createRequire itself without a duplicate declaration.
   banner: {
-    js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
+    js: "import { createRequire as __kjCreateRequire } from 'node:module'; const require = __kjCreateRequire(import.meta.url);",
   },
   logLevel: 'warning',
 });

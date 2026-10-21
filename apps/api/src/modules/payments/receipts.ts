@@ -1,7 +1,5 @@
 import { money } from '@kejasha/core';
 import { eq, schema } from '@kejasha/db';
-import { Document, Page, renderToBuffer, StyleSheet, Text, View } from '@react-pdf/renderer';
-import { createElement as h } from 'react';
 import type { AppDeps } from '../../deps';
 import { AppError } from '../../errors';
 import { inTenant, type Ctx } from '../../lib/ctx';
@@ -10,26 +8,6 @@ import * as leasing from '../leasing';
 import * as ledger from '../ledger';
 
 const { payment: pm, organization: org } = schema;
-
-const styles = StyleSheet.create({
-  page: { padding: 40, fontSize: 11, fontFamily: 'Helvetica' },
-  title: { fontSize: 18, marginBottom: 4, fontFamily: 'Helvetica-Bold' },
-  muted: { color: '#555555', marginBottom: 16 },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-    borderBottom: '1 solid #eeeeee',
-  },
-  label: { color: '#555555' },
-  total: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    fontSize: 14,
-    fontFamily: 'Helvetica-Bold',
-  },
-});
 
 /** PDF receipt for a matched payment, rendered once and cached in object storage. */
 export function createReceipts(deps: AppDeps) {
@@ -53,6 +31,31 @@ export function createReceipts(deps: AppDeps) {
         const cached = await storage.getObject(p.receiptFileKey);
         if (cached) return Buffer.from(cached);
       }
+
+      // Loaded lazily (scripts/build-app.mjs): only processes that render receipts need these.
+      const { Document, Page, renderToBuffer, StyleSheet, Text, View } =
+        await import('@react-pdf/renderer');
+      const { createElement: h } = await import('react');
+      const styles = StyleSheet.create({
+        page: { padding: 40, fontSize: 11, fontFamily: 'Helvetica' },
+        title: { fontSize: 18, marginBottom: 4, fontFamily: 'Helvetica-Bold' },
+        muted: { color: '#555555', marginBottom: 16 },
+        row: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingVertical: 4,
+          borderBottom: '1 solid #eeeeee',
+        },
+        label: { color: '#555555' },
+        total: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          marginTop: 12,
+          fontSize: 14,
+          fontFamily: 'Helvetica-Bold',
+        },
+      });
+
       const [orgRow] = await db.owner
         .select({ name: org.name })
         .from(org)
@@ -64,6 +67,12 @@ export function createReceipts(deps: AppDeps) {
           h(Text, { style: styles.label }, label),
           h(Text, null, value),
         );
+      const balanceText =
+        data.balance > 0n
+          ? money.formatKes(data.balance)
+          : data.balance < 0n
+            ? `Credit ${money.formatKes(-data.balance)}`
+            : 'Nil';
       const doc = h(
         Document,
         { title: `Receipt ${p.receiptNumber}` },
@@ -79,14 +88,7 @@ export function createReceipts(deps: AppDeps) {
             'Method',
             p.method === 'mpesa' ? `M-Pesa ${p.providerRef}` : `${p.method} ${p.providerRef}`,
           ),
-          line(
-            'Balance after payment',
-            data.balance > 0n
-              ? money.formatKes(data.balance)
-              : data.balance < 0n
-                ? `Credit ${money.formatKes(-data.balance)}`
-                : 'Nil',
-          ),
+          line('Balance after payment', balanceText),
           h(
             View,
             { style: styles.total },

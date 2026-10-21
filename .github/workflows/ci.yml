@@ -95,6 +95,14 @@ jobs:
           pnpm --filter @kejasha/api build
           (cd apps/api && node dist/server.js > /tmp/api.log 2>&1 &)
           for i in $(seq 1 60); do curl -sf localhost:4000/v1/health && break; sleep 1; done
+          curl -sf localhost:4000/v1/health > /dev/null || { echo "built API did not start"; cat /tmp/api.log; exit 1; }
+      # The built worker must start too (bundling regressions only show at boot).
+      - name: Boot worker
+        run: |
+          pnpm --filter @kejasha/worker build
+          (cd apps/worker && node dist/main.js > /tmp/worker.log 2>&1 &)
+          sleep 8
+          grep -q '"msg":"worker started"' /tmp/worker.log || { echo "built worker did not start"; cat /tmp/worker.log; exit 1; }
       - name: Seed demo data (gives an authenticated token)
         run: pnpm --filter @kejasha/api seed
       - name: Schemathesis (all operations, authenticated)

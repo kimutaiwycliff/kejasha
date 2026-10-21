@@ -2,7 +2,10 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { money, phone as phoneLib } from '@kejasha/core';
 
-const STANDARD_FONTS = `${join(dirname(createRequire(import.meta.url).resolve('pdfjs-dist/package.json')), 'standard_fonts')}/`;
+// Resolved lazily: processes that bundle this module but never parse PDFs (the worker) need not
+// have pdfjs-dist installed.
+const standardFonts = () =>
+  `${join(dirname(createRequire(import.meta.url).resolve('pdfjs-dist/package.json')), 'standard_fonts')}/`;
 
 /**
  * Parsers for reconciliation without a Paybill (ADR-009). Layouts follow Safaricom's documented
@@ -173,7 +176,7 @@ export async function pdfLines(data: Uint8Array, password?: string): Promise<str
     data: new Uint8Array(data),
     password,
     useSystemFonts: false,
-    standardFontDataUrl: STANDARD_FONTS,
+    standardFontDataUrl: standardFonts(),
   });
   let doc;
   try {
