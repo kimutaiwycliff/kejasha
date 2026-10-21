@@ -1,6 +1,6 @@
 # ADR-011 — Android offline sync with WatermelonDB pull/push protocol
 
-- Status: Accepted · 2026-10-16
+- Status: **Superseded by ADR-017** · 2026-10-21 (was Accepted 2026-10-16)
 
 ## Decision
 - Expo (React Native) app with role-based shells: owner/host, caretaker, tenant.
