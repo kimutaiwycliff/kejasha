@@ -5,6 +5,7 @@ import { createQueues, createTopicWorker, relayOnce, type QueueName } from '@kej
 import type { ConnectionOptions } from 'bullmq';
 import { Redis } from 'ioredis';
 import { pino } from 'pino';
+import { SCHEDULES } from '@kejasha/api/jobs';
 import { buildHandlers } from './handlers';
 
 const config = loadConfig();
@@ -46,6 +47,18 @@ async function relayLoop() {
     }
   }
 }
+// Cron jobs (idempotent; BullMQ keeps one scheduler per id across restarts and replicas).
+for (const s of SCHEDULES) {
+  await queues[s.queue].upsertJobScheduler(
+    s.id,
+    { pattern: s.pattern, tz: s.tz },
+    {
+      name: s.topic,
+      data: { outboxId: `scheduler:${s.id}`, orgId: null, topic: s.topic, payload: {} },
+    },
+  );
+}
+
 const relay = relayLoop();
 log.info({ queues: Object.keys(handlers) }, 'worker started');
 

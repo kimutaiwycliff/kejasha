@@ -1,5 +1,6 @@
 import type { AddressInfo } from 'node:net';
 import { createApiClient, type ApiClient } from '@kejasha/api-client';
+import type { Clock } from '../../src/deps';
 import { buildTestApi, type TestApi } from '../helpers';
 
 export interface Journey {
@@ -15,8 +16,8 @@ export interface Journey {
 }
 
 /** Boots the real API on a random port against Testcontainers. */
-export async function startJourney(): Promise<Journey> {
-  const api = await buildTestApi();
+export async function startJourney(opts: { clock?: Clock } = {}): Promise<Journey> {
+  const api = await buildTestApi({}, opts);
   await api.app.listen({ host: '127.0.0.1', port: 0 });
   const { port } = api.app.server.address() as AddressInfo;
   const baseUrl = `http://127.0.0.1:${port}`;

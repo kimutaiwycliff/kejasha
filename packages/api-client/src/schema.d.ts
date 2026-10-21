@@ -578,6 +578,459 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/tenants': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Tenants (people who rent units) */
+    get: operations['listTenants'];
+    put?: never;
+    /** Add a tenant */
+    post: operations['createTenant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/tenants/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A tenant with balance */
+    get: operations['getTenant'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update a tenant */
+    patch: operations['updateTenant'];
+    trace?: never;
+  };
+  '/v1/tenants/{id}/archive': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Archive a tenant (no active leases) */
+    post: operations['archiveTenant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/leases': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Leases, newest start first */
+    get: operations['listLeases'];
+    put?: never;
+    /** Sign a lease */
+    post: operations['createLease'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lease-calendar': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Lease ends and rent escalations in a date range */
+    get: operations['getLeaseCalendar'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/leases/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A lease with charges, rent steps and arrears */
+    get: operations['getLease'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Change lease terms (future invoices) */
+    patch: operations['updateLease'];
+    trace?: never;
+  };
+  '/v1/leases/{id}/rent-change': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Set a new rent from a future month */
+    post: operations['changeLeaseRent'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/leases/{id}/renew': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Extend a lease (optionally with new rent) */
+    post: operations['renewLease'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/leases/{id}/terminate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** End a lease early */
+    post: operations['terminateLease'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/leases/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancel a lease entered by mistake */
+    post: operations['cancelLease'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/leases/{id}/statement': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Statement with running balance */
+    get: operations['getLeaseStatement'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/leases/{leaseId}/charges': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Recurring charges on a lease */
+    get: operations['listLeaseCharges'];
+    put?: never;
+    /** Add a recurring charge */
+    post: operations['createLeaseCharge'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/charges/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Change or end a recurring charge */
+    patch: operations['updateCharge'];
+    trace?: never;
+  };
+  '/v1/units/{unitId}/meters': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Meters on a unit with last reading */
+    get: operations['listUnitMeters'];
+    put?: never;
+    /** Install a meter (optionally with its first reading) */
+    post: operations['createMeter'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/meters/{meterId}/readings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Readings, newest first */
+    get: operations['listMeterReadings'];
+    put?: never;
+    /** Record a reading */
+    post: operations['addMeterReading'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/meter-readings/bulk': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Record many readings (caretaker round) */
+    post: operations['addMeterReadingsBulk'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/invoices': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Invoices with derived outstanding amounts */
+    get: operations['listInvoices'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/invoices/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** An invoice with lines */
+    get: operations['getInvoice'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/leases/{leaseId}/invoices': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Bill a one-off charge */
+    post: operations['createManualInvoice'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/invoices/{id}/void': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Void an invoice nothing has been applied to */
+    post: operations['voidInvoice'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/leases/{leaseId}/credit-notes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Credit a tenant */
+    post: operations['createCreditNote'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/arrears': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Arrears aging by lease */
+    get: operations['getArrears'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/billing/run': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Run billing, late fees and reminders now
+     * @description The same job runs daily at 00:15 Africa/Nairobi; safe to repeat.
+     */
+    post: operations['runBilling'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/leases/{leaseId}/deposit-settlement': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Settle the deposit at move-out */
+    post: operations['settleDeposit'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/leases/{leaseId}/inspections': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Move-in/out inspections */
+    get: operations['listInspections'];
+    put?: never;
+    /** Record a move-in/out inspection */
+    post: operations['createInspection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/uploads': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Get a presigned URL to upload a photo */
+    post: operations['createUpload'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -874,6 +1327,326 @@ export interface components {
       maxGuests?: number | null;
       notes?: string | null;
     };
+    CreateTenantBodyInput: {
+      fullName: string;
+      /**
+       * @description Kenyan mobile number; any common format, normalised to E.164
+       * @example 0712345678
+       */
+      phone?: string;
+      /** Format: email */
+      email?: string;
+      nationalId?: string;
+      /** @example A123456789Z */
+      kraPin?: string;
+      nextOfKinName?: string;
+      /**
+       * @description Kenyan mobile number; any common format, normalised to E.164
+       * @example 0712345678
+       */
+      nextOfKinPhone?: string;
+      notes?: string;
+    };
+    UpdateTenantBodyInput: {
+      fullName?: string;
+      phone?: string | null;
+      email?: string | null;
+      nationalId?: string | null;
+      kraPin?: string | null;
+      nextOfKinName?: string | null;
+      nextOfKinPhone?: string | null;
+      notes?: string | null;
+    };
+    /** @enum {string} */
+    ChargeKindInput: 'service_charge' | 'garbage' | 'water' | 'electricity' | 'security' | 'other';
+    /** @enum {string} */
+    ChargeMethodInput: 'flat' | 'metered';
+    /** @description flat charges need amountCents; metered charges need unitPriceCents and a meterId on the same unit (422 invalid_charge) */
+    CreateChargeBodyInput: {
+      kind: components['schemas']['ChargeKindInput'];
+      label?: string;
+      method: components['schemas']['ChargeMethodInput'];
+      /**
+       * Format: int64
+       * @description Flat: full-month amount, prorated like rent
+       */
+      amountCents?: number;
+      /**
+       * Format: int64
+       * @description Metered: cents per whole unit (m³, kWh)
+       */
+      unitPriceCents?: number;
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      meterId?: string;
+      /**
+       * Format: date
+       * @description Defaults to the lease start
+       * @example 2026-10-21
+       */
+      startsOn?: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      endsOn?: string;
+    };
+    UpdateChargeBodyInput: {
+      label?: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents?: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      unitPriceCents?: number;
+      endsOn?: string | null;
+    };
+    /** @enum {string} */
+    LeaseStatusInput: 'active' | 'terminated' | 'cancelled';
+    /** @enum {string} */
+    LateFeeKindInput: 'none' | 'flat' | 'percent';
+    /** @description Creates the lease, invoices the deposit and bills every period already due. escalationBps and escalationEveryMonths go together; lateFeeKind flat needs lateFeeFlatCents, percent needs lateFeeBps (422 invalid_lease_terms). Overlapping a unit's existing lease answers 409 lease_overlap. */
+    CreateLeaseBodyInput: {
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      unitId: string;
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      tenantId: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      startDate: string;
+      /**
+       * Format: date
+       * @description Inclusive last day; omit for an open-ended tenancy
+       * @example 2026-10-21
+       */
+      endDate?: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      rentCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      depositCents?: number;
+      /** @description Day rent falls due (clamped to month end). Default 1. */
+      billingDay?: number;
+      /** @description Compounding rent increase, e.g. 500 = 5% */
+      escalationBps?: number;
+      escalationEveryMonths?: number;
+      lateFeeKind?: components['schemas']['LateFeeKindInput'];
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      lateFeeFlatCents?: number;
+      lateFeeBps?: number;
+      lateFeeGraceDays?: number;
+      charges?: components['schemas']['CreateChargeBodyInput'][];
+      notes?: string;
+    };
+    /** @description Applies to invoices not yet issued. escalationBps and escalationEveryMonths go together; lateFeeKind flat needs lateFeeFlatCents, percent needs lateFeeBps (422 invalid_lease_terms) */
+    UpdateLeaseBodyInput: {
+      /** @description Day rent falls due (clamped to month end). Default 1. */
+      billingDay?: number;
+      /** @description Compounding rent increase, e.g. 500 = 5% */
+      escalationBps?: number;
+      escalationEveryMonths?: number;
+      lateFeeKind?: components['schemas']['LateFeeKindInput'];
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      lateFeeFlatCents?: number;
+      lateFeeBps?: number;
+      lateFeeGraceDays?: number;
+      notes?: string | null;
+    };
+    /** @description New rent from a future (not yet invoiced) month; escalation restarts from it */
+    RentChangeBodyInput: {
+      /** @example 2026-11 */
+      effectivePeriod: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      rentCents: number;
+    };
+    RenewLeaseBodyInput: {
+      /** @description New inclusive end date, or null for open-ended */
+      endDate: string | null;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      rentCents?: number;
+      /** @example 2026-11 */
+      rentEffectivePeriod?: string;
+    };
+    /** @description Ends the lease; later invoices are voided and the final month is prorated */
+    TerminateLeaseBodyInput: {
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      endDate: string;
+      reason: string;
+    };
+    CancelLeaseBodyInput: {
+      reason: string;
+    };
+    /** @enum {string} */
+    MeterKindInput: 'water' | 'electricity';
+    CreateMeterBodyInput: {
+      kind: components['schemas']['MeterKindInput'];
+      serial?: string;
+      /** @description e.g. m³ or kWh */
+      unitLabel?: string;
+      initialReading?: {
+        /**
+         * Format: date
+         * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+         * @example 2026-10-21
+         */
+        readOn: string;
+        /**
+         * @description Decimal reading as a string (no float rounding)
+         * @example 1234.5
+         */
+        reading: string;
+      };
+    };
+    /** @description Readings cannot go backwards (422 reading_decreased) */
+    CreateReadingBodyInput: {
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      readOn: string;
+      /**
+       * @description Decimal reading as a string (no float rounding)
+       * @example 1234.5
+       */
+      reading: string;
+      note?: string;
+    };
+    /** @description Caretaker batch; each item succeeds or fails on its own */
+    BulkReadingsBodyInput: {
+      items: {
+        /**
+         * Format: uuid
+         * @description UUID identifier
+         */
+        meterId: string;
+        /**
+         * Format: date
+         * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+         * @example 2026-10-21
+         */
+        readOn: string;
+        /**
+         * @description Decimal reading as a string (no float rounding)
+         * @example 1234.5
+         */
+        reading: string;
+        note?: string;
+      }[];
+    };
+    /** @enum {string} */
+    InvoiceKindInput: 'periodic' | 'deposit' | 'late_fee' | 'manual';
+    ManualInvoiceBodyInput: {
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      dueOn: string;
+      lines: {
+        /** @enum {string} */
+        kind: 'service_charge' | 'garbage' | 'water' | 'electricity' | 'security' | 'other';
+        description: string;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        amountCents: number;
+      }[];
+    };
+    VoidInvoiceBodyInput: {
+      reason: string;
+    };
+    CreateCreditNoteBodyInput: {
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents: number;
+      reason: string;
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      invoiceId?: string;
+    };
+    DepositDeductionInput: {
+      description: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents: number;
+    };
+    /** @description Deductions → income; then arrears (default yes); remainder → refund due */
+    DepositSettlementBodyInput: {
+      deductions?: components['schemas']['DepositDeductionInput'][];
+      applyToArrears?: boolean;
+    };
+    InspectionItemInputInput: {
+      area: string;
+      /** @enum {string} */
+      condition: 'good' | 'fair' | 'poor' | 'damaged';
+      note?: string;
+      photoKeys?: string[];
+    };
+    /** @description photoKeys come from POST /v1/uploads (422 invalid_photo_key otherwise) */
+    CreateInspectionBodyInput: {
+      /** @enum {string} */
+      kind: 'move_in' | 'move_out';
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      inspectedOn: string;
+      items: components['schemas']['InspectionItemInputInput'][];
+      notes?: string;
+    };
+    UploadRequestInput: {
+      /** @enum {string} */
+      purpose: 'inspection_photo' | 'meter_photo' | 'maintenance_photo';
+      /** @enum {string} */
+      contentType: 'image/jpeg' | 'image/png' | 'image/webp';
+      sizeBytes: number;
+    };
     FieldError: {
       /** @description Dotted path to the offending field, e.g. body.phone */
       path: string;
@@ -1162,6 +1935,536 @@ export interface components {
       valid: boolean;
       available: boolean;
     };
+    /** @description Outstanding amounts by days past due (cents) */
+    Aging: {
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      current: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      d1_30: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      d31_60: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      d61_90: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      d90_plus: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      total: number;
+    };
+    Tenant: {
+      /** Format: uuid */
+      id: string;
+      fullName: string;
+      phone: string | null;
+      email: string | null;
+      nationalId: string | null;
+      kraPin: string | null;
+      nextOfKinName: string | null;
+      nextOfKinPhone: string | null;
+      notes: string | null;
+      activeLeaseCount: number;
+      /**
+       * Format: int64
+       * @description Sum of lease balances; negative = tenant credit
+       */
+      balanceCents: number;
+      archivedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    TenantPage: {
+      items: components['schemas']['Tenant'][];
+      nextCursor: string | null;
+    };
+    /** @enum {string} */
+    ChargeKind: 'service_charge' | 'garbage' | 'water' | 'electricity' | 'security' | 'other';
+    /** @enum {string} */
+    ChargeMethod: 'flat' | 'metered';
+    ChargeRule: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      leaseId: string;
+      kind: components['schemas']['ChargeKind'];
+      label: string;
+      method: components['schemas']['ChargeMethod'];
+      amountCents: number | null;
+      unitPriceCents: number | null;
+      meterId: string | null;
+      /** Format: date */
+      startsOn: string;
+      endsOn: string | null;
+    };
+    ChargeRuleList: {
+      items: components['schemas']['ChargeRule'][];
+    };
+    /** @enum {string} */
+    LeaseStatus: 'active' | 'terminated' | 'cancelled';
+    /** @enum {string} */
+    LateFeeKind: 'none' | 'flat' | 'percent';
+    Lease: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      unitId: string;
+      unitCode: string;
+      /** Format: uuid */
+      propertyId: string;
+      propertyName: string;
+      /** Format: uuid */
+      tenantId: string;
+      tenantName: string;
+      /** Format: date */
+      startDate: string;
+      endDate: string | null;
+      status: components['schemas']['LeaseStatus'];
+      /**
+       * Format: int64
+       * @description Rent at lease start
+       */
+      rentCents: number;
+      /**
+       * Format: int64
+       * @description Rent for the current month after steps and escalation
+       */
+      currentRentCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      depositCents: number;
+      billingDay: number;
+      escalationBps: number | null;
+      escalationEveryMonths: number | null;
+      nextEscalationPeriod: string | null;
+      lateFeeKind: components['schemas']['LateFeeKind'];
+      lateFeeFlatCents: number | null;
+      lateFeeBps: number | null;
+      lateFeeGraceDays: number;
+      notes: string | null;
+      /**
+       * Format: int64
+       * @description Receivable balance; negative = tenant credit
+       */
+      balanceCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      depositHeldCents: number;
+      terminatedAt: string | null;
+      terminationReason: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    LeasePage: {
+      items: components['schemas']['Lease'][];
+      nextCursor: string | null;
+    };
+    RentStep: {
+      effectivePeriod: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      rentCents: number;
+    };
+    LeaseDetail: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      unitId: string;
+      unitCode: string;
+      /** Format: uuid */
+      propertyId: string;
+      propertyName: string;
+      /** Format: uuid */
+      tenantId: string;
+      tenantName: string;
+      /** Format: date */
+      startDate: string;
+      endDate: string | null;
+      status: components['schemas']['LeaseStatus'];
+      /**
+       * Format: int64
+       * @description Rent at lease start
+       */
+      rentCents: number;
+      /**
+       * Format: int64
+       * @description Rent for the current month after steps and escalation
+       */
+      currentRentCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      depositCents: number;
+      billingDay: number;
+      escalationBps: number | null;
+      escalationEveryMonths: number | null;
+      nextEscalationPeriod: string | null;
+      lateFeeKind: components['schemas']['LateFeeKind'];
+      lateFeeFlatCents: number | null;
+      lateFeeBps: number | null;
+      lateFeeGraceDays: number;
+      notes: string | null;
+      /**
+       * Format: int64
+       * @description Receivable balance; negative = tenant credit
+       */
+      balanceCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      depositHeldCents: number;
+      terminatedAt: string | null;
+      terminationReason: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      charges: components['schemas']['ChargeRule'][];
+      rentSteps: components['schemas']['RentStep'][];
+      arrears: components['schemas']['Aging'];
+    };
+    LeaseCalendarEvent: {
+      /** @enum {string} */
+      kind: 'lease_end' | 'escalation';
+      /** Format: date */
+      date: string;
+      /** Format: uuid */
+      leaseId: string;
+      unitCode: string;
+      tenantName: string;
+      /** @description New rent for escalations */
+      rentCents: number | null;
+    };
+    LeaseCalendar: {
+      items: components['schemas']['LeaseCalendarEvent'][];
+    };
+    /** @enum {string} */
+    MeterKind: 'water' | 'electricity';
+    MeterReading: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      meterId: string;
+      /** Format: date */
+      readOn: string;
+      reading: string;
+      consumptionSincePrevious: string | null;
+      note: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    MeterReadingList: {
+      items: components['schemas']['MeterReading'][];
+    };
+    Meter: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      unitId: string;
+      unitCode: string;
+      kind: components['schemas']['MeterKind'];
+      serial: string | null;
+      unitLabel: string;
+      lastReading: components['schemas']['MeterReading'] | null;
+      archivedAt: string | null;
+    };
+    MeterList: {
+      items: components['schemas']['Meter'][];
+    };
+    BulkReadingsResult: {
+      items: {
+        /** Format: uuid */
+        meterId: string;
+        /** Format: date */
+        readOn: string;
+        /** @enum {string} */
+        status: 'applied' | 'rejected';
+        reading: components['schemas']['MeterReading'] | null;
+        errorCode: string | null;
+      }[];
+    };
+    /** @enum {string} */
+    InvoiceKind: 'periodic' | 'deposit' | 'late_fee' | 'manual';
+    /** @enum {string} */
+    InvoiceLineKind:
+      | 'rent'
+      | 'deposit'
+      | 'service_charge'
+      | 'garbage'
+      | 'water'
+      | 'electricity'
+      | 'security'
+      | 'late_fee'
+      | 'other';
+    /** @enum {string} */
+    PaymentStatus: 'unpaid' | 'partially_paid' | 'paid' | 'void';
+    InvoiceLine: {
+      /** Format: uuid */
+      id: string;
+      kind: components['schemas']['InvoiceLineKind'];
+      description: string;
+      quantity: string;
+      unitPriceCents: number | null;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents: number;
+      periodStart: string | null;
+      periodEnd: string | null;
+    };
+    Invoice: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      leaseId: string;
+      tenantName: string;
+      unitCode: string;
+      kind: components['schemas']['InvoiceKind'];
+      period: string | null;
+      /** Format: date */
+      issuedOn: string;
+      /** Format: date */
+      dueOn: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      totalCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      outstandingCents: number;
+      paymentStatus: components['schemas']['PaymentStatus'];
+      voidedAt: string | null;
+      voidReason: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    InvoiceDetail: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      leaseId: string;
+      tenantName: string;
+      unitCode: string;
+      kind: components['schemas']['InvoiceKind'];
+      period: string | null;
+      /** Format: date */
+      issuedOn: string;
+      /** Format: date */
+      dueOn: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      totalCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      outstandingCents: number;
+      paymentStatus: components['schemas']['PaymentStatus'];
+      voidedAt: string | null;
+      voidReason: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      lines: components['schemas']['InvoiceLine'][];
+    };
+    InvoicePage: {
+      items: components['schemas']['Invoice'][];
+      nextCursor: string | null;
+    };
+    CreditNote: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      leaseId: string;
+      invoiceId: string | null;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents: number;
+      reason: string;
+      /** Format: date */
+      issuedOn: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    StatementLine: {
+      /** Format: date */
+      date: string;
+      source: string;
+      reference: string | null;
+      description: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      debitCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      creditCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      balanceCents: number;
+    };
+    LeaseStatement: {
+      /** Format: uuid */
+      leaseId: string;
+      /** Format: date */
+      from: string;
+      /** Format: date */
+      to: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      openingBalanceCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      closingBalanceCents: number;
+      items: components['schemas']['StatementLine'][];
+    };
+    ArrearsItem: {
+      /** Format: uuid */
+      leaseId: string;
+      /** Format: uuid */
+      tenantId: string;
+      tenantName: string;
+      tenantPhone: string | null;
+      unitCode: string;
+      propertyName: string;
+      /** Format: date */
+      oldestDueOn: string;
+      aging: components['schemas']['Aging'];
+    };
+    ArrearsReport: {
+      /** Format: date */
+      asOf: string;
+      totals: components['schemas']['Aging'];
+      items: components['schemas']['ArrearsItem'][];
+    };
+    BillingRunResult: {
+      /** Format: date */
+      asOf: string;
+      leasesProcessed: number;
+      invoicesCreated: number;
+      lateFeesCreated: number;
+      remindersQueued: number;
+    };
+    DepositSettlement: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      leaseId: string;
+      /** Format: date */
+      settledOn: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      depositHeldCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      deductionsCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      appliedToArrearsCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      refundDueCents: number;
+      deductions: {
+        description: string;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        amountCents: number;
+      }[];
+    };
+    Inspection: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      leaseId: string;
+      /** @enum {string} */
+      kind: 'move_in' | 'move_out';
+      /** Format: date */
+      inspectedOn: string;
+      notes: string | null;
+      items: {
+        area: string;
+        /** @enum {string} */
+        condition: 'good' | 'fair' | 'poor' | 'damaged';
+        note: string | null;
+        photos: {
+          key: string;
+          url: string;
+        }[];
+      }[];
+      /** Format: date-time */
+      createdAt: string;
+    };
+    InspectionList: {
+      items: components['schemas']['Inspection'][];
+    };
+    /** @description PUT the file bytes to uploadUrl with these headers, then reference `key` */
+    UploadTicket: {
+      key: string;
+      uploadUrl: string;
+      /** @constant */
+      method: 'PUT';
+      headers: {
+        'content-type': string;
+      };
+      /** Format: date-time */
+      expiresAt: string;
+    };
     DependencyCheck: {
       /** @enum {string} */
       status: 'up' | 'down' | 'skipped';
@@ -1391,6 +2694,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Rate limited */
       429: {
         headers: {
@@ -1435,6 +2747,15 @@ export interface operations {
       };
       /** @description Validation failed */
       400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
         headers: {
           [name: string]: unknown;
         };
@@ -1495,6 +2816,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
         headers: {
           [name: string]: unknown;
         };
@@ -1607,6 +2937,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Rate limited */
       429: {
         headers: {
@@ -1658,6 +2997,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
         headers: {
           [name: string]: unknown;
         };
@@ -1790,6 +3138,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Internal error */
       500: {
         headers: {
@@ -1852,6 +3209,15 @@ export interface operations {
       };
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
         headers: {
           [name: string]: unknown;
         };
@@ -1968,6 +3334,15 @@ export interface operations {
       };
       /** @description Not allowed */
       403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
         headers: {
           [name: string]: unknown;
         };
@@ -2180,6 +3555,15 @@ export interface operations {
       };
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
         headers: {
           [name: string]: unknown;
         };
@@ -3536,6 +4920,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Internal error */
       500: {
         headers: {
@@ -3944,6 +5337,2630 @@ export interface operations {
       };
       /** @description Internal error */
       500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listTenants: {
+    parameters: {
+      query?: {
+        /** @description Opaque cursor from `nextCursor`; an unknown cursor answers 422 invalid_cursor */
+        cursor?: string;
+        limit?: number;
+        q?: string;
+        includeArchived?: 'true' | 'false';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TenantPage'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateTenantBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Tenant'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Tenant'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  updateTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTenantBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Tenant'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  archiveTenant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Tenant'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listLeases: {
+    parameters: {
+      query?: {
+        /** @description Opaque cursor from `nextCursor`; an unknown cursor answers 422 invalid_cursor */
+        cursor?: string;
+        limit?: number;
+        status?: components['schemas']['LeaseStatusInput'];
+        /** @description UUID identifier */
+        unitId?: string;
+        /** @description UUID identifier */
+        tenantId?: string;
+        /** @description UUID identifier */
+        propertyId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeasePage'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createLease: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateLeaseBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaseDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getLeaseCalendar: {
+    parameters: {
+      query: {
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        from: string;
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        to: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaseCalendar'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getLease: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaseDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  updateLease: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateLeaseBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaseDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  changeLeaseRent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RentChangeBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaseDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  renewLease: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RenewLeaseBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaseDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  terminateLease: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TerminateLeaseBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaseDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  cancelLease: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelLeaseBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaseDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getLeaseStatement: {
+    parameters: {
+      query?: {
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        from?: string;
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        to?: string;
+      };
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaseStatement'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listLeaseCharges: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        leaseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChargeRuleList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createLeaseCharge: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        leaseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateChargeBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChargeRule'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  updateCharge: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateChargeBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChargeRule'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listUnitMeters: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        unitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MeterList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createMeter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        unitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateMeterBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MeterList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listMeterReadings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        meterId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MeterReadingList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  addMeterReading: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        meterId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateReadingBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MeterReading'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  addMeterReadingsBulk: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BulkReadingsBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BulkReadingsResult'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listInvoices: {
+    parameters: {
+      query?: {
+        /** @description Opaque cursor from `nextCursor`; an unknown cursor answers 422 invalid_cursor */
+        cursor?: string;
+        limit?: number;
+        /** @description UUID identifier */
+        leaseId?: string;
+        /** @description UUID identifier */
+        tenantId?: string;
+        kind?: components['schemas']['InvoiceKindInput'];
+        period?: string;
+        includeVoid?: 'true' | 'false';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvoicePage'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getInvoice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvoiceDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createManualInvoice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        leaseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ManualInvoiceBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvoiceDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  voidInvoice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['VoidInvoiceBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvoiceDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createCreditNote: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        leaseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateCreditNoteBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreditNote'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getArrears: {
+    parameters: {
+      query?: {
+        /** @description UUID identifier */
+        propertyId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ArrearsReport'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  runBilling: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BillingRunResult'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  settleDeposit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        leaseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DepositSettlementBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DepositSettlement'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listInspections: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        leaseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InspectionList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createInspection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        leaseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateInspectionBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InspectionList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createUpload: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UploadRequestInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UploadTicket'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unavailable */
+      503: {
         headers: {
           [name: string]: unknown;
         };

@@ -1,4 +1,10 @@
-import { HeadBucketCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  GetObjectCommand,
+  HeadBucketCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export interface StorageConfig {
   endpoint: string | undefined;
@@ -14,6 +20,9 @@ export interface Storage {
   /** False when no endpoint/credentials are configured (health reports `skipped`). */
   configured: boolean;
   ping(): Promise<void>;
+  /** Presigned PUT the client uploads to directly (bytes never pass through the API). */
+  presignPut(key: string, contentType: string, expiresInSeconds?: number): Promise<string>;
+  presignGet(key: string, expiresInSeconds?: number): Promise<string>;
   close(): void;
 }
 
@@ -34,6 +43,20 @@ export function createStorage(cfg: StorageConfig): Storage {
     configured,
     async ping() {
       await client.send(new HeadBucketCommand({ Bucket: cfg.bucketFiles }));
+    },
+    presignPut(key, contentType, expiresInSeconds = 900) {
+      return getSignedUrl(
+        client,
+        new PutObjectCommand({ Bucket: cfg.bucketFiles, Key: key, ContentType: contentType }),
+        {
+          expiresIn: expiresInSeconds,
+        },
+      );
+    },
+    presignGet(key, expiresInSeconds = 3600) {
+      return getSignedUrl(client, new GetObjectCommand({ Bucket: cfg.bucketFiles, Key: key }), {
+        expiresIn: expiresInSeconds,
+      });
     },
     close() {
       client.destroy();

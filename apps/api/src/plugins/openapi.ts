@@ -28,6 +28,10 @@ export const openapiPlugin = fp(async (app: FastifyInstance) => {
           description: 'Sign-up, sign-in, sessions, organizations, members, invitations',
         },
         { name: 'accounts', description: 'Client landlords, properties and units' },
+        {
+          name: 'leasing',
+          description: 'Tenants, leases, charges, meters, invoices, arrears and deposits',
+        },
       ],
       components: {
         securitySchemes: {

@@ -1,3 +1,5 @@
+import { createJobHandlers } from '@kejasha/api/jobs';
+import { createDeps } from '@kejasha/api/runtime';
 import type { Config } from '@kejasha/config';
 import { createSmsSender } from '@kejasha/integrations-africastalking';
 import { createEmailSender } from '@kejasha/integrations-resend';
@@ -19,10 +21,11 @@ export function buildHandlers(config: Config, log: Logger): Record<QueueName, To
     { apiKey: config.email.resendApiKey, from: config.domain.emailFrom },
     (m) => dev && log.info({ to: m.to, subject: m.subject, text: m.text }, 'email (no provider)'),
   );
+  const jobs = createJobHandlers(createDeps(config), log);
   return {
     default: {},
     notifications: notificationHandlers({ email, sms }),
-    invoicing: {},
+    invoicing: jobs.invoicing,
     payments: {},
     ical: {},
     reports: {},

@@ -32,6 +32,8 @@ describe('Nairobi business dates', () => {
 describe('date arithmetic', () => {
   it('validates ISO dates', () => {
     expect(isIsoDate('2028-02-29')).toBe(true);
+    expect(isIsoDate('0020-02-29')).toBe(true); // years < 100 are real years, not 19xx
+    expect(isIsoDate('0021-02-29')).toBe(false);
     expect(isIsoDate('2026-02-29')).toBe(false);
     expect(isIsoDate('2026-13-01')).toBe(false);
     expect(() => addDays('2026-02-30', 1)).toThrow();

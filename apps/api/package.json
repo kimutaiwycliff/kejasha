@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    "./jobs": "./src/jobs/index.ts",
+    "./runtime": "./src/runtime.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

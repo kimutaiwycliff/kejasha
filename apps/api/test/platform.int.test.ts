@@ -117,3 +117,11 @@ describe('transport hardening', () => {
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
   });
 });
+
+describe('business date range', () => {
+  it('refuses dates outside 1900–2199 with 422 before any handler runs', async () => {
+    const res = await api.app.inject({ method: 'GET', url: '/v1/health?asOf=0020-02-29' });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().code).toBe('date_out_of_range');
+  });
+});

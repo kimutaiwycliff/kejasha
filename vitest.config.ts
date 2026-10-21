@@ -18,7 +18,10 @@ export default defineConfig({
           include: ['{apps,packages}/**/*.int.test.ts'],
           exclude: ignore,
           globalSetup: ['packages/db/test/global-setup.ts'],
-          testTimeout: 30_000,
+          // Integration files share one Postgres; running them one at a time keeps password
+          // hashing and multi-period billing runs from starving each other.
+          fileParallelism: false,
+          testTimeout: 90_000,
           hookTimeout: 120_000,
         },
       },
@@ -38,7 +41,8 @@ export default defineConfig({
           include: ['apps/api/test/journeys/**/*.journey.test.ts'],
           exclude: ignore,
           globalSetup: ['packages/db/test/global-setup.ts'],
-          testTimeout: 60_000,
+          fileParallelism: false,
+          testTimeout: 90_000,
           hookTimeout: 120_000,
         },
       },

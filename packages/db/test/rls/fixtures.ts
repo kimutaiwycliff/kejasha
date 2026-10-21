@@ -15,6 +15,8 @@ export interface TenantTableFixture {
   grants: { select: boolean; update: boolean; delete: boolean };
   /** Column assignment used by the UPDATE probe. */
   updateSet?: SQL;
+  /** Rows one `insert` creates (ledger postings come in balanced pairs). Default 1. */
+  rowsPerInsert?: number;
 }
 
 // Parents are keyed by the org id itself (org, self landlord, property, user) to stay idempotent.
@@ -26,6 +28,23 @@ const property = (orgId: string) =>
   sql`INSERT INTO property (id, org_id, client_landlord_id, name, kind, county) VALUES (${orgId}, ${orgId}, ${orgId}, 'Block', 'residential', 'Nairobi') ON CONFLICT DO NOTHING`;
 const user = (orgId: string) =>
   sql`INSERT INTO "user" (id, name, email) VALUES (${orgId}, 'Staff', ${`${orgId}@fixture.test`}) ON CONFLICT DO NOTHING`;
+const uid = (orgId: string, tag: string) => sql`md5(${orgId} || ${tag})::uuid`;
+const unit = (orgId: string) =>
+  sql`INSERT INTO unit (id, org_id, property_id, code, mode, rent_cents) VALUES (${orgId}, ${orgId}, ${orgId}, 'FX1', 'long_term', 100) ON CONFLICT DO NOTHING`;
+const tenant = (orgId: string) =>
+  sql`INSERT INTO tenant (id, org_id, full_name) VALUES (${orgId}, ${orgId}, 'Fixture Tenant') ON CONFLICT DO NOTHING`;
+const lease = (orgId: string) =>
+  sql`INSERT INTO lease (id, org_id, unit_id, tenant_id, start_date, rent_cents, billing_day) VALUES (${orgId}, ${orgId}, ${orgId}, ${orgId}, '2026-01-01', 100, 1) ON CONFLICT DO NOTHING`;
+const meter = (orgId: string) =>
+  sql`INSERT INTO meter (id, org_id, unit_id, kind) VALUES (${orgId}, ${orgId}, ${orgId}, 'water') ON CONFLICT DO NOTHING`;
+const entry = (orgId: string) =>
+  sql`INSERT INTO ledger_entry (id, org_id, occurred_on, source, idempotency_key) VALUES (${uid(orgId, 'entry')}, ${orgId}, '2026-01-01', 'adjustment', ${orgId}) ON CONFLICT DO NOTHING`;
+const accounts = (orgId: string) =>
+  sql`INSERT INTO ledger_account (id, org_id, kind) VALUES (${uid(orgId, 'a1')}, ${orgId}, 'income_rent'), (${uid(orgId, 'a2')}, ${orgId}, 'income_other') ON CONFLICT DO NOTHING`;
+const invoice = (orgId: string) =>
+  sql`INSERT INTO invoice (id, org_id, lease_id, number, kind, issued_on, due_on, total_cents, ledger_entry_id) VALUES (${uid(orgId, 'inv')}, ${orgId}, ${orgId}, 'FX-1', 'manual', '2026-01-01', '2026-01-01', 100, ${uid(orgId, 'entry')}) ON CONFLICT DO NOTHING`;
+const portfolio = [org, landlord, property, unit, tenant];
+
 const all =
   (...parts: ((orgId: string) => SQL)[]) =>
   (orgId: string) =>
@@ -90,5 +109,126 @@ export const tenantTableFixtures: TenantTableFixture[] = [
       sql`INSERT INTO property_staff (org_id, property_id, user_id) VALUES (${orgId}, ${orgId}, ${orgId})`,
     grants: { select: true, update: true, delete: true },
     updateSet: sql`created_at = now()`,
+  },
+  {
+    table: 'tenant',
+    prepare: all(org),
+    insert: (o) =>
+      sql`INSERT INTO tenant (id, org_id, full_name) VALUES (gen_random_uuid(), ${o}, 'T')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`full_name = 'hijacked'`,
+  },
+  {
+    table: 'lease',
+    prepare: all(...portfolio),
+    insert: (o) =>
+      sql`INSERT INTO lease (id, org_id, unit_id, tenant_id, start_date, rent_cents, billing_day) VALUES (gen_random_uuid(), ${o}, ${o}, ${o}, '2026-01-01', 100, 1)`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`notes = 'hijacked'`,
+  },
+  {
+    table: 'lease_rent_step',
+    prepare: all(...portfolio, lease),
+    insert: (o) =>
+      sql`INSERT INTO lease_rent_step (org_id, lease_id, effective_period, rent_cents) VALUES (${o}, ${o}, make_date(2027, 1 + floor(random() * 11)::int, 1), 1)`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`rent_cents = 0`,
+  },
+  {
+    table: 'meter',
+    prepare: all(...portfolio),
+    insert: (o) =>
+      sql`INSERT INTO meter (id, org_id, unit_id, kind, archived_at) VALUES (gen_random_uuid(), ${o}, ${o}, 'water', now())`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`serial = 'hijacked'`,
+  },
+  {
+    table: 'meter_reading',
+    prepare: all(...portfolio, meter),
+    insert: (o) =>
+      sql`INSERT INTO meter_reading (id, org_id, meter_id, read_on, reading) VALUES (gen_random_uuid(), ${o}, ${o}, current_date - (random() * 3000)::int, 1)`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`reading = 0`,
+  },
+  {
+    table: 'charge_rule',
+    prepare: all(...portfolio, lease),
+    insert: (o) =>
+      sql`INSERT INTO charge_rule (id, org_id, lease_id, kind, label, method, amount_cents, starts_on) VALUES (gen_random_uuid(), ${o}, ${o}, 'garbage', 'Garbage', 'flat', 1, '2026-01-01')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`label = 'hijacked'`,
+  },
+  {
+    table: 'org_counter',
+    prepare: all(org),
+    insert: (o) =>
+      sql`INSERT INTO org_counter (org_id, name) VALUES (${o}, gen_random_uuid()::text)`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`value = 99`,
+  },
+  {
+    table: 'ledger_account',
+    prepare: all(org),
+    insert: (o) =>
+      sql`INSERT INTO ledger_account (id, org_id, kind) VALUES (gen_random_uuid(), ${o}, 'income_water')`,
+    grants: { select: true, update: false, delete: false },
+    updateSet: sql`kind = 'income_rent'`,
+  },
+  {
+    table: 'ledger_entry',
+    prepare: all(org),
+    insert: (o) =>
+      sql`INSERT INTO ledger_entry (id, org_id, occurred_on, source, idempotency_key) VALUES (gen_random_uuid(), ${o}, '2026-01-01', 'adjustment', gen_random_uuid()::text)`,
+    grants: { select: true, update: false, delete: false },
+    updateSet: sql`memo = 'tampered'`,
+  },
+  {
+    table: 'ledger_posting',
+    prepare: all(org, accounts, entry),
+    insert: (o) =>
+      sql`INSERT INTO ledger_posting (org_id, entry_id, account_id, amount_cents) VALUES (${o}, ${uid(o, 'entry')}, ${uid(o, 'a1')}, -100), (${o}, ${uid(o, 'entry')}, ${uid(o, 'a2')}, 100)`,
+    grants: { select: true, update: false, delete: false },
+    updateSet: sql`amount_cents = 1`,
+    rowsPerInsert: 2,
+  },
+  {
+    table: 'invoice',
+    prepare: all(...portfolio, lease, entry),
+    insert: (o) =>
+      sql`INSERT INTO invoice (id, org_id, lease_id, number, kind, issued_on, due_on, total_cents, ledger_entry_id) VALUES (gen_random_uuid(), ${o}, ${o}, gen_random_uuid()::text, 'manual', '2026-01-01', '2026-01-01', 100, ${uid(o, 'entry')})`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`total_cents = 1`,
+  },
+  {
+    table: 'invoice_line',
+    prepare: all(...portfolio, lease, entry, invoice),
+    insert: (o) =>
+      sql`INSERT INTO invoice_line (id, org_id, invoice_id, kind, description, amount_cents) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'inv')}, 'rent', 'Rent', 100)`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`amount_cents = 1`,
+  },
+  {
+    table: 'credit_note',
+    prepare: all(...portfolio, lease, entry),
+    insert: (o) =>
+      sql`INSERT INTO credit_note (id, org_id, lease_id, number, amount_cents, reason, issued_on, ledger_entry_id) VALUES (gen_random_uuid(), ${o}, ${o}, gen_random_uuid()::text, 1, 'r', '2026-01-01', ${uid(o, 'entry')})`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`reason = 'hijacked'`,
+  },
+  {
+    table: 'deposit_settlement',
+    prepare: all(...portfolio, lease, entry),
+    insert: (o) =>
+      sql`INSERT INTO deposit_settlement (id, org_id, lease_id, settled_on, deposit_held_cents, deductions_cents, applied_to_arrears_cents, refund_due_cents, ledger_entry_id) VALUES (gen_random_uuid(), ${o}, ${o}, '2026-01-01', 0, 0, 0, 0, ${uid(o, 'entry')})`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`settled_on = '2026-02-01'`,
+  },
+  {
+    table: 'lease_inspection',
+    prepare: all(...portfolio, lease),
+    insert: (o) =>
+      sql`INSERT INTO lease_inspection (id, org_id, lease_id, kind, inspected_on) VALUES (gen_random_uuid(), ${o}, ${o}, 'move_in', '2026-01-01')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`notes = 'hijacked'`,
   },
 ];
