@@ -89,6 +89,10 @@ balance is always zero. Arrears and statements are derived from the ledger, neve
   fuzzed requests on rerun) — treated as transport artefacts; watch CI.
 - **Tests:** integration and journey files run one at a time against their shared Postgres
   (timeouts under parallel load were contention, not failures).
+- **Object storage (ADR-019):** MinIO images are no longer published; production moves to
+  Cloudflare R2, dev/CI/tests to SeaweedFS. Switching exposed a real bug: the AWS SDK's default
+  flexible checksums made every presigned upload fail (checksum of an empty body). Fixed with
+  `requestChecksumCalculation: 'WHEN_REQUIRED'`; a real upload/download round trip now runs in CI.
 - **Module boundaries:** leasing reads units/properties only through `accounts` lookups;
   the worker runs the API's own services via `@kejasha/api/jobs` with a system `Ctx`.
 

@@ -36,6 +36,10 @@ export function createStorage(cfg: StorageConfig): Storage {
       ? { credentials: { accessKeyId: cfg.accessKey, secretAccessKey: cfg.secretKey } }
       : {}),
     maxAttempts: 1,
+    // The SDK otherwise bakes a checksum of an *empty* body into presigned PUT URLs, so every real
+    // upload fails (BadDigest). R2 and SeaweedFS also reject the extra checksum parameters.
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   });
   return {
     client,

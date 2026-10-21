@@ -70,8 +70,8 @@ jobs:
       REDIS_URL: redis://localhost:6379
       BETTER_AUTH_SECRET: ci-only-secret-ci-only-secret-0123456789
       S3_ENDPOINT: http://localhost:9000
-      S3_ACCESS_KEY: minioadmin
-      S3_SECRET_KEY: minioadmin
+      S3_ACCESS_KEY: kejasha-dev
+      S3_SECRET_KEY: kejasha-dev-secret
       S3_BUCKET_FILES: kejasha-files
     steps:
       - uses: actions/checkout@v4
@@ -79,12 +79,13 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      # Object storage, as in `make up` (presigned uploads; health checks the bucket).
-      - name: Start MinIO
+      # Object storage, as in `make up` (ADR-019: SeaweedFS stands in for R2).
+      - name: Start SeaweedFS (S3)
         run: |
-          docker run -d --name minio -p 9000:9000 -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin minio/minio:latest server /data
-          for i in $(seq 1 30); do docker exec minio mc ready local && break; sleep 1; done
-          docker exec minio sh -c 'mc alias set local http://localhost:9000 minioadmin minioadmin && mc mb --ignore-existing local/kejasha-files'
+          docker run -d --name s3 -p 9000:8333 -v "$PWD/infra/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro" \
+            chrislusf/seaweedfs:latest server -s3 -s3.config=/etc/seaweedfs/s3.json -dir=/data
+          for i in $(seq 1 60); do curl -s -o /dev/null http://localhost:9000/ && break; sleep 1; done
+          echo "s3.bucket.create -name kejasha-files" | docker exec -i s3 weed shell
       - name: Provision tenant login role + migrate
         run: |
           PGPASSWORD=secret psql -h localhost -U app_owner -d kejasha -c "CREATE ROLE app_authenticated LOGIN NOBYPASSRLS PASSWORD 'secret'"

@@ -8,14 +8,14 @@ beforeAll(async () => {
 afterAll(() => api.close());
 
 describe('GET /v1/health', () => {
-  it('reports db and redis up; storage skipped when S3 is not configured', async () => {
+  it('reports db, redis and storage up', async () => {
     const res = await api.app.inject({ method: 'GET', url: '/v1/health' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
     expect(body.status).toBe('ok');
     expect(body.checks.db.status).toBe('up');
     expect(body.checks.redis.status).toBe('up');
-    expect(body.checks.storage.status).toBe('skipped');
+    expect(body.checks.storage.status).toBe('up');
   });
 
   it('echoes a safe incoming x-request-id and generates one otherwise', async () => {

@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "kejasha-dev",
+      "credentials": [{ "accessKey": "kejasha-dev", "secretKey": "kejasha-dev-secret" }],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}
