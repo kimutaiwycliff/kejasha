@@ -10,3 +10,4 @@ coverage/
 infra/backups/
 .DS_Store
 *.tsbuildinfo
+apps/api/.seed-token

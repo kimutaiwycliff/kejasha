@@ -1,4 +1,4 @@
-/** Postgres SQLSTATE from an error, unwrapping Drizzle's query error wrapper. */
+/** Postgres SQLSTATE from an error (test helper; see also pgError in src/errors.ts). */
 export function pgCode(err: unknown): string | undefined {
   let e: unknown = err;
   for (let i = 0; i < 5 && e; i++) {

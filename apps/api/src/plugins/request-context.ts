@@ -1,10 +1,19 @@
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 
+import type { Role } from '@kejasha/auth';
+
+/** Who is calling. Set by the auth plugin; read by logging, idempotency scoping and audit. */
+export interface Actor {
+  userId: string;
+  sessionId: string;
+  orgId?: string | undefined;
+  role?: Role | undefined;
+}
+
 declare module 'fastify' {
   interface FastifyRequest {
-    /** Populated by auth in B1; read by logging, idempotency scoping and audit. */
-    actor: { orgId?: string; userId?: string } | undefined;
+    actor: Actor | undefined;
   }
 }
 

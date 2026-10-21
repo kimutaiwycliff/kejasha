@@ -13,17 +13,20 @@
     "spec": "tsx scripts/gen-spec.ts",
     "spec:check": "tsx scripts/gen-spec.ts --check",
     "spec:lint": "tsx scripts/lint-spec.ts && redocly lint openapi.json --config ../../redocly.yaml",
-    "build": "node ../../scripts/build-app.mjs . src/server.ts"
+    "build": "node ../../scripts/build-app.mjs . src/server.ts",
+    "seed": "tsx --env-file-if-exists=../../.env scripts/seed.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.3.1",
     "@fastify/helmet": "^13.2.0",
     "@fastify/rate-limit": "^11.2.1",
     "@fastify/swagger": "^9.9.2",
+    "@kejasha/auth": "workspace:^",
     "@kejasha/config": "workspace:^",
     "@kejasha/contracts": "workspace:^",
     "@kejasha/core": "workspace:^",
     "@kejasha/db": "workspace:^",
+    "@kejasha/integrations-africastalking": "workspace:^",
     "@kejasha/integrations-storage": "workspace:^",
     "@kejasha/jobs": "workspace:^",
     "@scalar/fastify-api-reference": "^1.75.1",

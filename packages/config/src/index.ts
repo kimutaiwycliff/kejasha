@@ -30,6 +30,9 @@ const EnvSchema = z.object({
   WEB_URL: optionalString.pipe(z.url().optional()),
   LEGACY_DOMAINS: csv,
   API_PORT: z.coerce.number().int().positive().default(4000),
+  // Which proxies may set X-Forwarded-For. Never `true` in production (clients could spoof their
+  // IP and dodge rate limits): use the hop count or proxy CIDRs, e.g. "2" for Cloudflare → Caddy.
+  TRUST_PROXY: z.string().default('loopback'),
 
   DATABASE_URL: z.string().min(1),
   DATABASE_AUTHENTICATED_URL: z.string().min(1),
@@ -80,7 +83,7 @@ export interface Config {
     cookieDomain: string | undefined;
     emailFrom: string;
   };
-  api: { port: number };
+  api: { port: number; trustProxy: boolean | number | string };
   db: { ownerUrl: string; authenticatedUrl: string };
   redis: { url: string };
   auth: { secret: string | undefined; url: string };
@@ -138,6 +141,11 @@ export function loadConfig(source: Record<string, string | undefined> = process.
     const missing: string[] = [];
     if (local) missing.push('APP_DOMAIN: must be a real domain in production');
     if (!apiUrl.startsWith('https://')) missing.push('API_URL: must be https in production');
+    if (e.TRUST_PROXY === 'true')
+      missing.push('TRUST_PROXY: must be a hop count or CIDRs in production, not true');
+    if (!e.BETTER_AUTH_SECRET || e.BETTER_AUTH_SECRET.length < 32) {
+      missing.push('BETTER_AUTH_SECRET: required (32+ chars) in production');
+    }
     if (missing.length) throw new ConfigError(missing);
   }
 
@@ -154,7 +162,7 @@ export function loadConfig(source: Record<string, string | undefined> = process.
       cookieDomain: local ? undefined : `.${e.APP_DOMAIN}`,
       emailFrom: e.EMAIL_FROM ?? `no-reply@${local ? 'localhost' : e.APP_DOMAIN}`,
     },
-    api: { port: e.API_PORT },
+    api: { port: e.API_PORT, trustProxy: parseTrustProxy(e.TRUST_PROXY) },
     db: { ownerUrl: e.DATABASE_URL, authenticatedUrl: e.DATABASE_AUTHENTICATED_URL },
     redis: { url: e.REDIS_URL },
     auth: { secret: e.BETTER_AUTH_SECRET, url: stripSlash(e.BETTER_AUTH_URL ?? apiUrl) },
@@ -179,6 +187,13 @@ export function loadConfig(source: Record<string, string | undefined> = process.
     cronSecret: e.CRON_SECRET,
     observability: { glitchtipDsn: e.GLITCHTIP_DSN, otlpEndpoint: e.OTEL_EXPORTER_OTLP_ENDPOINT },
   };
+}
+
+function parseTrustProxy(v: string): boolean | number | string {
+  if (v === 'true') return true;
+  if (v === 'false') return false;
+  if (/^\d+$/.test(v)) return Number(v);
+  return v; // 'loopback', CIDR list, …
 }
 
 /** Daraja callback base for a payment channel (ADR-008/016). */

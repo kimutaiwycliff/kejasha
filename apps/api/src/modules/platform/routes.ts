@@ -7,6 +7,7 @@ export const platformRoutes: FastifyPluginAsyncZod<AppDeps> = async (app, deps) 
   app.get(
     '/v1/health',
     {
+      config: { auth: 'public' },
       schema: {
         operationId: 'getHealth',
         tags: ['platform'],
@@ -24,6 +25,7 @@ export const platformRoutes: FastifyPluginAsyncZod<AppDeps> = async (app, deps) 
   app.get(
     '/v1/meta/config',
     {
+      config: { auth: 'public' },
       schema: {
         operationId: 'getMetaConfig',
         tags: ['platform'],

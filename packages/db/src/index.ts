@@ -18,3 +18,4 @@ export {
   sql,
   type SQL,
 } from 'drizzle-orm';
+export { pgError, PG, type PgErrorInfo } from './errors';

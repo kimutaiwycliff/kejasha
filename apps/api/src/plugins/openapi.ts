@@ -21,7 +21,29 @@ export const openapiPlugin = fp(async (app: FastifyInstance) => {
       },
       // Relative: clients set their base URL from config (ADR-016); keeps the committed spec env-free.
       servers: [{ url: '/' }],
-      tags: [{ name: 'platform', description: 'Health, metadata and API documentation' }],
+      tags: [
+        { name: 'platform', description: 'Health, metadata and API documentation' },
+        {
+          name: 'identity',
+          description: 'Sign-up, sign-in, sessions, organizations, members, invitations',
+        },
+        { name: 'accounts', description: 'Client landlords, properties and units' },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            description: 'Session token from sign-in (`token` in the response). Used by Android.',
+          },
+          cookieAuth: {
+            type: 'apiKey',
+            in: 'cookie',
+            name: 'kj.session_token',
+            description: 'HTTP-only session cookie set on sign-in. Used by the web app.',
+          },
+        },
+      },
     },
     transform: createJsonSchemaTransform({ skipList: ['/openapi.json', '/docs', '/docs/*'] }),
     transformObject: (doc) => pruneUnreferenced(jsonSchemaTransformObject(doc)),

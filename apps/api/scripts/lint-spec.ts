@@ -34,13 +34,14 @@ function walk(node: unknown, where: string): void {
   const obj = node as Json;
   if (obj.properties && typeof obj.properties === 'object') {
     for (const [name, prop] of Object.entries(obj.properties as Record<string, Json>)) {
-      if (
-        /Cents$/.test(name) &&
-        !('$ref' in prop) &&
-        (prop.type !== 'integer' || prop.format !== 'int64')
-      ) {
+      if (!/Cents$/.test(name) || '$ref' in prop) continue;
+      // Nullable money is emitted as anyOf/oneOf [{integer,int64}, {null}]: check each non-null branch.
+      const union = (prop.anyOf ?? prop.oneOf) as Json[] | undefined;
+      const branches = union ? union.filter((b) => b.type !== 'null') : [prop];
+      const bad = branches.find((b) => b.type !== 'integer' || b.format !== 'int64');
+      if (bad || branches.length === 0) {
         errors.push(
-          `${where}.${name}: *Cents must be integer/int64 (got ${String(prop.type)}/${String(prop.format)})`,
+          `${where}.${name}: *Cents must be integer/int64 (got ${String(bad?.type)}/${String(bad?.format)})`,
         );
       }
     }
@@ -52,6 +53,8 @@ walk(spec.paths, 'paths');
 
 const jsonSchemaOf = (content: unknown) =>
   (content as Json | undefined)?.['application/json'] as Json | undefined;
+const problemSchemaOf = (content: unknown) =>
+  (content as Json | undefined)?.['application/problem+json'] as Json | undefined;
 for (const { id, method, op } of ops) {
   const body = jsonSchemaOf((op.requestBody as Json | undefined)?.content);
   if (body && !(body.schema as Json | undefined)?.$ref)
@@ -59,16 +62,24 @@ for (const { id, method, op } of ops) {
 
   const responses = (op.responses ?? {}) as Record<string, Json>;
   for (const [status, res] of Object.entries(responses)) {
-    const media = jsonSchemaOf(res.content);
-    const schema = media?.schema as Json | undefined;
-    if (schema && !schema.$ref)
-      errors.push(`${id} → ${status}: response must be a named schema ($ref)`);
+    for (const media of [jsonSchemaOf(res.content), problemSchemaOf(res.content)]) {
+      const schema = media?.schema as Json | undefined;
+      if (schema && !schema.$ref)
+        errors.push(`${id} → ${status}: response must be a named schema ($ref)`);
+    }
+    // 5. Errors are served as application/problem+json (RFC 9457); the spec must say so.
+    const jsonRef = String((jsonSchemaOf(res.content)?.schema as Json | undefined)?.$ref ?? '');
+    if (/^[45]/.test(status) && jsonRef.endsWith('/ProblemDetails')) {
+      errors.push(
+        `${id} → ${status}: error responses must be documented as application/problem+json`,
+      );
+    }
   }
   if (method !== 'get') {
     const has4xx = Object.entries(responses).some(
       ([s, r]) =>
         s.startsWith('4') &&
-        String((jsonSchemaOf(r.content)?.schema as Json | undefined)?.$ref ?? '').endsWith(
+        String((problemSchemaOf(r.content)?.schema as Json | undefined)?.$ref ?? '').endsWith(
           '/ProblemDetails',
         ),
     );

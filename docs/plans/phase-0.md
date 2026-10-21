@@ -1,8 +1,8 @@
 # Phase B0 — Foundations
 
-> Status: **IMPLEMENTED — awaiting first CI run on GitHub** · drafted 2026-10-16 · revised 2026-10-21 (ADR-017, ADR-018)
+> Status: **DONE** · DoD green locally and in CI (PR #1, 2026-10-21) · drafted 2026-10-16 · revised 2026-10-21 (ADR-017, ADR-018)
 > Goal: a working skeleton where isolation, contracts and tests are proven before any feature exists.
-> Convention: `[x]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
+> Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 
 ## 0.1 Monorepo scaffold
 - [x] pnpm workspaces + Turborepo; Node 22 pinned (`.nvmrc`, `engines`, `packageManager`)
@@ -78,9 +78,9 @@
 - [x] Exhaustive unit tests for all three
 
 ## 0.10 CI
-- [~] GitHub Actions (written; first run happens when this branch is pushed): install → typecheck → lint → unit → integration + RLS (Testcontainers) →
+- [x] GitHub Actions: install → typecheck → lint → unit → integration + RLS (Testcontainers) →
       journeys → spec up-to-date + spec lint + oasdiff → Schemathesis vs booted API → build
-- [~] Docker images for api/worker: built + smoke-tested locally (arm64); `linux/amd64` build runs in CI
+- [x] Docker images for api/worker: smoke-tested locally (arm64); `linux/amd64` builds green in CI
 
 ## Notes (2026-10-21)
 - **Roles:** `app_owner` (owner, BYPASSRLS — migrations, platform tables, relay) and

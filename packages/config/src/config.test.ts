@@ -11,7 +11,12 @@ const domain = ['example', 'co', 'ke'].join('.');
 
 describe('loadConfig', () => {
   it('derives every URL from APP_DOMAIN', () => {
-    const c = loadConfig({ ...base, NODE_ENV: 'production', APP_DOMAIN: domain });
+    const c = loadConfig({
+      ...base,
+      NODE_ENV: 'production',
+      APP_DOMAIN: domain,
+      BETTER_AUTH_SECRET: 'x'.repeat(32),
+    });
     expect(c.domain.apiUrl).toBe(`https://api.${domain}`);
     expect(c.domain.webUrl).toBe(`https://app.${domain}`);
     expect(c.domain.cookieDomain).toBe(`.${domain}`);
@@ -43,11 +48,31 @@ describe('loadConfig', () => {
     ]);
   });
 
+  it('parses TRUST_PROXY and refuses blanket trust in production', () => {
+    expect(loadConfig({ ...base, APP_DOMAIN: 'localhost' }).api.trustProxy).toBe('loopback');
+    expect(loadConfig({ ...base, APP_DOMAIN: 'localhost', TRUST_PROXY: '2' }).api.trustProxy).toBe(
+      2,
+    );
+    const prod = {
+      ...base,
+      NODE_ENV: 'production',
+      APP_DOMAIN: domain,
+      BETTER_AUTH_SECRET: 'x'.repeat(32),
+    };
+    expect(() => loadConfig({ ...prod, TRUST_PROXY: 'true' })).toThrow(/TRUST_PROXY/);
+    expect(loadConfig({ ...prod, TRUST_PROXY: '173.245.48.0/20,127.0.0.1' }).api.trustProxy).toBe(
+      '173.245.48.0/20,127.0.0.1',
+    );
+  });
+
   it('fails fast on invalid env', () => {
     expect(() => loadConfig({ APP_DOMAIN: 'localhost' })).toThrow(ConfigError);
     expect(() => loadConfig({ ...base, APP_DOMAIN: 'https://bad' })).toThrow(ConfigError);
     expect(() => loadConfig({ ...base, NODE_ENV: 'production', APP_DOMAIN: 'localhost' })).toThrow(
       ConfigError,
+    );
+    expect(() => loadConfig({ ...base, NODE_ENV: 'production', APP_DOMAIN: domain })).toThrow(
+      /BETTER_AUTH_SECRET/,
     );
   });
 });
