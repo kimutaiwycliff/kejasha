@@ -1,6 +1,6 @@
 # Phase B3 — Payments & reconciliation
 
-> Status: **DONE locally — awaiting CI** · drafted 2026-10-21 · ADR-006, ADR-008, ADR-009, ADR-014, ADR-015, ADR-016
+> Status: **DONE** · DoD green locally and in CI (PR #4, 2026-10-21) · drafted 2026-10-21 · ADR-006, ADR-008, ADR-009, ADR-014, ADR-015, ADR-016
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 
 ## Goal
