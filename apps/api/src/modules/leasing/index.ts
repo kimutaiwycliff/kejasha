@@ -17,3 +17,10 @@ export function createLeasing(deps: AppDeps): LeasingParts {
 }
 
 export { leasingRoutes, type LeasingParts };
+export {
+  leaseIdsByTenantPhone,
+  leaseOnUnitAt,
+  leasesForMatching,
+  sumOpen,
+  type LeaseForMatching,
+} from './lookups';

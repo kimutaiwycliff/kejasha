@@ -1,5 +1,6 @@
 import { loadConfig } from '@kejasha/config';
 import { MemorySmsSender } from '@kejasha/integrations-africastalking';
+import { FakeDarajaClient } from '@kejasha/integrations-daraja';
 import { testEnv } from '@kejasha/db/testing';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app';
@@ -10,6 +11,7 @@ export interface TestApi {
   app: FastifyInstance;
   deps: AppDeps;
   sms: MemorySmsSender;
+  daraja: FakeDarajaClient;
   close(): Promise<void>;
 }
 
@@ -31,8 +33,10 @@ export async function buildTestApi(
   opts: { clock?: Clock } = {},
 ): Promise<TestApi> {
   const sms = new MemorySmsSender();
+  const daraja = new FakeDarajaClient();
   const deps = createDeps(loadConfig({ ...testEnv(), ...env }), {
     sms,
+    daraja,
     ...(opts.clock ? { clock: opts.clock } : {}),
   });
   const app = await buildApp(deps);
@@ -40,6 +44,7 @@ export async function buildTestApi(
     app,
     deps,
     sms,
+    daraja,
     async close() {
       await app.close();
       await closeDeps(deps);

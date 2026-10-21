@@ -13,6 +13,7 @@ import {
   type Tx,
 } from '@kejasha/db';
 import type { Ctx } from '../../lib/ctx';
+import { nextNumber } from '../../lib/numbering';
 import * as ledger from '../ledger';
 
 /**
@@ -67,15 +68,6 @@ export interface DraftLine {
   readingToId?: string | null;
   periodStart?: string | null;
   periodEnd?: string | null;
-}
-
-/** Per-org running number, e.g. INV-000042. */
-export async function nextNumber(tx: Tx, ctx: Ctx, name: string, prefix: string): Promise<string> {
-  const { rows } = await tx.execute<{ value: string }>(sql`
-    INSERT INTO org_counter (org_id, name, value) VALUES (${ctx.orgId}, ${name}, 1)
-    ON CONFLICT (org_id, name) DO UPDATE SET value = org_counter.value + 1
-    RETURNING value`);
-  return `${prefix}-${String(rows[0]!.value).padStart(6, '0')}`;
 }
 
 /** Create an invoice + lines + its ledger entry. Returns null when nothing is billable. */

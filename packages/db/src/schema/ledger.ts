@@ -15,6 +15,7 @@ export const LEDGER_ACCOUNT_KINDS = [
   'income_deposit_deductions',
   'income_other',
   'deposit_refund_payable',
+  'collections',
 ] as const;
 export type LedgerAccountKind = (typeof LEDGER_ACCOUNT_KINDS)[number];
 

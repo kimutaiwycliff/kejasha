@@ -200,9 +200,21 @@ export function createLeasingOperations(deps: AppDeps) {
           'Storage unavailable',
           'File storage is not configured.',
         );
-      const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[
-        body.contentType
-      ];
+      const isImage = body.contentType.startsWith('image/');
+      if ((body.purpose === 'statement') === isImage) {
+        throw AppError.unprocessable(
+          'invalid_content_type',
+          'Photos must be images; statements must be CSV or PDF.',
+        );
+      }
+      const EXT = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'text/csv': 'csv',
+        'application/pdf': 'pdf',
+      } as const;
+      const ext = EXT[body.contentType];
       const key = `org/${ctx.orgId}/${body.purpose}/${uuidv7()}.${ext}`;
       const expiresIn = 900;
       return {

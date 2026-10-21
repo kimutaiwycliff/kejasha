@@ -14,17 +14,18 @@ export interface UnitInfo {
   archived: boolean;
   propertyId: string;
   propertyName: string;
+  clientLandlordId: string;
 }
 
 export async function unitsById(tx: Tx, ids: string[]): Promise<Map<string, UnitInfo>> {
   if (!ids.length) return new Map();
   const rows = await tx
-    .select({ u: un, propertyName: pr.name })
+    .select({ u: un, propertyName: pr.name, clientLandlordId: pr.clientLandlordId })
     .from(un)
     .innerJoin(pr, eq(pr.id, un.propertyId))
     .where(inArray(un.id, [...new Set(ids)]));
   return new Map(
-    rows.map(({ u, propertyName }) => [
+    rows.map(({ u, propertyName, clientLandlordId }) => [
       u.id,
       {
         id: u.id,
@@ -34,6 +35,7 @@ export async function unitsById(tx: Tx, ids: string[]): Promise<Map<string, Unit
         archived: u.archivedAt !== null,
         propertyId: u.propertyId,
         propertyName,
+        clientLandlordId,
       },
     ]),
   );
@@ -48,4 +50,12 @@ export async function unitIdsInProperty(tx: Tx, propertyId: string): Promise<str
 export async function assignedPropertyIds(tx: Tx, userId: string): Promise<Set<string>> {
   const rows = await tx.select({ id: ps.propertyId }).from(ps).where(eq(ps.userId, userId));
   return new Set(rows.map((r) => r.id));
+}
+
+/** Unit id for a Paybill account reference (normalised like unit codes), or null. */
+export async function unitIdByCode(tx: Tx, code: string): Promise<string | null> {
+  const normalised = code.trim().toUpperCase().replace(/[\s#]/g, '');
+  if (!/^[A-Z0-9][A-Z0-9-]{0,11}$/.test(normalised)) return null;
+  const [row] = await tx.select({ id: un.id }).from(un).where(eq(un.code, normalised)).limit(1);
+  return row?.id ?? null;
 }

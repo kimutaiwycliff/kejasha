@@ -111,5 +111,5 @@ build-image:
 deploy rollback:
 	@echo "$@: arrives with B7 (hardening & launch)"
 
-daraja-reregister:
-	@echo "daraja-reregister: arrives with B3 (payments)"
+daraja-reregister: ## re-register C2B URLs for every channel (after a domain change, ADR-016)
+	pnpm --filter @kejasha/api exec tsx --env-file-if-exists=../../.env scripts/daraja-reregister.ts
