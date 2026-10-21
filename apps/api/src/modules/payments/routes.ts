@@ -223,13 +223,13 @@ export function paymentsRoutes({
         schema: {
           operationId: 'allocatePayment',
           tags,
-          summary: 'Apply an unmatched payment to a lease',
+          summary: 'Apply an unmatched payment to a lease or booking',
           params: IdParam,
           body: AllocatePaymentBody,
-          response: { 200: Payment, ...problemResponses(404, 409) },
+          response: { 200: Payment, ...problemResponses(404, 409, 422) },
         },
       },
-      async (req) => payments.allocate(ctxOf(req), req.params.id, req.body.leaseId),
+      async (req) => payments.allocate(ctxOf(req), req.params.id, req.body),
     );
     app.post(
       '/v1/payments/:id/unallocate',

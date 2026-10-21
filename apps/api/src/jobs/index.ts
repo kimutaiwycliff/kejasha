@@ -4,6 +4,7 @@ import type { AppDeps } from '../deps';
 import { systemCtx } from '../lib/ctx';
 import { createLeasing } from '../modules/leasing';
 import { createPayments } from '../modules/payments';
+import { createShortStay } from '../modules/shortstay';
 
 export interface JobLogger {
   info(obj: object, msg: string): void;
@@ -26,6 +27,13 @@ export const SCHEDULES = [
     pattern: '*/5 * * * *',
     tz: 'Africa/Nairobi',
   },
+  {
+    id: 'ical-sync',
+    queue: 'ical',
+    topic: 'ical.sync_all',
+    pattern: '*/20 * * * *',
+    tz: 'Africa/Nairobi',
+  },
 ] as const;
 
 /**
@@ -36,10 +44,28 @@ export const SCHEDULES = [
 export function createJobHandlers(
   deps: AppDeps,
   log: JobLogger,
-): { invoicing: TopicHandlers; payments: TopicHandlers } {
+): { invoicing: TopicHandlers; payments: TopicHandlers; ical: TopicHandlers } {
   const leasing = createLeasing(deps);
   const payments = createPayments(deps);
+  const shortStay = createShortStay(deps);
   return {
+    ical: {
+      // Read-only iCal import (ADR-010). Feed errors are recorded on the feed, not thrown.
+      'ical.sync_all': async () => {
+        const orgs = await deps.db.owner
+          .select({ id: schema.organization.id })
+          .from(schema.organization);
+        for (const { id } of orgs) {
+          try {
+            const results = await shortStay.ical.syncAll(systemCtx(id));
+            const changed = results.filter((r) => r.added || r.updated || r.removed || r.error);
+            if (changed.length) log.info({ orgId: id, feeds: changed }, 'ical feeds synced');
+          } catch (err) {
+            log.error({ orgId: id, err }, 'ical sync failed for org');
+          }
+        }
+      },
+    },
     payments: {
       // Pending STK requests: confirm with Safaricom or time out (ADR-008).
       'payments.stk_reconcile': async () => {

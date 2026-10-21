@@ -37,6 +37,7 @@ export function testEnv(): Record<string, string> {
     S3_SECRET_KEY: 'kejasha-dev-secret',
     S3_BUCKET_FILES: 'kejasha-files',
     CREDENTIALS_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
+    ICAL_ALLOW_PRIVATE_HOSTS: 'true',
   };
 }
 

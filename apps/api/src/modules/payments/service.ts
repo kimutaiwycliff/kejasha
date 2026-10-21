@@ -17,10 +17,11 @@ import { decodeCursor, page } from '../../lib/pagination';
 import * as accounts from '../accounts';
 import * as leasing from '../leasing';
 import * as ledger from '../ledger';
+import * as shortstay from '../shortstay';
 
 /**
  * Payments core (ADR-008/009): one row per M-Pesa transaction, auto-matching, allocation to a
- * lease through the ledger (Dr collections / Cr lease_receivable), receipts.
+ * lease or booking through the ledger (Dr collections / Cr receivable), receipts.
  */
 const { payment: pm, paymentChannel: ch } = schema;
 export type PaymentRow = typeof pm.$inferSelect;
@@ -46,36 +47,71 @@ function payerPhone(msisdn: string | null): string | null {
   return msisdn ? phoneLib.normalizeKenyanPhone(msisdn) : null;
 }
 
-/** Post the payment to a lease and issue its receipt. The payment row must be locked. */
+/** What a payment is applied to: a lease (rent) or a short-stay booking. */
+export type PaymentTarget =
+  { leaseId: string; bookingId?: undefined } | { bookingId: string; leaseId?: undefined };
+
+async function resolveTarget(tx: Tx, ctx: Ctx, target: PaymentTarget) {
+  if (target.leaseId) {
+    const leaseId = target.leaseId;
+    const [l] = await leasing.leasesForMatching(tx, [leaseId]);
+    if (!l) throw AppError.notFound('Lease');
+    return {
+      leaseId,
+      bookingId: null,
+      unitId: l.unitId,
+      receivable: (await ledger.leaseAccounts(tx, ctx, leaseId)).receivable,
+      phone: l.tenantPhone,
+      balance: async () => (await ledger.leaseBalances(tx, [leaseId])).get(leaseId)!.receivable,
+    };
+  }
+  const bookingId = target.bookingId!;
+  const [b] = await shortstay.bookingsForPayments(tx, [bookingId]);
+  if (!b) throw AppError.notFound('Booking');
+  if (!(shortstay.COLLECTED_SOURCES as readonly string[]).includes(b.source))
+    throw AppError.unprocessable(
+      'booking_not_collected',
+      'This booking was paid through its channel (Airbnb/Booking.com); there is nothing to collect.',
+    );
+  return {
+    leaseId: null,
+    bookingId,
+    unitId: b.unitId,
+    receivable: await ledger.bookingReceivable(tx, ctx, bookingId),
+    phone: b.guestPhone,
+    balance: async () => (await ledger.bookingBalances(tx, [bookingId])).get(bookingId)!.balance,
+  };
+}
+
+/** Post the payment to a lease or booking and issue its receipt. The payment row must be locked. */
 export async function allocate(
   tx: Tx,
   ctx: Ctx,
   p: PaymentRow,
-  leaseId: string,
+  target: PaymentTarget,
   method: NonNullable<PaymentRow['matchMethod']>,
 ) {
   if (p.matchStatus !== 'unmatched')
     throw AppError.conflict('payment_not_unmatched', `The payment is already ${p.matchStatus}.`);
-  const [candidate] = await leasing.leasesForMatching(tx, [leaseId]);
-  if (!candidate) throw AppError.notFound('Lease');
-  const accountsOf = await ledger.leaseAccounts(tx, ctx, leaseId);
+  const t = await resolveTarget(tx, ctx, target);
   const collections = await ledger.accountFor(tx, ctx, 'collections');
   const counted = await tx.execute<{ n: number }>(
     sql`SELECT count(*)::int AS n FROM ledger_entry WHERE source = 'payment' AND source_id = ${p.id}`,
   );
   const n = counted.rows[0]!.n;
-  const unit = (await accounts.unitsById(tx, [candidate.unitId])).get(candidate.unitId);
+  const unit = (await accounts.unitsById(tx, [t.unitId])).get(t.unitId);
   const { entryId } = await ledger.post(tx, ctx, {
     occurredOn: time.nairobiDate(p.paidAt),
     source: 'payment',
     sourceId: p.id,
-    leaseId,
-    unitId: candidate.unitId,
+    leaseId: t.leaseId ?? undefined,
+    bookingId: t.bookingId ?? undefined,
+    unitId: t.unitId,
     memo: `Payment ${p.providerRef} · ${unit?.code ?? ''}`.slice(0, 300),
     idempotencyKey: `payment:${p.id}:${n}`,
     lines: [
       { accountId: collections, amountCents: p.amountCents },
-      { accountId: accountsOf.receivable, amountCents: -p.amountCents },
+      { accountId: t.receivable, amountCents: -p.amountCents },
     ],
   });
   const receiptNumber = p.receiptNumber ?? (await nextNumber(tx, ctx, 'receipt', 'RCT'));
@@ -84,7 +120,8 @@ export async function allocate(
     .set({
       matchStatus: 'matched',
       matchMethod: method,
-      leaseId,
+      leaseId: t.leaseId,
+      bookingId: t.bookingId,
       matchedBy: ctx.userId ?? null,
       matchedAt: sql`now()`,
       ledgerEntryId: entryId,
@@ -94,9 +131,9 @@ export async function allocate(
     .returning();
 
   // Receipt by SMS (via the outbox, deduped per allocation).
-  const to = candidate.tenantPhone ?? payerPhone(p.msisdn);
+  const to = t.phone ?? payerPhone(p.msisdn);
   if (to) {
-    const balance = (await ledger.leaseBalances(tx, [leaseId])).get(leaseId)!.receivable;
+    const balance = await t.balance();
     const balanceText =
       balance > 0n
         ? `Balance due ${money.formatKes(balance)}`
@@ -108,7 +145,7 @@ export async function allocate(
       topic: 'notifications.sms',
       payload: {
         to,
-        message: `Received ${money.formatKes(p.amountCents)} for ${unit?.code ?? 'your unit'} (M-Pesa ${p.providerRef}). Receipt ${receiptNumber}. ${balanceText}. Thank you.`,
+        message: `Received ${money.formatKes(p.amountCents)} for ${unit?.code ?? (t.bookingId ? 'your booking' : 'your unit')} (M-Pesa ${p.providerRef}). Receipt ${receiptNumber}. ${balanceText}. Thank you.`,
       },
       dedupeKey: `receipt:${p.id}:${n}`,
     });
@@ -117,31 +154,50 @@ export async function allocate(
     action: 'payment.allocated',
     entityType: 'payment',
     entityId: p.id,
-    diff: { leaseId, method },
+    diff: { leaseId: t.leaseId, bookingId: t.bookingId, method },
   });
   return updated!;
 }
 
-/** Account reference → unit → lease on the payment date; else a unique tenant phone. */
+/**
+ * Account reference → unit → the lease (or, for a short-stay unit, the booking with a balance)
+ * on the payment date; else a payer phone that identifies exactly one tenant lease or owing
+ * booking.
+ */
 async function autoMatch(tx: Tx, ctx: Ctx, p: PaymentRow): Promise<PaymentRow> {
   const [channel] = p.channelId ? await tx.select().from(ch).where(eq(ch.id, p.channelId)) : [];
-  const scopeOk = async (leaseId: string) => {
+  const scopeOk = async (unitId: string) => {
     if (!channel?.clientLandlordId) return true;
-    const [l] = await leasing.leasesForMatching(tx, [leaseId]);
-    const unit = l ? (await accounts.unitsById(tx, [l.unitId])).get(l.unitId) : undefined;
+    const unit = (await accounts.unitsById(tx, [unitId])).get(unitId);
     return unit?.clientLandlordId === channel.clientLandlordId;
   };
   const paidOn = time.nairobiDate(p.paidAt);
   if (p.accountRef) {
     const unitId = await accounts.unitIdByCode(tx, p.accountRef);
-    const leaseId = unitId ? await leasing.leaseOnUnitAt(tx, unitId, paidOn) : null;
-    if (leaseId && (await scopeOk(leaseId))) return allocate(tx, ctx, p, leaseId, 'auto_account');
+    if (unitId && (await scopeOk(unitId))) {
+      const leaseId = await leasing.leaseOnUnitAt(tx, unitId, paidOn);
+      if (leaseId) return allocate(tx, ctx, p, { leaseId }, 'auto_account');
+      const bookingId = await shortstay.bookingForPayment(tx, unitId, paidOn);
+      if (bookingId) return allocate(tx, ctx, p, { bookingId }, 'auto_account');
+    }
   }
   const e164 = payerPhone(p.msisdn);
   if (e164) {
     const leaseIds = await leasing.leaseIdsByTenantPhone(tx, e164);
-    if (leaseIds.length === 1 && (await scopeOk(leaseIds[0]!)))
-      return allocate(tx, ctx, p, leaseIds[0]!, 'auto_phone');
+    const bookingIds = await shortstay.owingBookingIdsByGuestPhone(tx, e164, paidOn);
+    if (leaseIds.length + bookingIds.length === 1) {
+      const [l] = leaseIds.length ? await leasing.leasesForMatching(tx, leaseIds) : [];
+      const [b] = bookingIds.length ? await shortstay.bookingsForPayments(tx, bookingIds) : [];
+      const unitId = l?.unitId ?? b!.unitId;
+      if (await scopeOk(unitId))
+        return allocate(
+          tx,
+          ctx,
+          p,
+          l ? { leaseId: l.leaseId } : { bookingId: b!.bookingId },
+          'auto_phone',
+        );
+    }
   }
   return p;
 }
@@ -189,6 +245,16 @@ export async function recordPayment(
   return { payment: await autoMatch(tx, ctx, inserted), created: true };
 }
 
+/** Exactly one of leaseId / bookingId, else null. */
+export function targetOf(b: {
+  leaseId?: string | undefined;
+  bookingId?: string | undefined;
+}): PaymentTarget | null {
+  if (b.leaseId && !b.bookingId) return { leaseId: b.leaseId };
+  if (b.bookingId && !b.leaseId) return { bookingId: b.bookingId };
+  return null;
+}
+
 export function createPaymentsService(deps: AppDeps) {
   const { db, clock } = deps;
 
@@ -203,13 +269,20 @@ export function createPaymentsService(deps: AppDeps) {
       ...new Set(rows.map((r) => r.leaseId).filter((x): x is string => Boolean(x))),
     ];
     const leases = leaseIds.length ? await leasing.leasesForMatching(tx, leaseIds) : [];
-    const units = await accounts.unitsById(
-      tx,
-      leases.map((l) => l.unitId),
-    );
+    const bookingIds = [
+      ...new Set(rows.map((r) => r.bookingId).filter((x): x is string => Boolean(x))),
+    ];
+    const bookings = await shortstay.bookingsForPayments(tx, bookingIds);
+    const units = await accounts.unitsById(tx, [
+      ...leases.map((l) => l.unitId),
+      ...bookings.map((b) => b.unitId),
+    ]);
     const byLease = new Map(leases.map((l) => [l.leaseId, l]));
+    const byBooking = new Map(bookings.map((b) => [b.bookingId, b]));
     return rows.map((r) => {
       const l = r.leaseId ? byLease.get(r.leaseId) : undefined;
+      const b = r.bookingId ? byBooking.get(r.bookingId) : undefined;
+      const unitId = l?.unitId ?? b?.unitId;
       return {
         id: r.id,
         source: r.source,
@@ -224,8 +297,9 @@ export function createPaymentsService(deps: AppDeps) {
         matchStatus: r.matchStatus,
         matchMethod: r.matchMethod,
         leaseId: r.leaseId,
-        tenantName: l?.tenantName ?? null,
-        unitCode: l ? (units.get(l.unitId)?.code ?? null) : null,
+        bookingId: r.bookingId,
+        tenantName: l?.tenantName ?? b?.guestName ?? null,
+        unitCode: unitId ? (units.get(unitId)?.code ?? null) : null,
         receiptNumber: r.receiptNumber,
         ignoreReason: r.ignoreReason,
         notes: r.notes,
@@ -312,9 +386,19 @@ export function createPaymentsService(deps: AppDeps) {
       });
     },
 
-    async allocate(ctx: Ctx, id: string, leaseId: string) {
+    async allocate(
+      ctx: Ctx,
+      id: string,
+      body: { leaseId?: string | undefined; bookingId?: string | undefined },
+    ) {
+      const target = targetOf(body);
+      if (!target)
+        throw AppError.unprocessable(
+          'target_required',
+          'Send exactly one of leaseId or bookingId.',
+        );
       return inTenant(db, ctx, async (tx) => {
-        const updated = await allocate(tx, ctx, await locked(tx, id), leaseId, 'manual');
+        const updated = await allocate(tx, ctx, await locked(tx, id), target, 'manual');
         return (await toDtos(tx, [updated]))[0]!;
       });
     },
@@ -340,6 +424,7 @@ export function createPaymentsService(deps: AppDeps) {
             matchStatus: 'unmatched',
             matchMethod: null,
             leaseId: null,
+            bookingId: null,
             ledgerEntryId: null,
             matchedBy: null,
             matchedAt: null,
@@ -378,6 +463,9 @@ export function createPaymentsService(deps: AppDeps) {
 
     /** Cash, bank or M-Pesa received outside our channels, entered by a manager. */
     async manual(ctx: Ctx, body: z.infer<typeof ManualPaymentBody>) {
+      if (body.leaseId && body.bookingId)
+        throw AppError.unprocessable('target_ambiguous', 'Send leaseId or bookingId, not both.');
+      const target = targetOf(body);
       return inTenant(db, ctx, async (tx) => {
         const ref =
           body.reference?.trim() || `MAN-${uuidv7().replace(/-/g, '').slice(0, 16).toUpperCase()}`;
@@ -397,8 +485,8 @@ export function createPaymentsService(deps: AppDeps) {
             `A payment with reference ${ref} already exists.`,
           );
         const final =
-          body.leaseId && payment.matchStatus === 'unmatched'
-            ? await allocate(tx, ctx, payment, body.leaseId, 'manual')
+          target && payment.matchStatus === 'unmatched'
+            ? await allocate(tx, ctx, payment, target, 'manual')
             : payment;
         return (await toDtos(tx, [final]))[0]!;
       });

@@ -60,6 +60,11 @@ const EnvSchema = z.object({
   DARAJA_ENV: z.enum(['sandbox', 'production']).default('sandbox'),
   // Optional allowlist of Safaricom callback source IPs (comma-separated). Empty = accept any.
   DARAJA_CALLBACK_IPS: csv,
+  // Tests only: let iCal feeds point at local servers. Refused in production (SSRF guard).
+  ICAL_ALLOW_PRIVATE_HOSTS: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
   PAYSTACK_SECRET_KEY: optionalString,
   PAYSTACK_PUBLIC_KEY: optionalString,
 
@@ -106,6 +111,7 @@ export interface Config {
     whatsappChannel: string | undefined;
   };
   daraja: { env: 'sandbox' | 'production'; callbackIps: string[] };
+  ical: { allowPrivateHosts: boolean };
   paystack: { secretKey: string | undefined; publicKey: string | undefined };
   cronSecret: string | undefined;
   observability: { glitchtipDsn: string | undefined; otlpEndpoint: string | undefined };
@@ -143,6 +149,8 @@ export function loadConfig(source: Record<string, string | undefined> = process.
     const missing: string[] = [];
     if (local) missing.push('APP_DOMAIN: must be a real domain in production');
     if (!apiUrl.startsWith('https://')) missing.push('API_URL: must be https in production');
+    if (e.ICAL_ALLOW_PRIVATE_HOSTS)
+      missing.push('ICAL_ALLOW_PRIVATE_HOSTS: must be false in production');
     if (e.TRUST_PROXY === 'true')
       missing.push('TRUST_PROXY: must be a hop count or CIDRs in production, not true');
     if (!e.BETTER_AUTH_SECRET || e.BETTER_AUTH_SECRET.length < 32) {
@@ -185,6 +193,7 @@ export function loadConfig(source: Record<string, string | undefined> = process.
       whatsappChannel: e.AFRICASTALKING_WHATSAPP_CHANNEL,
     },
     daraja: { env: e.DARAJA_ENV, callbackIps: e.DARAJA_CALLBACK_IPS },
+    ical: { allowPrivateHosts: e.ICAL_ALLOW_PRIVATE_HOSTS },
     paystack: { secretKey: e.PAYSTACK_SECRET_KEY, publicKey: e.PAYSTACK_PUBLIC_KEY },
     cronSecret: e.CRON_SECRET,
     observability: { glitchtipDsn: e.GLITCHTIP_DSN, otlpEndpoint: e.OTEL_EXPORTER_OTLP_ENDPOINT },

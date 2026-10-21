@@ -118,6 +118,7 @@ export const Payment = z
     matchStatus: MatchStatus,
     matchMethod: z.enum(['auto_account', 'auto_phone', 'manual']).nullable(),
     leaseId: z.uuid().nullable(),
+    bookingId: z.uuid().nullable(),
     tenantName: z.string().nullable(),
     unitCode: z.string().nullable(),
     receiptNumber: z.string().nullable(),
@@ -150,8 +151,11 @@ export const PaymentSuggestionList = z
   .meta({ id: 'PaymentSuggestionList' });
 
 export const AllocatePaymentBody = z
-  .object({ leaseId: IdInput })
-  .meta({ id: 'AllocatePaymentBody' });
+  .object({ leaseId: IdInput.optional(), bookingId: IdInput.optional() })
+  .meta({
+    id: 'AllocatePaymentBody',
+    description: 'Exactly one of leaseId or bookingId (422 target_required)',
+  });
 export const ReasonBody = z.object({ reason: RequiredTextInput(500) }).meta({ id: 'ReasonBody' });
 
 export const ManualPaymentBody = z
@@ -165,6 +169,9 @@ export const ManualPaymentBody = z
     leaseId: IdInput.optional().meta({
       description: 'Allocate immediately; otherwise it waits in the unmatched queue',
     }),
+    bookingId: IdInput.optional().meta({
+      description: 'Allocate to a short-stay booking instead (not with leaseId)',
+    }),
     payerName: TextInput(120).optional(),
     phone: PhoneInput.optional(),
     notes: TextInput(500).optional(),
@@ -174,7 +181,8 @@ export const ManualPaymentBody = z
 // ── STK Push ───────────────────────────────────────────────────────────────────────────────
 export const StkRequestBody = z
   .object({
-    leaseId: IdInput,
+    leaseId: IdInput.optional(),
+    bookingId: IdInput.optional().meta({ description: 'Exactly one of leaseId or bookingId' }),
     amountCents: Cents.min(100)
       .optional()
       .meta({ description: 'Whole shillings; defaults to the lease balance rounded up' }),
@@ -189,6 +197,7 @@ export const StkRequest = z
     id: z.uuid(),
     status: z.enum(['pending', 'succeeded', 'failed', 'cancelled', 'timeout']),
     leaseId: z.uuid().nullable(),
+    bookingId: z.uuid().nullable(),
     amountCents: Cents,
     msisdn: Phone,
     accountRef: z.string(),
