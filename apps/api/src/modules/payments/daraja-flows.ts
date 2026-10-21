@@ -10,8 +10,9 @@ import { record } from '../../lib/audit';
 import { inTenant, systemCtx, type Ctx } from '../../lib/ctx';
 import * as accounts from '../accounts';
 import * as leasing from '../leasing';
+import * as shortstay from '../shortstay';
 import type { ChannelService } from './channels';
-import { allocate, recordPayment } from './service';
+import { allocate, recordPayment, targetOf } from './service';
 
 const { paymentChannel: ch, paymentCallback: cb, stkRequest: stk } = schema;
 const ACK = { ResultCode: 0, ResultDesc: 'Accepted' };
@@ -73,6 +74,7 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
       id: r.id,
       status: r.status,
       leaseId: r.leaseId,
+      bookingId: r.bookingId,
       amountCents: money.toApiInt(r.amountCents),
       msisdn: r.msisdn,
       accountRef: r.accountRef,
@@ -82,7 +84,7 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
     };
   }
 
-  /** A confirmed STK success: record the payment and make sure it lands on the requested lease. */
+  /** A confirmed STK success: record the payment and make sure it lands on the requested lease or booking. */
   async function recordStkPayment(
     tx: Tx,
     ctx: Ctx,
@@ -102,8 +104,14 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
       accountRef: request.accountRef,
     });
     const final =
-      payment.matchStatus === 'unmatched' && request.leaseId
-        ? await allocate(tx, ctx, payment, request.leaseId, 'auto_account')
+      payment.matchStatus === 'unmatched' && (request.leaseId || request.bookingId)
+        ? await allocate(
+            tx,
+            ctx,
+            payment,
+            request.leaseId ? { leaseId: request.leaseId } : { bookingId: request.bookingId! },
+            'auto_account',
+          )
         : payment;
     await tx
       .update(stk)
@@ -206,31 +214,51 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
       return ACK;
     },
 
-    /** Ask the tenant's phone to pay (STK Push) against the landlord's shortcode. */
+    /** Ask the tenant's or guest's phone to pay (STK Push) against the landlord's shortcode. */
     async createStk(ctx: Ctx, body: z.infer<typeof StkRequestBody>) {
+      const target = targetOf(body);
+      if (!target)
+        throw AppError.unprocessable(
+          'target_required',
+          'Send exactly one of leaseId or bookingId.',
+        );
       return inTenant(db, ctx, async (tx) => {
-        const [lease] = await leasing.leasesForMatching(tx, [body.leaseId]);
-        if (!lease) throw AppError.notFound('Lease');
-        const unit = (await accounts.unitsById(tx, [lease.unitId])).get(lease.unitId)!;
+        let payFor: { unitId: string; balanceCents: bigint; phone: string | null };
+        if (target.leaseId) {
+          const [lease] = await leasing.leasesForMatching(tx, [target.leaseId]);
+          if (!lease) throw AppError.notFound('Lease');
+          payFor = {
+            unitId: lease.unitId,
+            balanceCents: lease.balanceCents,
+            phone: lease.tenantPhone,
+          };
+        } else {
+          const [b] = await shortstay.bookingsForPayments(tx, [target.bookingId!]);
+          if (!b) throw AppError.notFound('Booking');
+          if (!(shortstay.COLLECTED_SOURCES as readonly string[]).includes(b.source))
+            throw AppError.unprocessable(
+              'booking_not_collected',
+              'This booking was paid through its channel; there is nothing to collect.',
+            );
+          payFor = { unitId: b.unitId, balanceCents: b.balanceCents, phone: b.guestPhone };
+        }
+        const unit = (await accounts.unitsById(tx, [payFor.unitId])).get(payFor.unitId)!;
         const wanted =
           body.amountCents !== undefined
             ? BigInt(body.amountCents)
-            : lease.balanceCents > 0n
-              ? ((lease.balanceCents + 99n) / 100n) * 100n
+            : payFor.balanceCents > 0n
+              ? ((payFor.balanceCents + 99n) / 100n) * 100n
               : 0n;
         if (wanted <= 0n)
-          throw AppError.unprocessable(
-            'nothing_owed',
-            'This lease has nothing outstanding; send an amount.',
-          );
+          throw AppError.unprocessable('nothing_owed', 'Nothing is outstanding; send an amount.');
         if (wanted % 100n !== 0n)
           throw AppError.unprocessable(
             'whole_shillings_only',
             'M-Pesa payment requests are in whole shillings.',
           );
-        const phone = body.phone ?? lease.tenantPhone;
+        const phone = body.phone ?? payFor.phone;
         if (!phone || !phoneLib.normalizeKenyanPhone(phone))
-          throw AppError.unprocessable('no_phone', 'The tenant has no phone number; send one.');
+          throw AppError.unprocessable('no_phone', 'There is no phone number on file; send one.');
         const candidates = body.channelId
           ? await tx.select().from(ch).where(eq(ch.id, body.channelId))
           : await tx
@@ -260,7 +288,8 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
             id,
             orgId: ctx.orgId,
             channelId: channel.id,
-            leaseId: lease.leaseId,
+            leaseId: target.leaseId ?? null,
+            bookingId: target.bookingId ?? null,
             msisdn: phone,
             amountCents: wanted,
             accountRef: unit.code,
@@ -275,7 +304,7 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
             amountKes: Number(wanted / 100n),
             phone: phone.replace(/^\+/, ''),
             accountRef: unit.code,
-            description: `Rent ${unit.code}`,
+            description: `${target.leaseId ? 'Rent' : 'Stay'} ${unit.code}`,
             callbackUrl: channels.callbackUrls(channel.channelToken).stkResult,
           });
           [row] = (await tx
@@ -299,7 +328,7 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
           action: 'stk.requested',
           entityType: 'stk_request',
           entityId: id,
-          diff: { leaseId: lease.leaseId, amountCents: wanted.toString() },
+          diff: { ...target, amountCents: wanted.toString() },
         });
         return toStkDto(row);
       });

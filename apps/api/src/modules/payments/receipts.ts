@@ -6,6 +6,7 @@ import { inTenant, type Ctx } from '../../lib/ctx';
 import * as accounts from '../accounts';
 import * as leasing from '../leasing';
 import * as ledger from '../ledger';
+import * as shortstay from '../shortstay';
 
 const { payment: pm, organization: org } = schema;
 
@@ -18,13 +19,18 @@ export function createReceipts(deps: AppDeps) {
       const data = await inTenant(db, ctx, async (tx) => {
         const [p] = await tx.select().from(pm).where(eq(pm.id, paymentId));
         if (!p) throw AppError.notFound('Payment');
-        if (p.matchStatus !== 'matched' || !p.leaseId || !p.receiptNumber) {
+        if (p.matchStatus !== 'matched' || !p.receiptNumber || !(p.leaseId || p.bookingId)) {
           throw AppError.unprocessable('no_receipt', 'Receipts exist for allocated payments only.');
         }
-        const [lease] = await leasing.leasesForMatching(tx, [p.leaseId]);
-        const unit = (await accounts.unitsById(tx, [lease!.unitId])).get(lease!.unitId)!;
-        const balance = (await ledger.leaseBalances(tx, [p.leaseId])).get(p.leaseId)!.receivable;
-        return { p, lease: lease!, unit, balance };
+        if (p.leaseId) {
+          const [lease] = await leasing.leasesForMatching(tx, [p.leaseId]);
+          const unit = (await accounts.unitsById(tx, [lease!.unitId])).get(lease!.unitId)!;
+          const balance = (await ledger.leaseBalances(tx, [p.leaseId])).get(p.leaseId)!.receivable;
+          return { p, payer: lease!.tenantName, unit, balance };
+        }
+        const [b] = await shortstay.bookingsForPayments(tx, [p.bookingId!]);
+        const unit = (await accounts.unitsById(tx, [b!.unitId])).get(b!.unitId)!;
+        return { p, payer: b!.guestName ?? p.payerName ?? 'Guest', unit, balance: b!.balanceCents };
       });
       const { p } = data;
       if (p.receiptFileKey && storage.configured) {
@@ -81,7 +87,7 @@ export function createReceipts(deps: AppDeps) {
           { size: 'A5', style: styles.page },
           h(Text, { style: styles.title }, orgRow?.name ?? 'Receipt'),
           h(Text, { style: styles.muted }, `Receipt ${p.receiptNumber}`),
-          line('Received from', data.lease.tenantName),
+          line('Received from', data.payer),
           line('Unit', `${data.unit.code} · ${data.unit.propertyName}`),
           line('Date', p.paidAt.toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })),
           line(

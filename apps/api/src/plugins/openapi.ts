@@ -37,6 +37,11 @@ export const openapiPlugin = fp(async (app: FastifyInstance) => {
           description: 'Payment channels, payments, matching, receipts, STK Push, statement import',
         },
         {
+          name: 'short-stay',
+          description:
+            'Rates, quotes, guests, bookings, calendar & blocks, read-only iCal import, unit expenses, profit',
+        },
+        {
           name: 'daraja',
           description: 'Safaricom callbacks (public, authenticated by the channel token)',
         },

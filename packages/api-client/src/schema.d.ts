@@ -1195,7 +1195,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Apply an unmatched payment to a lease */
+    /** Apply an unmatched payment to a lease or booking */
     post: operations['allocatePayment'];
     delete?: never;
     options?: never;
@@ -1367,6 +1367,371 @@ export interface paths {
     put?: never;
     /** Safaricom STK Push result */
     post: operations['darajaStkResult'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/units/{unitId}/rate-plan': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Nightly rates, minimum stay, buffer and seasons of a short-stay unit */
+    get: operations['getRatePlan'];
+    /** Set nightly rates, minimum stay, buffer days and cleaning fee */
+    put: operations['upsertRatePlan'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/units/{unitId}/seasons': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Add a seasonal nightly rate (seasons on a unit cannot overlap) */
+    post: operations['createSeason'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/seasons/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove a seasonal rate */
+    delete: operations['deleteSeason'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/units/{unitId}/quote': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Price a stay night by night and check availability */
+    get: operations['quoteStay'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/guests': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Guests with stay counts (search by name or phone) */
+    get: operations['listGuests'];
+    put?: never;
+    /** Add a guest (one per phone number) */
+    post: operations['createGuest'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/guests/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A guest */
+    get: operations['getGuest'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit a guest */
+    patch: operations['updateGuest'];
+    trace?: never;
+  };
+  '/v1/bookings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Bookings by arrival date (filter by unit, dates, status, source) */
+    get: operations['listBookings'];
+    put?: never;
+    /** Book a short-stay unit (409 dates_unavailable when booked or blocked) */
+    post: operations['createBooking'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/bookings/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A booking with what is paid and owed */
+    get: operations['getBooking'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Change dates, price, commission or guest */
+    patch: operations['updateBooking'];
+    trace?: never;
+  };
+  '/v1/bookings/{id}/check-in': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mark the guest as arrived */
+    post: operations['checkInBooking'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/bookings/{id}/check-out': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mark the guest as departed */
+    post: operations['checkOutBooking'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/bookings/{id}/no-show': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** The guest never arrived (frees the dates) */
+    post: operations['markBookingNoShow'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/bookings/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancel a booking (frees the dates; billed amounts are reversed) */
+    post: operations['cancelBooking'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/calendar': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Bookings and blocks per short-stay unit for up to 92 days */
+    get: operations['getCalendar'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/calendar-blocks': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Block dates for owner use or maintenance */
+    post: operations['createCalendarBlock'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/calendar-blocks/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove a block (iCal blocks are managed by their feed) */
+    delete: operations['deleteCalendarBlock'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/ical-feeds': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Connected Airbnb/Booking.com calendars (read-only import) */
+    get: operations['listIcalFeeds'];
+    put?: never;
+    /** Connect an iCal export URL to a unit */
+    post: operations['createIcalFeed'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/ical-feeds/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Disconnect a feed (its blocks go; imported bookings stay) */
+    delete: operations['deleteIcalFeed'];
+    options?: never;
+    head?: never;
+    /** Pause or resume a feed */
+    patch: operations['updateIcalFeed'];
+    trace?: never;
+  };
+  '/v1/ical-feeds/{id}/sync': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Fetch the feed now (also runs every 20 minutes) */
+    post: operations['syncIcalFeed'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/unit-expenses': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Unit running costs in a date range */
+    get: operations['listUnitExpenses'];
+    put?: never;
+    /** Record a unit cost (tokens, wifi, cleaning, supplies, repairs…) */
+    post: operations['createUnitExpense'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/unit-expenses/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remove an expense */
+    delete: operations['deleteUnitExpense'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/reports/short-stay': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Monthly profit per unit (occupancy, ADR, RevPAR) and what each channel really costs */
+    get: operations['getShortStayReport'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -2026,12 +2391,18 @@ export interface components {
     PaymentMethodInput: 'mpesa' | 'cash' | 'bank' | 'other';
     /** @enum {string} */
     MatchStatusInput: 'unmatched' | 'matched' | 'ignored';
+    /** @description Exactly one of leaseId or bookingId (422 target_required) */
     AllocatePaymentBodyInput: {
       /**
        * Format: uuid
        * @description UUID identifier
        */
-      leaseId: string;
+      leaseId?: string;
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      bookingId?: string;
     };
     ReasonBodyInput: {
       reason: string;
@@ -2056,6 +2427,11 @@ export interface components {
        * @description Allocate immediately; otherwise it waits in the unmatched queue
        */
       leaseId?: string;
+      /**
+       * Format: uuid
+       * @description Allocate to a short-stay booking instead (not with leaseId)
+       */
+      bookingId?: string;
       payerName?: string;
       /**
        * @description Kenyan mobile number; any common format, normalised to E.164
@@ -2069,7 +2445,12 @@ export interface components {
        * Format: uuid
        * @description UUID identifier
        */
-      leaseId: string;
+      leaseId?: string;
+      /**
+       * Format: uuid
+       * @description Exactly one of leaseId or bookingId
+       */
+      bookingId?: string;
       /**
        * Format: int64
        * @description Whole shillings; defaults to the lease balance rounded up
@@ -2111,6 +2492,208 @@ export interface components {
     };
     DarajaCallbackBodyInput: {
       [key: string]: unknown;
+    };
+    /** @enum {string} */
+    BookingSourceInput: 'direct' | 'walk_in' | 'whatsapp' | 'airbnb' | 'booking' | 'other';
+    /** @enum {string} */
+    BookingStatusInput: 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';
+    /** @enum {string} */
+    ExpenseCategoryInput:
+      'tokens' | 'wifi' | 'cleaning' | 'supplies' | 'repair' | 'licence' | 'laundry' | 'other';
+    UpsertRatePlanBodyInput: {
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      baseNightlyCents: number;
+      weekendNightlyCents?: number | null;
+      minStayNights?: number;
+      bufferDays?: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      cleaningFeeCents?: number;
+      checkinInstructions?: string | null;
+    };
+    /** @description Seasons on a unit cannot overlap (409 season_overlap) */
+    CreateSeasonBodyInput: {
+      label: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      startsOn: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      endsOn: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      nightlyCents: number;
+      minStayNights?: number;
+    };
+    CreateGuestBodyInput: {
+      fullName: string;
+      /**
+       * @description Kenyan mobile number; any common format, normalised to E.164
+       * @example 0712345678
+       */
+      phone?: string;
+      /** Format: email */
+      email?: string;
+      idNumber?: string;
+      nationality?: string;
+      notes?: string;
+    };
+    UpdateGuestBodyInput: {
+      fullName?: string;
+      phone?: string | null;
+      email?: string | null;
+      idNumber?: string | null;
+      nationality?: string | null;
+      notes?: string | null;
+    };
+    /** @description Overlapping a booking or block answers 409 dates_unavailable; below minimum stay 422 min_stay */
+    CreateBookingBodyInput: {
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      unitId: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      checkIn: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      checkOut: string;
+      source: components['schemas']['BookingSourceInput'];
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      guestId?: string;
+      /** @description New or returning guest (matched by phone) */
+      guest?: components['schemas']['CreateGuestBodyInput'];
+      guestsCount?: number;
+      /**
+       * Format: int64
+       * @description Defaults to the quote (nights + cleaning)
+       */
+      grossCents?: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      cleaningFeeCents?: number;
+      /** @description OTA fee, e.g. 1500 = 15% */
+      commissionBps?: number;
+      notes?: string;
+      /** @description Book below the minimum stay */
+      allowShortStay?: boolean;
+    };
+    UpdateBookingBodyInput: {
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      checkIn?: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      checkOut?: string;
+      guestsCount?: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      grossCents?: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      cleaningFeeCents?: number;
+      commissionBps?: number;
+      guestId?: string | null;
+      notes?: string | null;
+    };
+    CancelBookingBodyInput: {
+      reason: string;
+    };
+    CreateBlockBodyInput: {
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      unitId: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      startsOn: string;
+      /**
+       * Format: date
+       * @description Exclusive
+       * @example 2026-10-21
+       */
+      endsOn: string;
+      /** @enum {string} */
+      reason: 'owner_use' | 'maintenance' | 'other';
+      note?: string;
+    };
+    /** @description Public https URL (private addresses answer 422 invalid_feed_url) */
+    CreateIcalFeedBodyInput: {
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      unitId: string;
+      /** @enum {string} */
+      source: 'airbnb' | 'booking' | 'other';
+      url: string;
+    };
+    UpdateIcalFeedBodyInput: {
+      enabled: boolean;
+    };
+    CreateExpenseBodyInput: {
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      unitId: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      incurredOn: string;
+      category: components['schemas']['ExpenseCategoryInput'];
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents: number;
+      description?: string;
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      bookingId?: string;
     };
     FieldError: {
       /** @description Dotted path to the offending field, e.g. body.phone */
@@ -2999,6 +3582,7 @@ export interface components {
       matchStatus: components['schemas']['MatchStatus'];
       matchMethod: ('auto_account' | 'auto_phone' | 'manual') | null;
       leaseId: string | null;
+      bookingId: string | null;
       tenantName: string | null;
       unitCode: string | null;
       receiptNumber: string | null;
@@ -3034,6 +3618,7 @@ export interface components {
       /** @enum {string} */
       status: 'pending' | 'succeeded' | 'failed' | 'cancelled' | 'timeout';
       leaseId: string | null;
+      bookingId: string | null;
       /**
        * Format: int64
        * @description Amount in minor units (cents). KES 1.00 = 100.
@@ -3099,6 +3684,368 @@ export interface components {
       webUrl: string;
       contractVersion: string;
       minAndroidVersionCode: number;
+    };
+    /** @enum {string} */
+    BookingSource: 'direct' | 'walk_in' | 'whatsapp' | 'airbnb' | 'booking' | 'other';
+    /** @enum {string} */
+    BookingStatus: 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';
+    /** @enum {string} */
+    ExpenseCategory:
+      'tokens' | 'wifi' | 'cleaning' | 'supplies' | 'repair' | 'licence' | 'laundry' | 'other';
+    Season: {
+      /** Format: uuid */
+      id: string;
+      label: string;
+      /** Format: date */
+      startsOn: string;
+      /**
+       * Format: date
+       * @description Exclusive: the first night not in the season
+       */
+      endsOn: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      nightlyCents: number;
+      minStayNights: number | null;
+    };
+    RatePlan: {
+      /** Format: uuid */
+      unitId: string;
+      unitCode: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      baseNightlyCents: number;
+      /** @description Friday and Saturday nights */
+      weekendNightlyCents: number | null;
+      minStayNights: number;
+      /** @description Turnover days kept free after each stay */
+      bufferDays: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      cleaningFeeCents: number;
+      checkinInstructions: string | null;
+      seasons: components['schemas']['Season'][];
+    };
+    Quote: {
+      /** Format: uuid */
+      unitId: string;
+      /** Format: date */
+      checkIn: string;
+      /** Format: date */
+      checkOut: string;
+      nights: {
+        /** Format: date */
+        date: string;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        nightlyCents: number;
+        /** @enum {string} */
+        rate: 'season' | 'weekend' | 'base';
+      }[];
+      nightCount: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      nightsTotalCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      cleaningFeeCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      totalCents: number;
+      minStayNights: number;
+      meetsMinStay: boolean;
+      available: boolean;
+    };
+    Guest: {
+      /** Format: uuid */
+      id: string;
+      fullName: string;
+      phone: string | null;
+      email: string | null;
+      idNumber: string | null;
+      nationality: string | null;
+      notes: string | null;
+      stays: number;
+      lastStayOn: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    GuestPage: {
+      items: components['schemas']['Guest'][];
+      nextCursor: string | null;
+    };
+    Booking: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      unitId: string;
+      unitCode: string;
+      propertyName: string;
+      guestId: string | null;
+      guestName: string | null;
+      isRepeatGuest: boolean;
+      /** Format: date */
+      checkIn: string;
+      /** Format: date */
+      checkOut: string;
+      nights: number;
+      source: components['schemas']['BookingSource'];
+      status: components['schemas']['BookingStatus'];
+      guestsCount: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      grossCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      cleaningFeeCents: number;
+      commissionBps: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      commissionCents: number;
+      /**
+       * Format: int64
+       * @description gross − commission
+       */
+      netCents: number;
+      /**
+       * Format: int64
+       * @description Collected through Kejasha payments (direct bookings)
+       */
+      paidCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      balanceCents: number;
+      notes: string | null;
+      fromIcal: boolean;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    BookingPage: {
+      items: components['schemas']['Booking'][];
+      nextCursor: string | null;
+    };
+    /** @enum {string} */
+    BlockReason: 'owner_use' | 'maintenance' | 'ical' | 'other';
+    CalendarBlock: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      unitId: string;
+      /** Format: date */
+      startsOn: string;
+      /** Format: date */
+      endsOn: string;
+      reason: components['schemas']['BlockReason'];
+      note: string | null;
+      fromIcal: boolean;
+    };
+    CalendarEntry: {
+      /** @enum {string} */
+      kind: 'booking' | 'block';
+      /** Format: uuid */
+      id: string;
+      /** Format: date */
+      start: string;
+      /**
+       * Format: date
+       * @description Exclusive
+       */
+      end: string;
+      label: string;
+      status: components['schemas']['BookingStatus'] | null;
+      source: components['schemas']['BookingSource'] | null;
+    };
+    Calendar: {
+      /** Format: date */
+      from: string;
+      /** Format: date */
+      to: string;
+      units: {
+        /** Format: uuid */
+        unitId: string;
+        unitCode: string;
+        propertyName: string;
+        entries: components['schemas']['CalendarEntry'][];
+      }[];
+    };
+    IcalFeed: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      unitId: string;
+      /** @enum {string} */
+      source: 'airbnb' | 'booking' | 'other';
+      /** @description Host and last characters only — feed URLs are secrets */
+      urlHint: string;
+      enabled: boolean;
+      lastSyncedAt: string | null;
+      lastStatus: ('ok' | 'not_modified' | 'error') | null;
+      lastError: string | null;
+      conflicts: {
+        uid: string;
+        /** Format: date */
+        start: string;
+        /** Format: date */
+        end: string;
+        summary: string;
+      }[];
+    };
+    IcalFeedList: {
+      items: components['schemas']['IcalFeed'][];
+    };
+    IcalSyncResult: {
+      /** Format: uuid */
+      feedId: string;
+      /** @enum {string} */
+      status: 'ok' | 'not_modified' | 'error';
+      added: number;
+      updated: number;
+      removed: number;
+      conflicts: number;
+      error: string | null;
+    };
+    UnitExpense: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      unitId: string;
+      bookingId: string | null;
+      /** Format: date */
+      incurredOn: string;
+      category: components['schemas']['ExpenseCategory'];
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents: number;
+      description: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    UnitExpenseList: {
+      items: components['schemas']['UnitExpense'][];
+    };
+    ShortStayReport: {
+      period: string;
+      units: {
+        /** Format: uuid */
+        unitId: string;
+        unitCode: string;
+        propertyName: string;
+        nightsSold: number;
+        availableNights: number;
+        /** @description Occupancy in basis points (8000 = 80%) */
+        occupancyBps: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        grossCents: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        commissionCents: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        expensesCents: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        netCents: number;
+        /**
+         * Format: int64
+         * @description Average daily rate
+         */
+        adrCents: number;
+        /**
+         * Format: int64
+         * @description Revenue per available night
+         */
+        revparCents: number;
+      }[];
+      totals: {
+        nightsSold: number;
+        availableNights: number;
+        /** @description Occupancy in basis points (8000 = 80%) */
+        occupancyBps: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        grossCents: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        commissionCents: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        expensesCents: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        netCents: number;
+        /**
+         * Format: int64
+         * @description Average daily rate
+         */
+        adrCents: number;
+        /**
+         * Format: int64
+         * @description Revenue per available night
+         */
+        revparCents: number;
+      };
+      channels: {
+        source: components['schemas']['BookingSource'];
+        bookings: number;
+        nights: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        grossCents: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        commissionCents: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        netCents: number;
+        effectiveCommissionBps: number;
+      }[];
     };
   };
   responses: never;
@@ -10219,6 +11166,2240 @@ export interface operations {
       };
       /** @description Not found */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getRatePlan: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        unitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RatePlan'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  upsertRatePlan: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        unitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpsertRatePlanBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RatePlan'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createSeason: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        unitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateSeasonBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RatePlan'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  deleteSeason: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  quoteStay: {
+    parameters: {
+      query: {
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        checkIn: string;
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        checkOut: string;
+      };
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        unitId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Quote'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listGuests: {
+    parameters: {
+      query?: {
+        /** @description Opaque cursor from `nextCursor`; an unknown cursor answers 422 invalid_cursor */
+        cursor?: string;
+        limit?: number;
+        q?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GuestPage'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createGuest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateGuestBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Guest'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getGuest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Guest'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  updateGuest: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateGuestBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Guest'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listBookings: {
+    parameters: {
+      query?: {
+        /** @description Opaque cursor from `nextCursor`; an unknown cursor answers 422 invalid_cursor */
+        cursor?: string;
+        limit?: number;
+        /** @description UUID identifier */
+        unitId?: string;
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        from?: string;
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        to?: string;
+        status?: components['schemas']['BookingStatusInput'];
+        source?: components['schemas']['BookingSourceInput'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BookingPage'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createBooking: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateBookingBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Booking'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getBooking: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Booking'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  updateBooking: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateBookingBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Booking'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  checkInBooking: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Booking'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  checkOutBooking: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Booking'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  markBookingNoShow: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Booking'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  cancelBooking: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelBookingBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Booking'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getCalendar: {
+    parameters: {
+      query: {
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        from: string;
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        to: string;
+        /** @description UUID identifier */
+        propertyId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Calendar'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createCalendarBlock: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateBlockBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CalendarBlock'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  deleteCalendarBlock: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listIcalFeeds: {
+    parameters: {
+      query?: {
+        /** @description UUID identifier */
+        unitId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['IcalFeedList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createIcalFeed: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateIcalFeedBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['IcalFeed'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  deleteIcalFeed: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  updateIcalFeed: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateIcalFeedBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['IcalFeed'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  syncIcalFeed: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['IcalSyncResult'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listUnitExpenses: {
+    parameters: {
+      query: {
+        /** @description UUID identifier */
+        unitId?: string;
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        from: string;
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        to: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnitExpenseList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createUnitExpense: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateExpenseBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnitExpense'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  deleteUnitExpense: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getShortStayReport: {
+    parameters: {
+      query: {
+        period: string;
+        /** @description UUID identifier */
+        propertyId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ShortStayReport'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
         headers: {
           [name: string]: unknown;
         };

@@ -1,5 +1,6 @@
 export {
   assignedPropertyIds,
+  shortStayUnitIds,
   unitIdByCode,
   unitIdsInProperty,
   unitsById,

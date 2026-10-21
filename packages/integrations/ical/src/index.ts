@@ -157,6 +157,25 @@ export interface FetchResult {
 
 const MAX_BYTES = 2 * 1024 * 1024;
 
+/** Read the body but stop at MAX_BYTES even when the server sends no Content-Length. */
+async function readCapped(res: Response): Promise<string> {
+  if (!res.body) return '';
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_BYTES) {
+      await reader.cancel();
+      throw new IcalError('too_large', 'The feed is larger than 2 MB.');
+    }
+    chunks.push(value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
+}
+
 export async function fetchFeed(
   url: string,
   cache: { etag?: string | null; lastModified?: string | null },
@@ -184,8 +203,7 @@ export async function fetchFeed(
   if (!res.ok) throw new IcalError('http_error', `The feed answered HTTP ${res.status}.`);
   const declared = Number(res.headers.get('content-length') ?? 0);
   if (declared > MAX_BYTES) throw new IcalError('too_large', 'The feed is larger than 2 MB.');
-  const body = await res.text();
-  if (body.length > MAX_BYTES) throw new IcalError('too_large', 'The feed is larger than 2 MB.');
+  const body = await readCapped(res);
   return {
     notModified: false,
     body,

@@ -1,6 +1,6 @@
 # Phase B4 — Short-stay
 
-> Status: **IN PROGRESS** · drafted 2026-10-21 · ADR-006, ADR-007, ADR-010
+> Status: **DONE** (pending CI) · drafted 2026-10-21 · ADR-006, ADR-007, ADR-010
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 
 ## Goal
@@ -40,22 +40,42 @@ expenses, and **true profit per unit** — with double-booking made impossible b
 
 ## Tasks
 ### B4.1 Core & schema
-- [ ] Core: nightly pricing (season > weekend > base), stay validation, profit metrics + tests
-- [ ] Migration: rate_plan, rate_override, guest, booking, calendar_block, unit_occupancy (+
+- [x] Core: nightly pricing (season > weekend > base), stay validation, profit metrics + tests
+- [x] Migration: rate_plan, rate_override, guest, booking, calendar_block, unit_occupancy (+
       triggers, exclusion), ical_feed, unit_expense; ledger booking accounts; payment/stk booking
       links; RLS + fixtures
 ### B4.2 Short-stay module
-- [ ] Rate plans, seasons, quote; guests; bookings (create, update amounts, confirm / check-in /
+- [x] Rate plans, seasons, quote; guests; bookings (create, update amounts, confirm / check-in /
       check-out / cancel / no-show); blocks; multi-unit calendar
-- [ ] Booking ledger entries; payments allocate/STK/auto-match to bookings; confirmation SMS
-- [ ] Expenses; P&L per unit/month; channel comparison
+- [x] Booking ledger entries; payments allocate/STK/auto-match to bookings; confirmation SMS
+- [x] Expenses; P&L per unit/month; channel comparison
 ### B4.3 iCal
-- [ ] `packages/integrations/ical`: fetch (ETag), RFC 5545 parse (DATE / DATE-TIME, folding)
-- [ ] Feed CRUD, sync service (upsert/cancel by UID, conflicts flagged), worker job
+- [x] `packages/integrations/ical`: fetch (ETag), RFC 5545 parse (DATE / DATE-TIME, folding)
+- [x] Feed CRUD, sync service (upsert/cancel by UID, conflicts flagged), worker job
 ### B4.4 Proof
-- [ ] Integration tests incl. concurrent double-booking attempts; iCal fixture sync adds/updates/
+- [x] Integration tests incl. concurrent double-booking attempts; iCal fixture sync adds/updates/
       removes; P&L reconciles to bookings + expenses; RLS fixtures
-- [ ] Journey through the generated client; spec lint + Schemathesis green
+- [x] Journey through the generated client; spec lint + Schemathesis green
+
+## Notes (2026-10-21)
+- **Imported (iCal) bookings use 0 buffer days.** The channel already enforces its own
+  preparation time, and adding ours would flag back-to-back Airbnb stays as conflicts. Direct
+  bookings use the rate plan's buffer.
+- **Imported amounts are 0** until the host enters the payout and commission (`PATCH /v1/bookings`).
+  The feed carries no prices.
+- **Payments:** allocate, manual entry and STK take `leaseId` *or* `bookingId` (422
+  `target_required` / `target_ambiguous`). Airbnb and Booking.com bookings refuse collection
+  (422 `booking_not_collected`). Receipts and receipt PDFs work for booking payments.
+- **Suggestions** for unmatched payments still rank leases only; booking suggestions are a
+  follow-up if hosts need them (B7 review).
+- **iCal fetch:** the body is read with a 2 MB streamed cap even without Content-Length. The SSRF
+  guard resolves the host before fetching, so a DNS-rebinding window remains between check and
+  connect. It goes on the B7 security checklist (pin the resolved address).
+- **Roles:** short-stay endpoints need `agent` (bookings, guests, calendar) or `manager` (rates,
+  feeds, expenses, P&L). Caretaker access arrives with property scoping in the B6 sync API.
+- **Schemathesis (local):** every short-stay operation passed. The run still showed the known
+  client-side timing artifact on two older operations with 1-byte invalid JSON bodies (35 s and
+  68 s client-side, 61 ms and 145 ms server-side; see the B2/B3 notes).
 
 ## Screens this phase must power (ADR-018)
 Multi-unit calendar (month + timeline) · booking create/detail · rates editor · iCal feeds ·

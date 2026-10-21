@@ -1,4 +1,4 @@
-import { eq, inArray, schema, type Tx } from '@kejasha/db';
+import { and, eq, inArray, isNull, schema, type Tx } from '@kejasha/db';
 
 /**
  * Read helpers other modules use instead of touching accounts tables (ADR-001). They run inside
@@ -15,6 +15,7 @@ export interface UnitInfo {
   propertyId: string;
   propertyName: string;
   clientLandlordId: string;
+  baseNightlyCents: bigint | null;
 }
 
 export async function unitsById(tx: Tx, ids: string[]): Promise<Map<string, UnitInfo>> {
@@ -36,6 +37,7 @@ export async function unitsById(tx: Tx, ids: string[]): Promise<Map<string, Unit
         propertyId: u.propertyId,
         propertyName,
         clientLandlordId,
+        baseNightlyCents: u.baseNightlyCents,
       },
     ]),
   );
@@ -58,4 +60,20 @@ export async function unitIdByCode(tx: Tx, code: string): Promise<string | null>
   if (!/^[A-Z0-9][A-Z0-9-]{0,11}$/.test(normalised)) return null;
   const [row] = await tx.select({ id: un.id }).from(un).where(eq(un.code, normalised)).limit(1);
   return row?.id ?? null;
+}
+
+/** Active short-stay units (optionally in one property), sorted by code. */
+export async function shortStayUnitIds(tx: Tx, propertyId?: string): Promise<string[]> {
+  const rows = await tx
+    .select({ id: un.id })
+    .from(un)
+    .where(
+      and(
+        eq(un.mode, 'short_stay'),
+        isNull(un.archivedAt),
+        propertyId ? eq(un.propertyId, propertyId) : undefined,
+      ),
+    )
+    .orderBy(un.code);
+  return rows.map((r) => r.id);
 }

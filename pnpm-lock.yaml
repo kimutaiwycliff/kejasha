@@ -113,6 +113,9 @@ importers:
       '@kejasha/integrations-daraja':
         specifier: workspace:^
         version: link:../../packages/integrations/daraja
+      '@kejasha/integrations-ical':
+        specifier: workspace:^
+        version: link:../../packages/integrations/ical
       '@kejasha/integrations-storage':
         specifier: workspace:^
         version: link:../../packages/integrations/storage

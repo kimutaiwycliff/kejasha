@@ -32,6 +32,7 @@ export interface NewEntry {
   sourceId?: string | undefined;
   leaseId?: string | undefined;
   unitId?: string | undefined;
+  bookingId?: string | undefined;
   memo?: string | undefined;
   /** Unique per org: posting the same business event twice returns the first entry. */
   idempotencyKey: string;
@@ -68,9 +69,11 @@ export async function accountFor(
   const leaseScoped = kind === 'lease_receivable' || kind === 'lease_deposit';
   if (leaseScoped !== Boolean(leaseId))
     throw new Error(`Account ${kind} ${leaseScoped ? 'needs' : 'must not have'} a lease`);
+  if (kind === 'booking_receivable')
+    throw new Error('Use bookingReceivable() for booking accounts');
   const where = leaseId
     ? and(eq(acc.leaseId, leaseId), eq(acc.kind, kind))
-    : and(sql`${acc.leaseId} IS NULL`, eq(acc.kind, kind));
+    : and(sql`${acc.leaseId} IS NULL`, sql`${acc.bookingId} IS NULL`, eq(acc.kind, kind));
   const [found] = await tx.select({ id: acc.id }).from(acc).where(where);
   if (found) return found.id;
   await tx
@@ -79,6 +82,39 @@ export async function accountFor(
     .onConflictDoNothing();
   const [created] = await tx.select({ id: acc.id }).from(acc).where(where);
   return created!.id;
+}
+
+/** Per-booking receivable (direct-collection short stays). */
+export async function bookingReceivable(tx: Tx, ctx: Ctx, bookingId: string): Promise<string> {
+  const where = and(eq(acc.bookingId, bookingId), eq(acc.kind, 'booking_receivable'));
+  const [found] = await tx.select({ id: acc.id }).from(acc).where(where);
+  if (found) return found.id;
+  await tx
+    .insert(acc)
+    .values({ id: uuidv7(), orgId: ctx.orgId, kind: 'booking_receivable', bookingId })
+    .onConflictDoNothing();
+  const [created] = await tx.select({ id: acc.id }).from(acc).where(where);
+  return created!.id;
+}
+
+/** For each booking: receivable balance and the amount billed through booking entries. */
+export async function bookingBalances(tx: Tx, bookingIds: string[]) {
+  const out = new Map(bookingIds.map((id) => [id, { balance: 0n, billed: 0n }]));
+  if (!bookingIds.length) return out;
+  const rows = await tx
+    .select({
+      bookingId: acc.bookingId,
+      balance: sql<string>`coalesce(sum(${pst.amountCents}), 0)`,
+      billed: sql<string>`coalesce(sum(${pst.amountCents}) FILTER (WHERE ${ent.source} IN ('booking', 'booking_cancellation')), 0)`,
+    })
+    .from(acc)
+    .leftJoin(pst, eq(pst.accountId, acc.id))
+    .leftJoin(ent, eq(ent.id, pst.entryId))
+    .where(inArray(acc.bookingId, bookingIds))
+    .groupBy(acc.bookingId);
+  for (const r of rows)
+    out.set(r.bookingId!, { balance: BigInt(r.balance), billed: BigInt(r.billed) });
+  return out;
 }
 
 export async function leaseAccounts(tx: Tx, ctx: Ctx, leaseId: string) {
@@ -106,6 +142,7 @@ export async function post(
       sourceId: e.sourceId ?? null,
       leaseId: e.leaseId ?? null,
       unitId: e.unitId ?? null,
+      bookingId: e.bookingId ?? null,
       memo: e.memo ?? null,
       idempotencyKey: e.idempotencyKey,
       reversesEntryId: e.reversesEntryId ?? null,
@@ -150,6 +187,7 @@ export async function reverse(
     sourceId: original.sourceId ?? undefined,
     leaseId: original.leaseId ?? undefined,
     unitId: original.unitId ?? undefined,
+    bookingId: original.bookingId ?? undefined,
     memo: opts.memo,
     idempotencyKey: opts.idempotencyKey,
     reversesEntryId: entryId,
