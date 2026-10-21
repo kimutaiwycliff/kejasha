@@ -8,6 +8,30 @@ import { z } from 'zod';
 
 export const Uuid = z.uuid().meta({ description: 'UUID identifier' });
 
+/**
+ * Input rules: the documented JSON Schema must describe exactly what is accepted, so no hidden
+ * trimming/upper-casing runs before validation. Normalisation happens in transforms afterwards.
+ */
+export const IdInput = z.guid().meta({ description: 'UUID identifier' });
+/** Any string Postgres can store: no NUL characters. */
+export const SafeString = (max: number) =>
+  z
+    .string()
+    .max(max)
+    // eslint-disable-next-line no-control-regex -- NUL is exactly what must be rejected
+    .regex(/^[^\u0000]*$/, 'Must not contain NUL characters');
+/** Optional free text; surrounding whitespace is trimmed after validation. */
+export const TextInput = (max: number) => SafeString(max).transform((v) => v.trim());
+/** Required text with at least one non-space character; trimmed after validation. */
+export const RequiredTextInput = (max: number, min = 1) =>
+  z
+    .string()
+    .min(min)
+    .max(max)
+    // eslint-disable-next-line no-control-regex -- NUL is exactly what must be rejected
+    .regex(/^[^\u0000]*\S[^\u0000]*$/, 'Must not be blank')
+    .transform((v) => v.trim());
+
 /** Money in minor units (cents) — int64 on the wire, `bigint` in the domain (ADR-006). */
 export const Cents = z.int().meta({
   format: 'int64',
@@ -48,7 +72,14 @@ export const ProblemDetails = z
 export type ProblemDetails = z.infer<typeof ProblemDetails>;
 
 export const CursorQuery = z.object({
-  cursor: z.string().max(512).optional(),
+  cursor: z
+    .string()
+    .max(512)
+    .regex(/^[A-Za-z0-9_-]*$/, 'Invalid cursor')
+    .optional()
+    .meta({
+      description: 'Opaque cursor from `nextCursor`; an unknown cursor answers 422 invalid_cursor',
+    }),
   limit: z.coerce.number().int().min(1).max(100).default(25),
 });
 
@@ -59,13 +90,35 @@ export function pageOf<T extends z.ZodType>(item: T, name: string) {
     .meta({ id: `${name}Page` });
 }
 
-type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500 | 503;
+type ErrorStatus = 400 | 401 | 403 | 404 | 405 | 409 | 422 | 429 | 500 | 503;
+
+const ERROR_DESCRIPTIONS: Record<ErrorStatus, string> = {
+  400: 'Validation failed',
+  401: 'Not signed in',
+  403: 'Not allowed',
+  404: 'Not found',
+  405: 'Method not allowed',
+  409: 'Conflict',
+  422: 'Unprocessable',
+  429: 'Rate limited',
+  500: 'Internal error',
+  503: 'Unavailable',
+};
+
+/** One problem response, documented with its real media type (RFC 9457). */
+export function problemResponse(status: ErrorStatus) {
+  return {
+    description: ERROR_DESCRIPTIONS[status],
+    content: { 'application/problem+json': { schema: ProblemDetails } },
+  };
+}
+export type ProblemResponse = ReturnType<typeof problemResponse>;
 
 /** Problem responses for a route's schema.response map. 400 and 500 are always included. */
 export function problemResponses<S extends ErrorStatus = never>(...statuses: S[]) {
   const all = [...new Set<ErrorStatus>([400, 500, ...statuses])];
-  return Object.fromEntries(all.map((s) => [s, ProblemDetails])) as Record<
+  return Object.fromEntries(all.map((s) => [s, problemResponse(s)])) as Record<
     S | 400 | 500,
-    typeof ProblemDetails
+    ProblemResponse
   >;
 }

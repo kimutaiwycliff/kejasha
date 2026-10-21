@@ -1,0 +1,7 @@
+# Contract-test settings (make test-contract, CI). Schemathesis fuzzes every operation in openapi.json.
+
+[checks.positive_data_acceptance]
+# A schema-valid request may still be refused for business reasons: 422 means "valid shape, but not
+# allowed in the current state" (archived record, cross-field rule, unknown cursor). 400 is reserved
+# for requests that violate the schema, so it stays a failure here.
+expected-statuses = ["2xx", "401", "403", "404", "409", "422", "429"]

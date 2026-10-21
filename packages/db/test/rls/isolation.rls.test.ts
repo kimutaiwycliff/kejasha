@@ -12,9 +12,14 @@ const INSUFFICIENT_PRIVILEGE = '42501'; // also raised for RLS WITH CHECK violat
 
 describe.each(tenantTableFixtures)('RLS isolation: $table', (f) => {
   const table = sql.identifier(f.table);
+  const prepared = async (...orgIds: string[]) => {
+    for (const orgId of orgIds)
+      for (const stmt of f.prepare?.(orgId) ?? []) await db.owner.execute(stmt);
+    return orgIds;
+  };
 
   it('owner org can insert its own row', async () => {
-    const orgA = newOrgId();
+    const [orgA] = (await prepared(newOrgId())) as [string];
     await withTenant(db, { orgId: orgA }, (tx) => tx.execute(f.insert(orgA)));
     const { rows } = await db.pools.owner.query(
       `SELECT count(*)::int AS n FROM ${f.table} WHERE org_id = $1`,
@@ -24,7 +29,7 @@ describe.each(tenantTableFixtures)('RLS isolation: $table', (f) => {
   });
 
   it('cannot insert a row for another org', async () => {
-    const [orgA, orgB] = [newOrgId(), newOrgId()];
+    const [orgA, orgB] = (await prepared(newOrgId(), newOrgId())) as [string, string];
     await expectPgError(
       withTenant(db, { orgId: orgB }, (tx) => tx.execute(f.insert(orgA))),
       INSUFFICIENT_PRIVILEGE,
@@ -32,7 +37,7 @@ describe.each(tenantTableFixtures)('RLS isolation: $table', (f) => {
   });
 
   it('without org context: no inserts, no rows', async () => {
-    const orgA = newOrgId();
+    const [orgA] = (await prepared(newOrgId())) as [string];
     await withTenant(db, { orgId: orgA }, (tx) => tx.execute(f.insert(orgA)));
     await expectPgError(
       db.authenticated.transaction((tx) => tx.execute(f.insert(orgA))),
@@ -45,7 +50,7 @@ describe.each(tenantTableFixtures)('RLS isolation: $table', (f) => {
   });
 
   it('another org cannot read, update or delete the row', async () => {
-    const [orgA, orgB] = [newOrgId(), newOrgId()];
+    const [orgA, orgB] = (await prepared(newOrgId(), newOrgId())) as [string, string];
     await withTenant(db, { orgId: orgA }, (tx) => tx.execute(f.insert(orgA)));
 
     await withTenant(db, { orgId: orgB }, async (tx) => {
@@ -77,7 +82,7 @@ describe.each(tenantTableFixtures)('RLS isolation: $table', (f) => {
   });
 
   it.runIf(f.grants.select)('owner org sees only its own rows', async () => {
-    const [orgA, orgB] = [newOrgId(), newOrgId()];
+    const [orgA, orgB] = (await prepared(newOrgId(), newOrgId())) as [string, string];
     await withTenant(db, { orgId: orgA }, (tx) => tx.execute(f.insert(orgA)));
     await withTenant(db, { orgId: orgB }, (tx) => tx.execute(f.insert(orgB)));
     const res = await withTenant(db, { orgId: orgA }, (tx) =>

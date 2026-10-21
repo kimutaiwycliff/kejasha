@@ -15,9 +15,15 @@
   "dependencies": {
     "@kejasha/config": "workspace:^",
     "@kejasha/db": "workspace:^",
+    "@kejasha/integrations-africastalking": "workspace:^",
+    "@kejasha/integrations-resend": "workspace:^",
     "@kejasha/jobs": "workspace:^",
     "bullmq": "^6.3.19",
     "ioredis": "5",
-    "pino": "^10.4.0"
+    "pino": "^10.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22"
   }
 }

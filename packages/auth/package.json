@@ -1,0 +1,20 @@
+{
+  "name": "@kejasha/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@kejasha/config": "workspace:^",
+    "@kejasha/core": "workspace:^",
+    "@kejasha/db": "workspace:^",
+    "@kejasha/integrations-africastalking": "workspace:^",
+    "better-auth": "1.7.12",
+    "drizzle-orm": "0.45.4"
+  }
+}

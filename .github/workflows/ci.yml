@@ -68,6 +68,7 @@ jobs:
       DATABASE_URL: postgresql://app_owner:secret@localhost:5432/kejasha?sslmode=disable
       DATABASE_AUTHENTICATED_URL: postgresql://app_authenticated:secret@localhost:5432/kejasha?sslmode=disable
       REDIS_URL: redis://localhost:6379
+      BETTER_AUTH_SECRET: ci-only-secret-ci-only-secret-0123456789
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -83,10 +84,15 @@ jobs:
           pnpm --filter @kejasha/api build
           (cd apps/api && node dist/server.js > /tmp/api.log 2>&1 &)
           for i in $(seq 1 60); do curl -sf localhost:4000/v1/health && break; sleep 1; done
-      - name: Schemathesis
+      - name: Seed demo data (gives an authenticated token)
+        run: pnpm --filter @kejasha/api seed
+      - name: Schemathesis (all operations, authenticated)
         run: |
-          docker run --rm --network host schemathesis/schemathesis:stable \
-            run http://localhost:4000/openapi.json --url http://localhost:4000 --checks all --max-examples 100
+          docker run --rm --network host -v "$PWD/schemathesis.toml:/cfg/schemathesis.toml:ro" \
+            schemathesis/schemathesis:stable --config-file /cfg/schemathesis.toml \
+            run http://localhost:4000/openapi.json --url http://localhost:4000 --checks all --max-examples 100 \
+            --exclude-operation-id signOut \
+            -H "Authorization: Bearer $(cat apps/api/.seed-token)"
       - if: failure()
         run: cat /tmp/api.log
 

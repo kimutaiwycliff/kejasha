@@ -8,7 +8,7 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "generate": "openapi-typescript ../../apps/api/openapi.json -o src/schema.d.ts && prettier --write src/schema.d.ts --log-level warn"
+    "generate": "openapi-typescript ../../apps/api/openapi.json --default-non-nullable false -o src/schema.d.ts && prettier --write src/schema.d.ts --log-level warn"
   },
   "dependencies": {
     "openapi-fetch": "^0.17.0"

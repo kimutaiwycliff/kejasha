@@ -104,3 +104,16 @@ describe('meta, docs and errors', () => {
     expect(evil.headers['access-control-allow-origin']).toBeUndefined();
   });
 });
+
+describe('transport hardening', () => {
+  it('strips __proto__ keys instead of rejecting the request', async () => {
+    const res = await api.app.inject({
+      method: 'POST',
+      url: '/v1/identity/otp/request',
+      headers: { 'content-type': 'application/json' },
+      payload: '{"__proto__": {"polluted": true}, "phone": "0712000001"}',
+    });
+    expect(res.statusCode).toBe(202);
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+});

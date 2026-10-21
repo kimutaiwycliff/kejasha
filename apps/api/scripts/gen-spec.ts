@@ -17,6 +17,7 @@ const config = loadConfig({
   DATABASE_URL: 'postgresql://spec@127.0.0.1:1/spec',
   DATABASE_AUTHENTICATED_URL: 'postgresql://spec@127.0.0.1:1/spec',
   REDIS_URL: 'redis://127.0.0.1:1',
+  BETTER_AUTH_SECRET: 'spec-generation-only-secret-0123456789abcdef',
 });
 const deps = createDeps(config);
 const app = await buildApp(deps);

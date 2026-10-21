@@ -28,6 +28,9 @@ export function testEnv(): Record<string, string> {
     DATABASE_URL: inject('databaseOwnerUrl'),
     DATABASE_AUTHENTICATED_URL: inject('databaseAuthenticatedUrl'),
     REDIS_URL: inject('redisUrl'),
+    BETTER_AUTH_SECRET: 'test-secret-test-secret-test-secret-0123',
+    // Tests simulate distinct client IPs via X-Forwarded-For.
+    TRUST_PROXY: 'true',
   };
 }
 

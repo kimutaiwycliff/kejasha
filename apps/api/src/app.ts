@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import Fastify, { LogController, type FastifyInstance } from 'fastify';
+import Fastify, { LogController, type FastifyInstance, type FastifyServerOptions } from 'fastify';
 import {
   serializerCompiler,
   validatorCompiler,
@@ -8,6 +8,7 @@ import {
 import type { AppDeps } from './deps';
 import { registerModules } from './modules';
 import { errorsPlugin } from './plugins/errors';
+import { authPlugin } from './plugins/auth';
 import { idempotencyPlugin } from './plugins/idempotency';
 import { observabilityPlugin } from './plugins/observability';
 import { openapiPlugin } from './plugins/openapi';
@@ -29,8 +30,13 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       const incoming = req.headers['x-request-id'];
       return typeof incoming === 'string' && REQUEST_ID_RE.test(incoming) ? incoming : randomUUID();
     },
-    trustProxy: true,
+    trustProxy: deps.config.api.trustProxy as FastifyServerOptions['trustProxy'],
     bodyLimit: 1024 * 1024,
+    // A client that announces a body and never sends it must not hold a socket open (slowloris).
+    requestTimeout: 15_000,
+    // Strip prototype-polluting keys rather than rejecting otherwise valid requests.
+    onProtoPoisoning: 'remove',
+    onConstructorPoisoning: 'remove',
   }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);
@@ -40,6 +46,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(errorsPlugin);
   await app.register(requestContextPlugin);
   await app.register(securityPlugin, deps);
+  // Before openapi: its onRoute hook stamps security onto each route schema.
+  await app.register(authPlugin, deps);
   await app.register(openapiPlugin);
   await app.register(idempotencyPlugin, { db: deps.db });
   await registerModules(app, deps);

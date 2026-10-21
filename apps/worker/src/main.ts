@@ -5,7 +5,7 @@ import { createQueues, createTopicWorker, relayOnce, type QueueName } from '@kej
 import type { ConnectionOptions } from 'bullmq';
 import { Redis } from 'ioredis';
 import { pino } from 'pino';
-import { handlers } from './handlers';
+import { buildHandlers } from './handlers';
 
 const config = loadConfig();
 const log = pino({ level: config.logLevel, base: { service: 'worker' } });
@@ -19,6 +19,7 @@ const connection = new Redis(config.redis.url, {
   maxRetriesPerRequest: null,
 }) as unknown as ConnectionOptions;
 const queues = createQueues(connection);
+const handlers = buildHandlers(config, log);
 
 const workers = (Object.keys(handlers) as QueueName[]).map((queue) => {
   const { worker, deadLetter } = createTopicWorker(queue, handlers[queue], connection);
