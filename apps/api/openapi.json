@@ -1,0 +1,277 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Kejasha API",
+    "version": "0.1.0",
+    "description": "Property management, rent collection and short-stay management for Kenya. Money is integer cents (int64). Business dates are Africa/Nairobi. Every write accepts an Idempotency-Key header. Errors are RFC 9457 problem+json."
+  },
+  "components": {
+    "schemas": {
+      "FieldError": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Dotted path to the offending field, e.g. body.phone"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "code": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "additionalProperties": false
+      },
+      "DependencyCheck": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down",
+              "skipped"
+            ]
+          },
+          "latencyMs": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ]
+          },
+          "version": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "db": {
+                "$ref": "#/components/schemas/DependencyCheck"
+              },
+              "redis": {
+                "$ref": "#/components/schemas/DependencyCheck"
+              },
+              "storage": {
+                "$ref": "#/components/schemas/DependencyCheck"
+              }
+            },
+            "required": [
+              "db",
+              "redis",
+              "storage"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status",
+          "version",
+          "time",
+          "checks"
+        ],
+        "additionalProperties": false
+      },
+      "MetaConfigResponse": {
+        "type": "object",
+        "properties": {
+          "apiUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "webUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "contractVersion": {
+            "type": "string"
+          },
+          "minAndroidVersionCode": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "apiUrl",
+          "webUrl",
+          "contractVersion",
+          "minAndroidVersionCode"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Liveness and dependency health",
+        "tags": [
+          "platform"
+        ],
+        "description": "Returns 200 when every configured dependency is up, 503 otherwise.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/meta/config": {
+      "get": {
+        "operationId": "getMetaConfig",
+        "summary": "Canonical client configuration",
+        "tags": [
+          "platform"
+        ],
+        "description": "Installed clients read this to discover the canonical API URL after a domain move (ADR-016).",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "platform",
+      "description": "Health, metadata and API documentation"
+    }
+  ]
+}

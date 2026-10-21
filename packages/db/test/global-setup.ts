@@ -4,14 +4,7 @@ import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import { RedisContainer } from '@testcontainers/redis';
 import pg from 'pg';
 import type { TestProject } from 'vitest/node';
-
-declare module 'vitest' {
-  export interface ProvidedContext {
-    databaseOwnerUrl: string;
-    databaseAuthenticatedUrl: string;
-    redisUrl: string;
-  }
-}
+import '../src/testing';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
 const AUTH_PASSWORD = 'test-authenticated';

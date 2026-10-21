@@ -17,7 +17,7 @@ export const outbox = pgTable('outbox', {
   orgId: uuid('org_id'),
   topic: text('topic').notNull(),
   payload: jsonb('payload').notNull(),
-  dedupeKey: text('dedupe_key').unique(),
+  dedupeKey: text('dedupe_key'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   availableAt: timestamp('available_at', { withTimezone: true }).notNull().defaultNow(),
   dispatchedAt: timestamp('dispatched_at', { withTimezone: true }),

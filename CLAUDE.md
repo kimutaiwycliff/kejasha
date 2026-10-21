@@ -108,6 +108,7 @@ kejasha/
 │  ├─ web/                    # Next.js — landlord/agency/host dashboard + tenant portal
 │  └─ android/                # Kotlin Android (Gradle) — owner/host, caretaker (offline), tenant
 ├─ packages/
+│  ├─ config/                 # Zod env parsing; all URLs derived from APP_DOMAIN (ADR-016)
 │  ├─ contracts/              # Zod schemas = API contract (request/response/error shapes)
 │  ├─ api-client/             # Generated from OpenAPI — the ONLY way clients call the API
 │  ├─ db/                     # Drizzle schema, withTenant(), RLS helpers, seed, test harness

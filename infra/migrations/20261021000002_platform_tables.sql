@@ -7,7 +7,7 @@ CREATE TABLE outbox (
   org_id        uuid,
   topic         text        NOT NULL,
   payload       jsonb       NOT NULL,
-  dedupe_key    text        UNIQUE,
+  dedupe_key    text,
   created_at    timestamptz NOT NULL DEFAULT now(),
   available_at  timestamptz NOT NULL DEFAULT now(),
   dispatched_at timestamptz,
@@ -15,13 +15,20 @@ CREATE TABLE outbox (
   last_error    text
 );
 CREATE INDEX outbox_pending_idx ON outbox (available_at, id) WHERE dispatched_at IS NULL;
+-- Business dedupe is per org (two orgs may legitimately use the same key).
+CREATE UNIQUE INDEX outbox_dedupe_idx ON outbox (org_id, dedupe_key) WHERE dedupe_key IS NOT NULL;
 
 ALTER TABLE outbox ENABLE ROW LEVEL SECURITY;
 ALTER TABLE outbox FORCE ROW LEVEL SECURITY;
 REVOKE ALL ON outbox FROM app_authenticated;
 GRANT INSERT ON outbox TO app_authenticated;
+-- INSERT ... ON CONFLICT needs SELECT on the arbiter columns and a passing SELECT policy for
+-- the new row. Tenants can therefore see only (org_id, dedupe_key) of their own org's events.
+GRANT SELECT (org_id, dedupe_key) ON outbox TO app_authenticated;
 CREATE POLICY tenant_insert ON outbox FOR INSERT TO app_authenticated
   WITH CHECK (org_id = app.current_org_id());
+CREATE POLICY tenant_dedupe_read ON outbox FOR SELECT TO app_authenticated
+  USING (org_id = app.current_org_id());
 
 -- Idempotency-Key store (CLAUDE.md §2.8). Platform table, owner role only:
 -- the plugin runs outside the request's tenant transaction.

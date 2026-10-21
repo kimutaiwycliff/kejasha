@@ -15,7 +15,8 @@
     "test:int": "vitest run --project int",
     "test:rls": "vitest run --project rls",
     "test:journeys": "vitest run --project journeys",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build": "turbo run build"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs,cjs}": [
@@ -30,13 +31,17 @@
     "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.2.4",
     "@eslint/js": "^10.0.1",
+    "@redocly/cli": "^2.66.0",
     "@testcontainers/postgresql": "^12.2.1",
     "@testcontainers/redis": "^12.2.1",
     "@types/node": "22",
+    "bullmq": "^6.3.19",
     "dbmate": "^2.37.0",
+    "esbuild": "^0.28.2",
     "eslint": "^10.13.0",
     "globals": "^17.13.0",
     "husky": "^9.1.7",
+    "ioredis": "5",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
     "testcontainers": "^12.2.1",

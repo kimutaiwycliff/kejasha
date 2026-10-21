@@ -40,7 +40,7 @@ export default tseslint.config(
         {
           patterns: [
             {
-              regex: '^\\.\\./[^/]+/(?!index$).+',
+              regex: '^\\.\\./(?!\\.\\.)[^/]+/(?!index$).+',
               message: 'Import other modules only via their index.ts (ADR-001).',
             },
           ],

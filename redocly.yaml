@@ -1,0 +1,11 @@
+extends:
+  - recommended
+rules:
+  # Servers are relative by design (ADR-016): clients set the base URL from config.
+  no-server-example.com: off
+  no-empty-servers: error
+  operation-4xx-response: error
+  operation-operationId: error
+  operation-operationId-unique: error
+  security-defined: off # auth arrives in B1
+  info-license: off

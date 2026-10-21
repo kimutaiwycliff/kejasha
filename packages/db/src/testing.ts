@@ -2,6 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { inject } from 'vitest';
 import { createDb, type Db } from './client';
 
+declare module 'vitest' {
+  export interface ProvidedContext {
+    databaseOwnerUrl: string;
+    databaseAuthenticatedUrl: string;
+    redisUrl: string;
+  }
+}
+
 /** A Db wired to the Testcontainers Postgres started by test/global-setup.ts. */
 export function createTestDb(): Db {
   return createDb({
