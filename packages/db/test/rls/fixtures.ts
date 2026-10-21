@@ -45,6 +45,8 @@ const invoice = (orgId: string) =>
   sql`INSERT INTO invoice (id, org_id, lease_id, number, kind, issued_on, due_on, total_cents, ledger_entry_id) VALUES (${uid(orgId, 'inv')}, ${orgId}, ${orgId}, 'FX-1', 'manual', '2026-01-01', '2026-01-01', 100, ${uid(orgId, 'entry')}) ON CONFLICT DO NOTHING`;
 const channel = (orgId: string) =>
   sql`INSERT INTO payment_channel (id, org_id, kind, shortcode, display_name, channel_token) VALUES (${uid(orgId, 'ch')}, ${orgId}, 'paybill', '600000', 'Fixture', ${`tok-${orgId}`}) ON CONFLICT DO NOTHING`;
+const ssUnit = (orgId: string) =>
+  sql`INSERT INTO unit (id, org_id, property_id, code, mode, base_nightly_cents) VALUES (${uid(orgId, 'ss')}, ${orgId}, ${orgId}, 'SS1', 'short_stay', 100) ON CONFLICT DO NOTHING`;
 const portfolio = [org, landlord, property, unit, tenant];
 
 const all =
@@ -272,5 +274,70 @@ export const tenantTableFixtures: TenantTableFixture[] = [
       sql`INSERT INTO statement_import (id, org_id, file_key, format, status) VALUES (gen_random_uuid(), ${o}, 'k', 'mpesa_business_csv', 'parsed')`,
     grants: { select: true, update: true, delete: true },
     updateSet: sql`error = 'hijacked'`,
+  },
+  {
+    table: 'rate_plan',
+    prepare: all(org, landlord, property, ssUnit),
+    insert: (o) =>
+      sql`INSERT INTO rate_plan (org_id, unit_id, base_nightly_cents) VALUES (${o}, ${uid(o, 'ss')}, 100)`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`min_stay_nights = 9`,
+  },
+  {
+    table: 'rate_override',
+    prepare: all(org, landlord, property, ssUnit),
+    insert: (o) =>
+      sql`INSERT INTO rate_override (id, org_id, unit_id, label, starts_on, ends_on, nightly_cents) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'ss')}, 'Season', '2026-12-01', '2026-12-31', 100)`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`label = 'hijacked'`,
+  },
+  {
+    table: 'guest',
+    prepare: all(org),
+    insert: (o) =>
+      sql`INSERT INTO guest (id, org_id, full_name) VALUES (gen_random_uuid(), ${o}, 'G')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`full_name = 'hijacked'`,
+  },
+  {
+    table: 'ical_feed',
+    prepare: all(org, landlord, property, ssUnit),
+    insert: (o) =>
+      sql`INSERT INTO ical_feed (id, org_id, unit_id, source, url) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'ss')}, 'airbnb', 'https://example.test/x.ics')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`url = 'https://evil.test'`,
+  },
+  {
+    table: 'booking',
+    prepare: all(org, landlord, property, ssUnit),
+    insert: (o) =>
+      sql`INSERT INTO booking (id, org_id, unit_id, check_in, check_out, source) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'ss')}, '2026-11-01', '2026-11-03', 'direct')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`notes = 'hijacked'`,
+  },
+  {
+    table: 'calendar_block',
+    prepare: all(org, landlord, property, ssUnit),
+    insert: (o) =>
+      sql`INSERT INTO calendar_block (id, org_id, unit_id, starts_on, ends_on, reason) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'ss')}, '2026-12-01', '2026-12-05', 'owner_use')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`note = 'hijacked'`,
+  },
+  {
+    // Occupancy is written only by booking/block triggers: inserting a block creates the row.
+    table: 'unit_occupancy',
+    prepare: all(org, landlord, property, ssUnit),
+    insert: (o) =>
+      sql`INSERT INTO calendar_block (id, org_id, unit_id, starts_on, ends_on, reason) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'ss')}, '2027-01-01', '2027-01-03', 'maintenance')`,
+    grants: { select: true, update: false, delete: false },
+    updateSet: sql`unit_id = unit_id`,
+  },
+  {
+    table: 'unit_expense',
+    prepare: all(org, landlord, property, ssUnit),
+    insert: (o) =>
+      sql`INSERT INTO unit_expense (id, org_id, unit_id, incurred_on, category, amount_cents) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'ss')}, '2026-10-01', 'wifi', 100)`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`description = 'hijacked'`,
   },
 ];

@@ -16,6 +16,8 @@ export const LEDGER_ACCOUNT_KINDS = [
   'income_other',
   'deposit_refund_payable',
   'collections',
+  'booking_receivable',
+  'income_short_stay',
 ] as const;
 export type LedgerAccountKind = (typeof LEDGER_ACCOUNT_KINDS)[number];
 
@@ -27,6 +29,8 @@ export const LEDGER_SOURCES = [
   'payment',
   'payment_reversal',
   'adjustment',
+  'booking',
+  'booking_cancellation',
 ] as const;
 export type LedgerSource = (typeof LEDGER_SOURCES)[number];
 
@@ -35,6 +39,7 @@ export const ledgerAccount = pgTable('ledger_account', {
   orgId: uuid('org_id').notNull(),
   kind: text('kind', { enum: LEDGER_ACCOUNT_KINDS }).notNull(),
   leaseId: uuid('lease_id'),
+  bookingId: uuid('booking_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -47,6 +52,7 @@ export const ledgerEntry = pgTable('ledger_entry', {
   sourceId: uuid('source_id'),
   leaseId: uuid('lease_id'),
   unitId: uuid('unit_id'),
+  bookingId: uuid('booking_id'),
   memo: text('memo'),
   idempotencyKey: text('idempotency_key').notNull(),
   reversesEntryId: uuid('reverses_entry_id'),
