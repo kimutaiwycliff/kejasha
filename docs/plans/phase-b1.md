@@ -1,6 +1,6 @@
 # Phase B1 — Identity & portfolio
 
-> Status: **DONE locally — awaiting CI** · drafted 2026-10-21 · ADR-004, ADR-005, ADR-016, ADR-017
+> Status: **DONE** · DoD green locally and in CI (PR #2, 2026-10-21) · drafted 2026-10-21 · ADR-004, ADR-005, ADR-016, ADR-017
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 
 ## Goal
