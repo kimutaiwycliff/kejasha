@@ -1,6 +1,12 @@
 import { inject, it, expect } from 'vitest';
 import { createStorage } from '../src/index';
 
+declare module 'vitest' {
+  export interface ProvidedContext {
+    s3Endpoint: string;
+  }
+}
+
 /** Guards ADR-019's checksum setting: presigned URLs must accept a real upload, not just exist. */
 it('round-trips a file through presigned PUT and GET, and refuses a bad signature', async () => {
   const cfg = {
