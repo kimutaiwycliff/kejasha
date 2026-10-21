@@ -9,3 +9,4 @@ coverage/
 !.env.example
 infra/backups/
 .DS_Store
+*.tsbuildinfo

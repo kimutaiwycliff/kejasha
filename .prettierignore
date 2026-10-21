@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+apps/api/openapi.json
+packages/api-client/src/schema.d.ts
+infra/migrations/
+docs/
+CLAUDE.md
+coverage/
