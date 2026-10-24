@@ -4,6 +4,7 @@ import type { AppDeps } from '../deps';
 import { accountsRoutes, createAccountsService } from './accounts';
 import { createIdentityService, identityRoutes, toUser } from './identity';
 import { createLeasing, leasingRoutes } from './leasing';
+import { createMaintenanceService, maintenanceRoutes } from './maintenance';
 import { createPayments, paymentsRoutes } from './payments';
 import { platformRoutes } from './platform';
 import { createShortStay, shortStayRoutes } from './shortstay';
@@ -37,4 +38,8 @@ export async function registerModules(app: FastifyInstance, deps: AppDeps): Prom
   await app.register(leasingRoutes(createLeasing(deps)), deps);
   await app.register(paymentsRoutes(createPayments(deps)), deps);
   await app.register(shortStayRoutes(createShortStay(deps)), deps);
+  await app.register(
+    maintenanceRoutes(createMaintenanceService(deps, { memberRoles: identity.memberRoles })),
+    deps,
+  );
 }

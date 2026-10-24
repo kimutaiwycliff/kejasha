@@ -604,7 +604,14 @@ export const InspectionList = z
 
 export const UploadRequest = z
   .object({
-    purpose: z.enum(['inspection_photo', 'meter_photo', 'maintenance_photo', 'statement']),
+    purpose: z.enum([
+      'inspection_photo',
+      'meter_photo',
+      'maintenance_photo',
+      'cash_receipt',
+      'licence_document',
+      'statement',
+    ]),
     contentType: z.enum(['image/jpeg', 'image/png', 'image/webp', 'text/csv', 'application/pdf']),
     sizeBytes: z
       .int()
@@ -614,7 +621,7 @@ export const UploadRequest = z
   .meta({
     id: 'UploadRequest',
     description:
-      'Photos take image types; statements take text/csv or application/pdf (422 invalid_content_type)',
+      'Photos and receipts take image types; statements take text/csv or application/pdf; licence documents take an image or PDF (422 invalid_content_type)',
   });
 export const UploadTicket = z
   .object({

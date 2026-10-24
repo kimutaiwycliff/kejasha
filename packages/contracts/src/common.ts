@@ -58,6 +58,9 @@ export const BusinessDateInput = z.iso.date().meta({
 });
 export const Timestamp = z.iso.datetime({ offset: true }).meta({ description: 'RFC 3339 instant' });
 
+/** A stored file with a short-lived download link (empty when storage is not configured). */
+export const FileLink = z.object({ key: z.string(), url: z.string() }).meta({ id: 'FileLink' });
+
 export const FieldError = z
   .object({
     path: z.string().meta({ description: 'Dotted path to the offending field, e.g. body.phone' }),

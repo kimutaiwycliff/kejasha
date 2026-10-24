@@ -201,10 +201,16 @@ export function createLeasingOperations(deps: AppDeps) {
           'File storage is not configured.',
         );
       const isImage = body.contentType.startsWith('image/');
-      if ((body.purpose === 'statement') === isImage) {
+      const allowed =
+        body.purpose === 'statement'
+          ? !isImage
+          : body.purpose === 'licence_document'
+            ? isImage || body.contentType === 'application/pdf'
+            : isImage;
+      if (!allowed) {
         throw AppError.unprocessable(
           'invalid_content_type',
-          'Photos must be images; statements must be CSV or PDF.',
+          'Photos and receipts must be images; statements CSV or PDF; licence documents an image or PDF.',
         );
       }
       const EXT = {

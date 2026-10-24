@@ -42,6 +42,10 @@ export const openapiPlugin = fp(async (app: FastifyInstance) => {
             'Rates, quotes, guests, bookings, calendar & blocks, read-only iCal import, unit expenses, profit',
         },
         {
+          name: 'maintenance',
+          description: 'Maintenance tickets with photos; repair costs flow into unit expenses',
+        },
+        {
           name: 'daraja',
           description: 'Safaricom callbacks (public, authenticated by the channel token)',
         },

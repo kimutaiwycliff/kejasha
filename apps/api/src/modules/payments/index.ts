@@ -1,4 +1,5 @@
 import type { AppDeps } from '../../deps';
+import { createCashCollections } from './cash';
 import { createChannelService } from './channels';
 import { createDarajaFlows } from './daraja-flows';
 import { createImports } from './imports';
@@ -15,6 +16,7 @@ export function createPayments(deps: AppDeps): PaymentsParts {
     daraja: createDarajaFlows(deps, channels),
     imports: createImports(deps, payments),
     receipts: createReceipts(deps),
+    cash: createCashCollections(deps),
   };
 }
 

@@ -6,3 +6,4 @@ export * from './leasing';
 export * from './payments';
 export * from './platform';
 export * from './shortstay';
+export * from './maintenance';

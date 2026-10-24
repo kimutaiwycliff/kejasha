@@ -112,6 +112,33 @@ export async function recordUnitExpense(
   return row!;
 }
 
+/**
+ * Keep a maintenance ticket's cost in the register: replaces the ticket's expense with `e`, or
+ * removes it when `e` is null (cost cleared, ticket reopened or cancelled).
+ */
+export async function setTicketExpense(
+  tx: Tx,
+  ctx: Ctx,
+  ticketId: string,
+  e: Omit<UnitExpenseInput, 'maintenanceTicketId'> | null,
+): Promise<ExpenseRow | null> {
+  await tx.delete(ex).where(eq(ex.maintenanceTicketId, ticketId));
+  return e ? recordUnitExpense(tx, ctx, { ...e, maintenanceTicketId: ticketId }) : null;
+}
+
+/** Expense ids recorded for maintenance tickets. */
+export async function expenseIdsByTicket(
+  tx: Tx,
+  ticketIds: string[],
+): Promise<Map<string, string>> {
+  if (!ticketIds.length) return new Map();
+  const rows = await tx
+    .select({ id: ex.id, ticketId: ex.maintenanceTicketId })
+    .from(ex)
+    .where(inArray(ex.maintenanceTicketId, ticketIds));
+  return new Map(rows.map((r) => [r.ticketId!, r.id]));
+}
+
 export function createShortStayService(deps: AppDeps) {
   const { db, clock } = deps;
 

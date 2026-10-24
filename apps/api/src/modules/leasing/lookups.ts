@@ -77,3 +77,16 @@ export async function leasesForMatching(tx: Tx, leaseIds?: string[]): Promise<Le
 export function sumOpen(l: LeaseForMatching): bigint {
   return money.sum(l.openAmounts);
 }
+
+/** Tenant names (and phones) by id, for other modules' displays and validation. */
+export async function tenantsById(
+  tx: Tx,
+  ids: string[],
+): Promise<Map<string, { id: string; fullName: string; phone: string | null }>> {
+  if (!ids.length) return new Map();
+  const rows = await tx
+    .select({ id: tn.id, fullName: tn.fullName, phone: tn.phone })
+    .from(tn)
+    .where(inArray(tn.id, [...new Set(ids)]));
+  return new Map(rows.map((r) => [r.id, r]));
+}

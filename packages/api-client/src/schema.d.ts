@@ -1322,6 +1322,75 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/cash-collections': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Cash entries, newest first (caretakers: their own) */
+    get: operations['listCashCollections'];
+    put?: never;
+    /** Log cash received from a tenant or guest (awaits confirmation) */
+    post: operations['submitCashCollection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/cash-collections/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A cash entry */
+    get: operations['getCashCollection'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/cash-collections/{id}/confirm': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Accept the cash: records and allocates a cash payment with a receipt */
+    post: operations['confirmCashCollection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/cash-collections/{id}/reject': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Refuse the cash entry (nothing is booked) */
+    post: operations['rejectCashCollection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/payments/daraja/{channelToken}/c2b/validation': {
     parameters: {
       query?: never;
@@ -1732,6 +1801,59 @@ export interface paths {
     get: operations['getShortStayReport'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/tickets': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Maintenance tickets, newest first (caretakers: assigned properties) */
+    get: operations['listTickets'];
+    put?: never;
+    /** Report a problem on a unit or a whole property, with photos */
+    post: operations['createTicket'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/tickets/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A ticket with its timeline and photos */
+    get: operations['getTicket'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit title, priority, assignee or cost */
+    patch: operations['updateTicket'];
+    trace?: never;
+  };
+  '/v1/tickets/{id}/updates': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Add a note, photos, the cost or a status change */
+    post: operations['addTicketUpdate'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2347,10 +2469,16 @@ export interface components {
       items: components['schemas']['InspectionItemInputInput'][];
       notes?: string;
     };
-    /** @description Photos take image types; statements take text/csv or application/pdf (422 invalid_content_type) */
+    /** @description Photos and receipts take image types; statements take text/csv or application/pdf; licence documents take an image or PDF (422 invalid_content_type) */
     UploadRequestInput: {
       /** @enum {string} */
-      purpose: 'inspection_photo' | 'meter_photo' | 'maintenance_photo' | 'statement';
+      purpose:
+        | 'inspection_photo'
+        | 'meter_photo'
+        | 'maintenance_photo'
+        | 'cash_receipt'
+        | 'licence_document'
+        | 'statement';
       /** @enum {string} */
       contentType: 'image/jpeg' | 'image/png' | 'image/webp' | 'text/csv' | 'application/pdf';
       sizeBytes: number;
@@ -2492,6 +2620,36 @@ export interface components {
     };
     DarajaCallbackBodyInput: {
       [key: string]: unknown;
+    };
+    /** @enum {string} */
+    CashCollectionStatusInput: 'pending' | 'confirmed' | 'rejected';
+    /** @description Exactly one of leaseId or bookingId (422 target_required) */
+    CreateCashCollectionBodyInput: {
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      leaseId?: string;
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      bookingId?: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents: number;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      receivedOn: string;
+      payerName?: string;
+      note?: string;
+      /** @description Photo of the receipt: key from POST /v1/uploads (purpose cash_receipt) */
+      receiptKey?: string;
     };
     /** @enum {string} */
     BookingSourceInput: 'direct' | 'walk_in' | 'whatsapp' | 'airbnb' | 'booking' | 'other';
@@ -2700,6 +2858,77 @@ export interface components {
        * @description UUID identifier
        */
       bookingId?: string;
+    };
+    /** @enum {string} */
+    TicketCategoryInput:
+      | 'plumbing'
+      | 'electrical'
+      | 'structural'
+      | 'appliance'
+      | 'pest'
+      | 'cleaning'
+      | 'security'
+      | 'other';
+    /** @enum {string} */
+    TicketPriorityInput: 'low' | 'normal' | 'high' | 'urgent';
+    /** @enum {string} */
+    TicketStatusInput: 'open' | 'in_progress' | 'resolved' | 'closed' | 'cancelled';
+    /** @description unitId or propertyId (422 target_required) */
+    CreateTicketBodyInput: {
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      propertyId?: string;
+      /**
+       * Format: uuid
+       * @description Implies the property
+       */
+      unitId?: string;
+      title: string;
+      description?: string;
+      category: components['schemas']['TicketCategoryInput'];
+      priority?: components['schemas']['TicketPriorityInput'];
+      /**
+       * @description Defaults to caretaker for caretakers, staff otherwise; 'tenant' when entering a tenant's report
+       * @enum {string}
+       */
+      reporterKind?: 'staff' | 'caretaker' | 'tenant';
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      tenantId?: string;
+      /** @description Keys from POST /v1/uploads with purpose maintenance_photo */
+      photoKeys?: string[];
+    };
+    UpdateTicketBodyInput: {
+      title?: string;
+      description?: string | null;
+      category?: components['schemas']['TicketCategoryInput'];
+      priority?: components['schemas']['TicketPriorityInput'];
+      /** @description A member of the org */
+      assigneeUserId?: string | null;
+      /** @description An outside fundi */
+      assigneeName?: string | null;
+      costCents?: number | null;
+    };
+    /** @description At least one of note, status, costCents or photoKeys */
+    AddTicketUpdateBodyInput: {
+      note?: string;
+      /** @description open ↔ in_progress → resolved → closed; resolved can reopen; open/in_progress can be cancelled (409 invalid_ticket_transition). Caretakers cannot close or cancel. */
+      status?: components['schemas']['TicketStatusInput'];
+      /**
+       * Format: int64
+       * @description Final cost, usually sent when resolving
+       */
+      costCents?: number;
+      /** @description Keys from POST /v1/uploads with purpose maintenance_photo */
+      photoKeys?: string[];
+    };
+    FileLink: {
+      key: string;
+      url: string;
     };
     FieldError: {
       /** @description Dotted path to the offending field, e.g. body.phone */
@@ -3665,6 +3894,39 @@ export interface components {
       ResultCode: number;
       ResultDesc: string;
     };
+    /** @enum {string} */
+    CashCollectionStatus: 'pending' | 'confirmed' | 'rejected';
+    CashCollection: {
+      /** Format: uuid */
+      id: string;
+      leaseId: string | null;
+      bookingId: string | null;
+      unitCode: string | null;
+      payerName: string | null;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents: number;
+      /** Format: date */
+      receivedOn: string;
+      note: string | null;
+      receipt: components['schemas']['FileLink'] | null;
+      status: components['schemas']['CashCollectionStatus'];
+      /** Format: uuid */
+      submittedBy: string;
+      decidedBy: string | null;
+      decidedAt: string | null;
+      rejectReason: string | null;
+      /** @description The payment recorded on confirmation */
+      paymentId: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CashCollectionPage: {
+      items: components['schemas']['CashCollection'][];
+      nextCursor: string | null;
+    };
     DependencyCheck: {
       /** @enum {string} */
       status: 'up' | 'down' | 'skipped';
@@ -4056,6 +4318,111 @@ export interface components {
         netCents: number;
         effectiveCommissionBps: number;
       }[];
+    };
+    /** @enum {string} */
+    TicketCategory:
+      | 'plumbing'
+      | 'electrical'
+      | 'structural'
+      | 'appliance'
+      | 'pest'
+      | 'cleaning'
+      | 'security'
+      | 'other';
+    /** @enum {string} */
+    TicketPriority: 'low' | 'normal' | 'high' | 'urgent';
+    /** @enum {string} */
+    TicketStatus: 'open' | 'in_progress' | 'resolved' | 'closed' | 'cancelled';
+    Ticket: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      propertyId: string;
+      propertyName: string;
+      unitId: string | null;
+      unitCode: string | null;
+      title: string;
+      description: string | null;
+      category: components['schemas']['TicketCategory'];
+      priority: components['schemas']['TicketPriority'];
+      status: components['schemas']['TicketStatus'];
+      /** @enum {string} */
+      reporterKind: 'staff' | 'caretaker' | 'tenant';
+      reportedBy: string | null;
+      tenantId: string | null;
+      assigneeUserId: string | null;
+      assigneeName: string | null;
+      costCents: number | null;
+      /** @description Expense recorded when resolved with a cost */
+      expenseId: string | null;
+      resolvedAt: string | null;
+      closedAt: string | null;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      updatedAt: string;
+    };
+    TicketPage: {
+      items: components['schemas']['Ticket'][];
+      nextCursor: string | null;
+    };
+    TicketUpdate: {
+      /** Format: uuid */
+      id: string;
+      authorId: string | null;
+      note: string | null;
+      statusFrom: components['schemas']['TicketStatus'] | null;
+      statusTo: components['schemas']['TicketStatus'] | null;
+      photos: components['schemas']['FileLink'][];
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      createdAt: string;
+    };
+    TicketDetail: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      propertyId: string;
+      propertyName: string;
+      unitId: string | null;
+      unitCode: string | null;
+      title: string;
+      description: string | null;
+      category: components['schemas']['TicketCategory'];
+      priority: components['schemas']['TicketPriority'];
+      status: components['schemas']['TicketStatus'];
+      /** @enum {string} */
+      reporterKind: 'staff' | 'caretaker' | 'tenant';
+      reportedBy: string | null;
+      tenantId: string | null;
+      assigneeUserId: string | null;
+      assigneeName: string | null;
+      costCents: number | null;
+      /** @description Expense recorded when resolved with a cost */
+      expenseId: string | null;
+      resolvedAt: string | null;
+      closedAt: string | null;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      updatedAt: string;
+      updates: components['schemas']['TicketUpdate'][];
     };
   };
   responses: never;
@@ -10990,6 +11357,398 @@ export interface operations {
       };
     };
   };
+  listCashCollections: {
+    parameters: {
+      query?: {
+        /** @description Opaque cursor from `nextCursor`; an unknown cursor answers 422 invalid_cursor */
+        cursor?: string;
+        limit?: number;
+        status?: components['schemas']['CashCollectionStatusInput'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CashCollectionPage'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  submitCashCollection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateCashCollectionBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CashCollection'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getCashCollection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CashCollection'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  confirmCashCollection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CashCollection'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  rejectCashCollection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReasonBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CashCollection'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
   darajaC2bValidation: {
     parameters: {
       query?: never;
@@ -13412,6 +14171,409 @@ export interface operations {
       };
       /** @description Not allowed */
       403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listTickets: {
+    parameters: {
+      query?: {
+        /** @description Opaque cursor from `nextCursor`; an unknown cursor answers 422 invalid_cursor */
+        cursor?: string;
+        limit?: number;
+        status?: components['schemas']['TicketStatusInput'];
+        /** @description true = open, in progress or resolved (not closed/cancelled) */
+        active?: 'true' | 'false';
+        /** @description UUID identifier */
+        propertyId?: string;
+        /** @description UUID identifier */
+        unitId?: string;
+        priority?: components['schemas']['TicketPriorityInput'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TicketPage'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createTicket: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateTicketBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TicketDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getTicket: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TicketDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  updateTicket: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTicketBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TicketDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  addTicketUpdate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddTicketUpdateBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TicketDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
         headers: {
           [name: string]: unknown;
         };

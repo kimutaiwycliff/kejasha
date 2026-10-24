@@ -22,5 +22,6 @@ export {
   leaseOnUnitAt,
   leasesForMatching,
   sumOpen,
+  tenantsById,
   type LeaseForMatching,
 } from './lookups';
