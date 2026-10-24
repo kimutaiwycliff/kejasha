@@ -43,6 +43,75 @@ const api = (v: bigint) => money.toApiInt(v);
 const collected = (source: string) => (COLLECTED_SOURCES as readonly string[]).includes(source);
 const MAX_CALENDAR_DAYS = 92;
 
+type ExpenseRow = typeof ex.$inferSelect;
+
+function toExpense(r: ExpenseRow) {
+  return {
+    id: r.id,
+    propertyId: r.propertyId,
+    unitId: r.unitId,
+    bookingId: r.bookingId,
+    maintenanceTicketId: r.maintenanceTicketId,
+    incurredOn: r.incurredOn,
+    category: r.category,
+    amountCents: api(r.amountCents),
+    description: r.description,
+    createdAt: r.createdAt.toISOString(),
+  };
+}
+
+export interface UnitExpenseInput {
+  unitId: string | null;
+  propertyId: string | null;
+  bookingId?: string | null;
+  maintenanceTicketId?: string | null;
+  incurredOn: string;
+  category: ExpenseRow['category'];
+  amountCents: bigint;
+  description?: string | null;
+}
+
+/**
+ * The org's expense register (every unit, or a whole property). Other modules record costs here
+ * through the module's index (maintenance repairs). Runs in the caller's tenant transaction.
+ */
+export async function recordUnitExpense(
+  tx: Tx,
+  ctx: Ctx,
+  e: UnitExpenseInput,
+): Promise<ExpenseRow> {
+  let propertyId = e.propertyId;
+  if (e.unitId) {
+    const unit = (await accounts.unitsById(tx, [e.unitId])).get(e.unitId);
+    if (!unit) throw AppError.notFound('Unit');
+    if (propertyId && propertyId !== unit.propertyId)
+      throw AppError.unprocessable('unit_property_mismatch', 'The unit is in another property.');
+    propertyId = unit.propertyId;
+  } else if (propertyId) {
+    if (!(await accounts.propertiesById(tx, [propertyId])).has(propertyId))
+      throw AppError.notFound('Property');
+  } else {
+    throw AppError.unprocessable('target_required', 'Send a unitId or a propertyId.');
+  }
+  const [row] = await tx
+    .insert(ex)
+    .values({
+      id: uuidv7(),
+      orgId: ctx.orgId,
+      propertyId: propertyId!,
+      unitId: e.unitId,
+      bookingId: e.bookingId ?? null,
+      maintenanceTicketId: e.maintenanceTicketId ?? null,
+      incurredOn: e.incurredOn,
+      category: e.category,
+      amountCents: e.amountCents,
+      description: e.description ?? null,
+      createdBy: ctx.userId ?? null,
+    })
+    .returning();
+  return row!;
+}
+
 export function createShortStayService(deps: AppDeps) {
   const { db, clock } = deps;
 
@@ -817,9 +886,9 @@ export function createShortStayService(deps: AppDeps) {
 
     // ── Expenses & profit ─────────────────────────────────────────────────────────────────
     async addExpense(ctx: Ctx, body: z.infer<typeof CreateExpenseBody>) {
+      if (!body.unitId && !body.propertyId)
+        throw AppError.unprocessable('target_required', 'Send a unitId or a propertyId.');
       return inTenant(db, ctx, async (tx) => {
-        const unit = (await accounts.unitsById(tx, [body.unitId])).get(body.unitId);
-        if (!unit) throw AppError.notFound('Unit');
         if (body.bookingId) {
           const b = await loadBooking(tx, body.bookingId);
           if (b.unitId !== body.unitId)
@@ -828,44 +897,31 @@ export function createShortStayService(deps: AppDeps) {
               'The booking is on another unit.',
             );
         }
-        const [row] = await tx
-          .insert(ex)
-          .values({
-            id: uuidv7(),
-            orgId: ctx.orgId,
-            unitId: body.unitId,
-            bookingId: body.bookingId ?? null,
-            incurredOn: body.incurredOn,
-            category: body.category,
-            amountCents: BigInt(body.amountCents),
-            description: body.description || null,
-            createdBy: ctx.userId ?? null,
-          })
-          .returning();
+        const row = await recordUnitExpense(tx, ctx, {
+          unitId: body.unitId ?? null,
+          propertyId: body.propertyId ?? null,
+          bookingId: body.bookingId ?? null,
+          incurredOn: body.incurredOn,
+          category: body.category,
+          amountCents: BigInt(body.amountCents),
+          description: body.description || null,
+        });
         await record(tx, ctx, {
           action: 'expense.created',
-          entityType: 'unit',
-          entityId: body.unitId,
+          entityType: 'property',
+          entityId: row.propertyId,
           diff: body,
         });
-        return this.toExpense(row!);
+        return toExpense(row);
       });
     },
 
-    toExpense(r: typeof ex.$inferSelect) {
-      return {
-        id: r.id,
-        unitId: r.unitId,
-        bookingId: r.bookingId,
-        incurredOn: r.incurredOn,
-        category: r.category,
-        amountCents: api(r.amountCents),
-        description: r.description,
-        createdAt: r.createdAt.toISOString(),
-      };
-    },
+    toExpense,
 
-    async listExpenses(ctx: Ctx, q: { unitId?: string | undefined; from: string; to: string }) {
+    async listExpenses(
+      ctx: Ctx,
+      q: { unitId?: string | undefined; propertyId?: string | undefined; from: string; to: string },
+    ) {
       if (q.to < q.from) throw AppError.unprocessable('invalid_range', '`to` is before `from`.');
       return inTenant(db, ctx, async (tx) => {
         const rows = await tx
@@ -874,23 +930,30 @@ export function createShortStayService(deps: AppDeps) {
           .where(
             and(
               q.unitId ? eq(ex.unitId, q.unitId) : undefined,
+              q.propertyId ? eq(ex.propertyId, q.propertyId) : undefined,
               sql`${ex.incurredOn} BETWEEN ${q.from}::date AND ${q.to}::date`,
             ),
           )
           .orderBy(desc(ex.incurredOn));
-        return rows.map((r) => this.toExpense(r));
+        return rows.map(toExpense);
       });
     },
 
     async removeExpense(ctx: Ctx, id: string) {
       return inTenant(db, ctx, async (tx) => {
-        const [row] = await tx.delete(ex).where(eq(ex.id, id)).returning();
-        if (!row) throw AppError.notFound('Expense');
+        const [found] = await tx.select().from(ex).where(eq(ex.id, id));
+        if (!found) throw AppError.notFound('Expense');
+        if (found.maintenanceTicketId)
+          throw AppError.conflict(
+            'managed_by_ticket',
+            'This cost comes from a maintenance ticket; change it on the ticket.',
+          );
+        await tx.delete(ex).where(eq(ex.id, id));
         await record(tx, ctx, {
           action: 'expense.removed',
-          entityType: 'unit',
-          entityId: row.unitId,
-          diff: { amountCents: row.amountCents.toString() },
+          entityType: 'property',
+          entityId: found.propertyId,
+          diff: { amountCents: found.amountCents.toString() },
         });
       });
     },

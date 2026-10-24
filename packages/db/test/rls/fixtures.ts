@@ -47,6 +47,8 @@ const channel = (orgId: string) =>
   sql`INSERT INTO payment_channel (id, org_id, kind, shortcode, display_name, channel_token) VALUES (${uid(orgId, 'ch')}, ${orgId}, 'paybill', '600000', 'Fixture', ${`tok-${orgId}`}) ON CONFLICT DO NOTHING`;
 const ssUnit = (orgId: string) =>
   sql`INSERT INTO unit (id, org_id, property_id, code, mode, base_nightly_cents) VALUES (${uid(orgId, 'ss')}, ${orgId}, ${orgId}, 'SS1', 'short_stay', 100) ON CONFLICT DO NOTHING`;
+const ticket = (orgId: string) =>
+  sql`INSERT INTO maintenance_ticket (id, org_id, number, property_id, title, category, reporter_kind) VALUES (${uid(orgId, 'tk')}, ${orgId}, 'MT-FX', ${orgId}, 'Leak', 'plumbing', 'staff') ON CONFLICT DO NOTHING`;
 const portfolio = [org, landlord, property, unit, tenant];
 
 const all =
@@ -336,8 +338,56 @@ export const tenantTableFixtures: TenantTableFixture[] = [
     table: 'unit_expense',
     prepare: all(org, landlord, property, ssUnit),
     insert: (o) =>
-      sql`INSERT INTO unit_expense (id, org_id, unit_id, incurred_on, category, amount_cents) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'ss')}, '2026-10-01', 'wifi', 100)`,
+      sql`INSERT INTO unit_expense (id, org_id, property_id, unit_id, incurred_on, category, amount_cents) VALUES (gen_random_uuid(), ${o}, ${o}, ${uid(o, 'ss')}, '2026-10-01', 'wifi', 100)`,
     grants: { select: true, update: true, delete: true },
     updateSet: sql`description = 'hijacked'`,
+  },
+  {
+    table: 'maintenance_ticket',
+    prepare: all(org, landlord, property),
+    insert: (o) =>
+      sql`INSERT INTO maintenance_ticket (id, org_id, number, property_id, title, category, reporter_kind) VALUES (gen_random_uuid(), ${o}, gen_random_uuid()::text, ${o}, 'Leak', 'plumbing', 'staff')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`title = 'hijacked'`,
+  },
+  {
+    table: 'maintenance_update',
+    prepare: all(org, landlord, property, ticket),
+    insert: (o) =>
+      sql`INSERT INTO maintenance_update (id, org_id, ticket_id, note) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'tk')}, 'Fixed')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`note = 'hijacked'`,
+  },
+  {
+    table: 'cash_collection',
+    prepare: all(...portfolio, lease),
+    insert: (o) =>
+      sql`INSERT INTO cash_collection (id, org_id, lease_id, amount_cents, received_on, submitted_by) VALUES (gen_random_uuid(), ${o}, ${o}, 100, '2026-10-01', ${o})`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`note = 'hijacked'`,
+  },
+  {
+    table: 'mri_filing',
+    prepare: all(org, landlord),
+    insert: (o) =>
+      sql`INSERT INTO mri_filing (id, org_id, client_landlord_id, period, rent_cents, tax_cents, filed_on) VALUES (gen_random_uuid(), ${o}, ${o}, (date '2000-01-01' + (random() * 3000)::int * interval '1 month')::date, 100, 8, '2026-10-20')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`kra_reference = 'hijacked'`,
+  },
+  {
+    table: 'licence',
+    prepare: all(org, landlord, property),
+    insert: (o) =>
+      sql`INSERT INTO licence (id, org_id, property_id, kind, expires_on) VALUES (gen_random_uuid(), ${o}, ${o}, 'tra_short_stay', '2027-01-01')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`number = 'hijacked'`,
+  },
+  {
+    table: 'member_scope',
+    prepare: all(org, landlord, user),
+    insert: (o) =>
+      sql`INSERT INTO member_scope (org_id, user_id, client_landlord_id) VALUES (${o}, ${o}, ${o})`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`created_at = now()`,
   },
 ];

@@ -2670,12 +2670,18 @@ export interface components {
     UpdateIcalFeedBodyInput: {
       enabled: boolean;
     };
+    /** @description unitId or propertyId (422 target_required / unit_property_mismatch) */
     CreateExpenseBodyInput: {
       /**
        * Format: uuid
        * @description UUID identifier
        */
-      unitId: string;
+      unitId?: string;
+      /**
+       * Format: uuid
+       * @description For property-wide costs; implied by unitId otherwise
+       */
+      propertyId?: string;
       /**
        * Format: date
        * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
@@ -3930,8 +3936,12 @@ export interface components {
       /** Format: uuid */
       id: string;
       /** Format: uuid */
-      unitId: string;
+      propertyId: string;
+      /** @description Null for property-wide costs */
+      unitId: string | null;
       bookingId: string | null;
+      /** @description Set when the cost came from a resolved maintenance ticket */
+      maintenanceTicketId: string | null;
       /** Format: date */
       incurredOn: string;
       category: components['schemas']['ExpenseCategory'];
@@ -13147,6 +13157,8 @@ export interface operations {
       query: {
         /** @description UUID identifier */
         unitId?: string;
+        /** @description UUID identifier */
+        propertyId?: string;
         /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
         from: string;
         /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */

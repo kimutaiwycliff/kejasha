@@ -43,6 +43,34 @@ export async function unitsById(tx: Tx, ids: string[]): Promise<Map<string, Unit
   );
 }
 
+export interface PropertyInfo {
+  id: string;
+  name: string;
+  kind: 'residential' | 'commercial' | 'mixed';
+  clientLandlordId: string;
+  archived: boolean;
+}
+
+export async function propertiesById(tx: Tx, ids: string[]): Promise<Map<string, PropertyInfo>> {
+  if (!ids.length) return new Map();
+  const rows = await tx
+    .select()
+    .from(pr)
+    .where(inArray(pr.id, [...new Set(ids)]));
+  return new Map(
+    rows.map((p) => [
+      p.id,
+      {
+        id: p.id,
+        name: p.name,
+        kind: p.kind,
+        clientLandlordId: p.clientLandlordId,
+        archived: p.archivedAt !== null,
+      },
+    ]),
+  );
+}
+
 export async function unitIdsInProperty(tx: Tx, propertyId: string): Promise<string[]> {
   const rows = await tx.select({ id: un.id }).from(un).where(eq(un.propertyId, propertyId));
   return rows.map((r) => r.id);

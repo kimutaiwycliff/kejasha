@@ -313,8 +313,13 @@ export const IcalSyncResult = z
 export const UnitExpense = z
   .object({
     id: z.uuid(),
-    unitId: z.uuid(),
+    propertyId: z.uuid(),
+    unitId: z.uuid().nullable().meta({ description: 'Null for property-wide costs' }),
     bookingId: z.uuid().nullable(),
+    maintenanceTicketId: z
+      .uuid()
+      .nullable()
+      .meta({ description: 'Set when the cost came from a resolved maintenance ticket' }),
     incurredOn: IsoDate,
     category: ExpenseCategory,
     amountCents: Cents,
@@ -327,16 +332,23 @@ export const UnitExpenseList = z
   .meta({ id: 'UnitExpenseList' });
 export const CreateExpenseBody = z
   .object({
-    unitId: IdInput,
+    unitId: IdInput.optional(),
+    propertyId: IdInput.optional().meta({
+      description: 'For property-wide costs; implied by unitId otherwise',
+    }),
     incurredOn: BusinessDateInput,
     category: ExpenseCategory,
     amountCents: Cents.min(1),
     description: TextInput(500).optional(),
     bookingId: IdInput.optional(),
   })
-  .meta({ id: 'CreateExpenseBody' });
+  .meta({
+    id: 'CreateExpenseBody',
+    description: 'unitId or propertyId (422 target_required / unit_property_mismatch)',
+  });
 export const ExpenseQuery = z.object({
   unitId: IdInput.optional(),
+  propertyId: IdInput.optional(),
   from: BusinessDateInput,
   to: BusinessDateInput,
 });

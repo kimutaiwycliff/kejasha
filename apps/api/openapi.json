@@ -2757,6 +2757,12 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
             "description": "UUID identifier"
           },
+          "propertyId": {
+            "description": "For property-wide costs; implied by unitId otherwise",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          },
           "incurredOn": {
             "type": "string",
             "format": "date",
@@ -2787,11 +2793,11 @@
           }
         },
         "required": [
-          "unitId",
           "incurredOn",
           "category",
           "amountCents"
-        ]
+        ],
+        "description": "unitId or propertyId (422 target_required / unit_property_mismatch)"
       },
       "FieldError": {
         "type": "object",
@@ -7665,10 +7671,23 @@
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
-          "unitId": {
+          "propertyId": {
             "type": "string",
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "unitId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for property-wide costs"
           },
           "bookingId": {
             "anyOf": [
@@ -7681,6 +7700,19 @@
                 "type": "null"
               }
             ]
+          },
+          "maintenanceTicketId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set when the cost came from a resolved maintenance ticket"
           },
           "incurredOn": {
             "type": "string",
@@ -7711,8 +7743,10 @@
         },
         "required": [
           "id",
+          "propertyId",
           "unitId",
           "bookingId",
+          "maintenanceTicketId",
           "incurredOn",
           "category",
           "amountCents",
@@ -20358,6 +20392,17 @@
             },
             "in": "query",
             "name": "unitId",
+            "required": false,
+            "description": "UUID identifier"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+            },
+            "in": "query",
+            "name": "propertyId",
             "required": false,
             "description": "UUID identifier"
           },

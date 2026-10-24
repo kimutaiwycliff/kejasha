@@ -15,4 +15,5 @@ export {
   owingBookingIdsByGuestPhone,
   type BookingForPayment,
 } from './lookups';
+export { recordUnitExpense, type UnitExpenseInput } from './service';
 export { shortStayRoutes, type ShortStayParts };
