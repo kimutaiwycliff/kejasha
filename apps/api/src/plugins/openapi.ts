@@ -46,6 +46,10 @@ export const openapiPlugin = fp(async (app: FastifyInstance) => {
           description: 'Maintenance tickets with photos; repair costs flow into unit expenses',
         },
         {
+          name: 'compliance',
+          description: 'KRA Monthly Rental Income, tenant PIN register, licences and permits',
+        },
+        {
           name: 'daraja',
           description: 'Safaricom callbacks (public, authenticated by the channel token)',
         },

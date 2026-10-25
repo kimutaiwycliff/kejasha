@@ -3,6 +3,8 @@ import type { TopicHandlers } from '@kejasha/jobs';
 import type { AppDeps } from '../deps';
 import { systemCtx } from '../lib/ctx';
 import { createLeasing } from '../modules/leasing';
+import { createCompliance } from '../modules/compliance';
+import { createIdentityService } from '../modules/identity';
 import { createPayments } from '../modules/payments';
 import { createShortStay } from '../modules/shortstay';
 
@@ -28,6 +30,13 @@ export const SCHEDULES = [
     tz: 'Africa/Nairobi',
   },
   {
+    id: 'compliance-daily',
+    queue: 'compliance',
+    topic: 'compliance.daily_run',
+    pattern: '0 7 * * *',
+    tz: 'Africa/Nairobi',
+  },
+  {
     id: 'ical-sync',
     queue: 'ical',
     topic: 'ical.sync_all',
@@ -44,11 +53,42 @@ export const SCHEDULES = [
 export function createJobHandlers(
   deps: AppDeps,
   log: JobLogger,
-): { invoicing: TopicHandlers; payments: TopicHandlers; ical: TopicHandlers } {
+): {
+  invoicing: TopicHandlers;
+  payments: TopicHandlers;
+  ical: TopicHandlers;
+  compliance: TopicHandlers;
+} {
   const leasing = createLeasing(deps);
   const payments = createPayments(deps);
   const shortStay = createShortStay(deps);
+  const identity = createIdentityService(deps, { orgCreated: [], memberRemoved: [] });
+  const compliance = createCompliance(deps, { staffContacts: identity.staffContacts });
   return {
+    compliance: {
+      // Licence expiry reminders and the MRI reminder on the 15th (deduped per recipient).
+      'compliance.daily_run': async () => {
+        const today = deps.clock.today();
+        const orgs = await deps.db.owner
+          .select({ id: schema.organization.id })
+          .from(schema.organization);
+        const failed: string[] = [];
+        for (const { id } of orgs) {
+          try {
+            const r = await compliance.reminders.runDaily(systemCtx(id), today);
+            if (r.licenceReminders || r.mriReminders)
+              log.info({ orgId: id, ...r }, 'compliance reminders');
+          } catch (err) {
+            failed.push(id);
+            log.error({ orgId: id, err }, 'compliance run failed for org');
+          }
+        }
+        if (failed.length)
+          throw new Error(
+            `Compliance run failed for ${failed.length} org(s): ${failed.join(', ')}`,
+          );
+      },
+    },
     ical: {
       // Read-only iCal import (ADR-010). Feed errors are recorded on the feed, not thrown.
       'ical.sync_all': async () => {

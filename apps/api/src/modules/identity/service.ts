@@ -339,6 +339,22 @@ export function createIdentityService(
       return new Map(rows.map((r) => [r.userId, r.role]));
     },
 
+    /** Contact details of members holding any of `roles` (reminders and alerts). */
+    async staffContacts(
+      orgId: string,
+      roles: Role[],
+    ): Promise<{ userId: string; name: string; email: string | null; phone: string | null }[]> {
+      const rows = await db.owner
+        .select({ m: schema.member, u: schema.user })
+        .from(schema.member)
+        .innerJoin(schema.user, eq(schema.user.id, schema.member.userId))
+        .where(and(eq(schema.member.organizationId, orgId), inArray(schema.member.role, roles)));
+      return rows.map(({ u }) => {
+        const dto = toUser(u);
+        return { userId: u.id, name: dto.name, email: dto.email, phone: dto.phone };
+      });
+    },
+
     async updateMemberRole(req: FastifyRequest, memberId: string, role: Role) {
       const orgId = req.actor!.orgId!;
       const target = await memberOf(orgId, memberId);

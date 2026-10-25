@@ -1860,6 +1860,144 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/compliance/mri': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** MRI (7.5% of residential rent received) per landlord for a month */
+    get: operations['getMriMonth'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/compliance/mri/{clientLandlordId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A landlord's MRI for a month, per tenant */
+    get: operations['getMriDetail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/compliance/mri/{clientLandlordId}/erits.csv': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** eRITS-ready CSV: tenant PIN, name, unit, rent received, tax */
+    get: operations['exportMriErits'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/compliance/mri/{clientLandlordId}/filings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mark a month filed with KRA (snapshots the figures) */
+    post: operations['fileMri'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/compliance/mri-filings/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Undo a filing mark (e.g. marked against the wrong month) */
+    delete: operations['deleteMriFiling'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/compliance/tenant-pins': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** KRA PINs of tenants with an active lease (missing first) */
+    get: operations['getTenantPinRegister'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/licences': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Licences and permits by expiry date */
+    get: operations['listLicences'];
+    put?: never;
+    /** Track a licence or permit (expiry reminders at 30, 7, 1 and 0 days) */
+    post: operations['createLicence'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/licences/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Stop tracking a licence (archived, no more reminders) */
+    delete: operations['archiveLicence'];
+    options?: never;
+    head?: never;
+    /** Edit or renew a licence */
+    patch: operations['updateLicence'];
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2925,6 +3063,77 @@ export interface components {
       costCents?: number;
       /** @description Keys from POST /v1/uploads with purpose maintenance_photo */
       photoKeys?: string[];
+    };
+    /** @description Snapshots the computed figures (409 already_filed) */
+    FileMriBodyInput: {
+      /** @description Calendar month, YYYY-MM */
+      period: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      filedOn: string;
+      /** @description KRA payment registration number */
+      kraReference?: string;
+    };
+    /** @enum {string} */
+    LicenceKindInput: 'tra_short_stay' | 'county_business_permit' | 'other';
+    /**
+     * @description expiring = within 30 days
+     * @enum {string}
+     */
+    LicenceStatusInput: 'valid' | 'expiring' | 'expired';
+    /** @description unitId or propertyId (422 target_required) */
+    CreateLicenceBodyInput: {
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      propertyId?: string;
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      unitId?: string;
+      kind: components['schemas']['LicenceKindInput'];
+      number?: string;
+      issuer?: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      issuedOn?: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      expiresOn: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      feeCents?: number;
+      /** @description Key from POST /v1/uploads (purpose licence_document) */
+      documentKey?: string;
+      notes?: string;
+    };
+    /** @description Renewal: set the new expiresOn (and document) */
+    UpdateLicenceBodyInput: {
+      number?: string | null;
+      issuer?: string | null;
+      issuedOn?: string | null;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+       * @example 2026-10-21
+       */
+      expiresOn?: string;
+      feeCents?: number | null;
+      documentKey?: string | null;
+      notes?: string | null;
     };
     FileLink: {
       key: string;
@@ -4423,6 +4632,190 @@ export interface components {
        */
       updatedAt: string;
       updates: components['schemas']['TicketUpdate'][];
+    };
+    /**
+     * @description Calendar-year residential rent received vs the KES 288,000–15,000,000 MRI band (above → normal income tax)
+     * @enum {string}
+     */
+    MriBand: 'below_threshold' | 'eligible' | 'above_threshold';
+    MriFiling: {
+      /** Format: uuid */
+      id: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      filedOn: string;
+      kraReference: string | null;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      rentCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      taxCents: number;
+      /**
+       * Format: int64
+       * @description Tax now computed minus tax filed (non-zero when receipts changed after filing)
+       */
+      differenceCents: number;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      createdAt: string;
+    };
+    MriLandlord: {
+      /** Format: uuid */
+      clientLandlordId: string;
+      name: string;
+      isSelf: boolean;
+      kraPin: string | null;
+      /**
+       * Format: int64
+       * @description Residential rent received in the month
+       */
+      rentCents: number;
+      /**
+       * Format: int64
+       * @description 7.5% of rentCents
+       */
+      taxCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      yearToDateRentCents: number;
+      band: components['schemas']['MriBand'];
+      /** @description Mixed-use properties are included; review them */
+      hasMixedProperties: boolean;
+      tenantsMissingPin: number;
+      filing: components['schemas']['MriFiling'] | null;
+    };
+    MriMonth: {
+      period: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      dueOn: string;
+      rateBps: number;
+      landlords: components['schemas']['MriLandlord'][];
+    };
+    MriLine: {
+      /** Format: uuid */
+      leaseId: string;
+      /** Format: uuid */
+      tenantId: string;
+      tenantName: string;
+      tenantKraPin: string | null;
+      unitCode: string;
+      propertyName: string;
+      /** @enum {string} */
+      propertyKind: 'residential' | 'mixed';
+      /**
+       * Format: int64
+       * @description Money received from this tenant in the month
+       */
+      receivedCents: number;
+      /**
+       * Format: int64
+       * @description Rent portion of it (deposits, service charges, utilities excluded)
+       */
+      rentCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      taxCents: number;
+    };
+    MriDetail: {
+      /** Format: uuid */
+      clientLandlordId: string;
+      name: string;
+      isSelf: boolean;
+      kraPin: string | null;
+      /**
+       * Format: int64
+       * @description Residential rent received in the month
+       */
+      rentCents: number;
+      /**
+       * Format: int64
+       * @description 7.5% of rentCents
+       */
+      taxCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      yearToDateRentCents: number;
+      band: components['schemas']['MriBand'];
+      /** @description Mixed-use properties are included; review them */
+      hasMixedProperties: boolean;
+      tenantsMissingPin: number;
+      filing: components['schemas']['MriFiling'] | null;
+      period: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      dueOn: string;
+      lines: components['schemas']['MriLine'][];
+    };
+    /** @description Tenants with an active lease, missing PINs first */
+    TenantPinRegister: {
+      total: number;
+      missing: number;
+      items: {
+        /** Format: uuid */
+        tenantId: string;
+        fullName: string;
+        kraPin: string | null;
+        unitCodes: string[];
+      }[];
+    };
+    /** @enum {string} */
+    LicenceKind: 'tra_short_stay' | 'county_business_permit' | 'other';
+    /**
+     * @description expiring = within 30 days
+     * @enum {string}
+     */
+    LicenceStatus: 'valid' | 'expiring' | 'expired';
+    Licence: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      propertyId: string;
+      propertyName: string;
+      unitId: string | null;
+      unitCode: string | null;
+      kind: components['schemas']['LicenceKind'];
+      number: string | null;
+      issuer: string | null;
+      issuedOn: string | null;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      expiresOn: string;
+      daysToExpiry: number;
+      status: components['schemas']['LicenceStatus'];
+      feeCents: number | null;
+      document: components['schemas']['FileLink'] | null;
+      notes: string | null;
+      archived: boolean;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      createdAt: string;
+    };
+    LicenceList: {
+      items: components['schemas']['Licence'][];
     };
   };
   responses: never;
@@ -14574,6 +14967,741 @@ export interface operations {
       };
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getMriMonth: {
+    parameters: {
+      query: {
+        /** @description Calendar month, YYYY-MM */
+        period: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MriMonth'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getMriDetail: {
+    parameters: {
+      query: {
+        /** @description Calendar month, YYYY-MM */
+        period: string;
+      };
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        clientLandlordId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MriDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  exportMriErits: {
+    parameters: {
+      query: {
+        /** @description Calendar month, YYYY-MM */
+        period: string;
+      };
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        clientLandlordId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description MRI lines for the month */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  fileMri: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        clientLandlordId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['FileMriBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MriDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  deleteMriFiling: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getTenantPinRegister: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TenantPinRegister'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listLicences: {
+    parameters: {
+      query?: {
+        status?: components['schemas']['LicenceStatusInput'];
+        /** @description UUID identifier */
+        propertyId?: string;
+        includeArchived?: 'true' | 'false';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LicenceList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  createLicence: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateLicenceBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Licence'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  archiveLicence: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  updateLicence: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateLicenceBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Licence'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
         headers: {
           [name: string]: unknown;
         };

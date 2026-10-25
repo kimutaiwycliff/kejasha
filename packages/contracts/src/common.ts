@@ -134,3 +134,8 @@ export function problemResponses<S extends ErrorStatus = never>(...statuses: S[]
     ProblemResponse
   >;
 }
+
+/** A `text/csv` download response (exports). */
+export function csvResponse(description: string) {
+  return { description, content: { 'text/csv': { schema: z.string() } } };
+}

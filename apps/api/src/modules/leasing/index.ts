@@ -20,8 +20,10 @@ export { leasingRoutes, type LeasingParts };
 export {
   leaseIdsByTenantPhone,
   leaseOnUnitAt,
+  leaseTaxInputs,
   leasesForMatching,
   sumOpen,
   tenantsById,
   type LeaseForMatching,
+  type LeaseTaxInputs,
 } from './lookups';

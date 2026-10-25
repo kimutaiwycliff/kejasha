@@ -1,10 +1,13 @@
 export {
   assignedPropertyIds,
+  landlords,
+  propertiesOf,
   propertiesById,
   shortStayUnitIds,
   unitIdByCode,
   unitIdsInProperty,
   unitsById,
+  type LandlordInfo,
   type PropertyInfo,
   type UnitInfo,
 } from './lookups';

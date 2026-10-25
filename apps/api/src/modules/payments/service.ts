@@ -499,3 +499,27 @@ export function createPaymentsService(deps: AppDeps) {
 }
 
 export type PaymentsService = ReturnType<typeof createPaymentsService>;
+
+/** Matched lease payments (money received) for MRI: one credit per payment, dated in Nairobi. */
+export async function leasePaymentCredits(tx: Tx) {
+  const rows = await tx
+    .select({
+      id: pm.id,
+      leaseId: pm.leaseId,
+      paidAt: pm.paidAt,
+      amountCents: pm.amountCents,
+      ref: pm.providerRef,
+    })
+    .from(pm)
+    .where(and(eq(pm.matchStatus, 'matched'), sql`${pm.leaseId} IS NOT NULL`));
+  return rows.map((r) => ({
+    leaseId: r.leaseId!,
+    credit: {
+      id: r.id,
+      on: time.nairobiDate(r.paidAt),
+      seq: `${r.paidAt.toISOString()}:${r.ref}`,
+      amountCents: r.amountCents,
+      received: true,
+    },
+  }));
+}

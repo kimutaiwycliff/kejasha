@@ -7,3 +7,4 @@ export * from './payments';
 export * from './platform';
 export * from './shortstay';
 export * from './maintenance';
+export * from './compliance';
