@@ -39,6 +39,7 @@ export function testEnv(): Record<string, string> {
     CREDENTIALS_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
     ICAL_ALLOW_PRIVATE_HOSTS: 'true',
     SYNC_LAG_SECONDS: '0',
+    BILLING_REQUIRED: 'false',
   };
 }
 

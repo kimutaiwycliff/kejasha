@@ -9,7 +9,7 @@ DBMATE  := pnpm exec dbmate --no-dump-schema --migrations-dir infra/migrations
 .PHONY: up down restart logs db-migrate db-rollback db-seed db-reset db-shell db-dump \
         dev-reset-limits dev-api dev-worker api-spec spec-check spec-lint client-gen \
         test test-unit test-int test-rls test-journeys test-contract test-e2e \
-        typecheck lint build build-image deploy rollback daraja-reregister
+        typecheck lint build build-image deploy rollback daraja-reregister operator-grant
 
 up: ## start postgres, redis, seaweedfs (S3), create buckets, apply migrations
 	$(COMPOSE) up -d --wait postgres redis seaweedfs
@@ -85,11 +85,13 @@ test-journeys:
 
 API_BASE ?= http://host.docker.internal:4000
 # signOut is excluded: fuzzing it would revoke the very token the run authenticates with.
+# startCheckout is excluded: it calls Paystack, and contract runs have no Paystack keys (503).
 test-contract: ## Schemathesis against a running API (make up, make db-seed, make dev-api first)
 	docker run --rm --add-host=host.docker.internal:host-gateway -v "$(CURDIR)/schemathesis.toml:/cfg/schemathesis.toml:ro" \
 	  schemathesis/schemathesis:stable --config-file /cfg/schemathesis.toml \
 	  run $(API_BASE)/openapi.json --url $(API_BASE) --checks all --max-examples 50 \
 	  --exclude-operation-id signOut \
+	  --exclude-operation-id startCheckout \
 	  $(if $(wildcard apps/api/.seed-token),-H "Authorization: Bearer $$(cat apps/api/.seed-token)",)
 
 test-e2e:
@@ -110,6 +112,9 @@ build-image:
 
 deploy rollback:
 	@echo "$@: arrives with B7 (hardening & launch)"
+
+operator-grant: ## grant Kejasha operator access: make operator-grant EMAIL=you@example.com [ARGS=--revoke]
+	pnpm --filter @kejasha/api exec tsx --env-file-if-exists=../../.env scripts/operator-grant.ts $(EMAIL) $(ARGS)
 
 daraja-reregister: ## re-register C2B URLs for every channel (after a domain change, ADR-016)
 	pnpm --filter @kejasha/api exec tsx --env-file-if-exists=../../.env scripts/daraja-reregister.ts

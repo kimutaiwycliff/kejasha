@@ -1,6 +1,6 @@
 # Phase B6 — Sync API, tenant portal, SaaS billing, operator
 
-> Status: **IN PROGRESS** · drafted 2026-10-25 · ADR-004, ADR-008, ADR-014, ADR-017
+> Status: **DONE** (pending CI) · drafted 2026-10-25 · ADR-004, ADR-008, ADR-014, ADR-017
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 > Shipped as two PRs: **B6a** (sync + tenant portal) and **B6b** (billing + operator).
 
@@ -48,25 +48,31 @@ ever blocking their reads; platform staff can support orgs through an audited op
   - A tenant never sees another tenant's data; leases on cancelled tenancies are hidden.
 
 ### SaaS billing (`subscriptions` module; Kejasha's own revenue, never rent — ADR-008)
-- `plan` table (operator-editable data, not code), seeded with **placeholder prices for the
-  owner to confirm in B7**:
-  - free: up to 3 units;
-  - landlord: per occupied long-term unit;
-  - host: per short-stay listing;
-  - agency: flat fee + per unit, white-label included.
-- `subscription` per org: `trialing → active → past_due → suspended` (or `cancelled`), with a
-  30-day trial from org creation and monthly periods.
-- `subscription_invoice` holds the amount computed at period end from usage (occupied units,
-  listings), using the core `subscriptions` pricing.
-- **Paystack:** checkout via `transaction/initialize`; the webhook (`charge.success`) is verified
-  by HMAC-SHA512 of the raw body and is idempotent by reference. Saved card authorizations are
-  charged automatically at renewal (`charge_authorization`); otherwise a pay link is emailed.
-  `packages/integrations/paystack` + a fake client in tests.
-- **Dunning** (daily job): invoice at period end, retry / remind on days 1, 3 and 7, then
-  `suspended` after a 7-day grace period.
-- **Gate plugin:** a suspended org's writes answer **402** `subscription_suspended`, except
-  billing, identity and sign-out routes. Reads always work. The plan's unit limit is checked
-  when units are created (402 `plan_limit`).
+- **Pricing (owner decision 2026-10-25: no free tier, affordable and competitive).** Global tools
+  charge about $1.50–3.50 (≈ KES 200–450) per unit per month; Kejasha prices well below that.
+  - **Landlord:** KES 100 per occupied long-term unit, minimum KES 500.
+  - **Host:** KES 500 per active short-stay listing, minimum KES 500.
+  - **Agency:** KES 3,000 base (white-label included) + KES 70 per occupied unit.
+  - Mixed portfolios pay per unit plus per listing. Prices live in the `plan` table (operator
+    editable, no deploy). The plan follows the org kind and can be changed by the operator.
+- **No free use.** A new org is `incomplete`: it may set up (org profile, client landlords,
+  properties, units, members) but every other write answers **402** `subscription_required`
+  until the first month is paid. Reads always work.
+- **Trials** exist only when an operator grants one to a specific org (`trialing` until a date).
+- **Lifecycle:** `incomplete → active → past_due → suspended`, or `trialing` (operator-granted)
+  and `cancelled`. Monthly periods, billed in advance from current usage (occupied units,
+  active listings), never below the plan minimum.
+- **Paystack:**
+  - Checkout via `transaction/initialize`.
+  - The webhook (`charge.success`) is verified by HMAC-SHA512 of the raw body and is
+    idempotent by reference.
+  - A saved card authorization is charged automatically at renewal (`charge_authorization`);
+    otherwise a pay link is emailed.
+  - Lives in `packages/integrations/paystack`, with a fake client in tests.
+- **Dunning** (daily job): at period end, invoice the next month; charge or remind on days 0, 1,
+  3 and 7 (`past_due`); after a 7-day grace period the org is `suspended`.
+- **Gate plugin:** `incomplete` and `suspended` orgs get 402 on writes except billing, identity
+  and setup routes; reads always work.
 
 ### Operator (platform staff)
 - `platform_operator` (user ids) granted by a CLI (`make operator-grant EMAIL=…`). It is not an
@@ -87,11 +93,11 @@ ever blocking their reads; platform staff can support orgs through an audited op
 - [x] Tenant portal: leases, statement, receipt PDF, pay (STK), tickets
 - [x] Tests: replay of 50 readings applies once; closed-ticket conflict rejected; caretaker scope + reset; portal isolation
 ### B6b — Billing & operator
-- [ ] Migration: plan (seeded placeholders), subscription, subscription_invoice, subscription_payment, platform_operator; RLS
-- [ ] Core pricing; Paystack client (+ fake); checkout, webhook, renewal/dunning job; gate plugin; plan limits
-- [ ] Operator auth mode, CLI grant, orgs/subscriptions/plans/audit endpoints, audited reads
-- [ ] Journey: trial → paid → lapsed → suspended (writes blocked, reads allowed) → paid → active
-- [ ] Spec + client regenerated; spec lint + Schemathesis green (both PRs)
+- [x] Migration: plan (seeded with the 2026-10-25 prices), subscription, subscription_invoice, subscription_payment, platform_operator; RLS
+- [x] Core pricing; Paystack client (+ fake); checkout, webhook, renewal/dunning job; gate plugin (incomplete/suspended)
+- [x] Operator auth mode, CLI grant, orgs/subscriptions/plans/audit endpoints, audited reads
+- [x] Journey: new org incomplete (setup only) → paid → active → lapsed → past_due → suspended (writes blocked, reads allowed) → paid → active
+- [x] Spec + client regenerated; spec lint + Schemathesis green (both PRs)
 
 ## Notes (2026-10-25)
 - **B6a:**
@@ -100,6 +106,22 @@ ever blocking their reads; platform staff can support orgs through an audited op
   - The push body has one array per record type, not a polymorphic list, so the generated
     Kotlin client stays simple.
   - Portal tickets have no photos yet (uploads are an org route).
+
+- **B6b:**
+  - Paystack runs through `FakePaystackClient` in tests (checkout, verify, saved-card charge).
+    Before launch it needs a live smoke test with Kejasha's own test keys (B7 checklist), like
+    Daraja.
+  - The webhook is re-verified with `GET /transaction/verify` before money is applied, so a
+    forged or replayed body cannot activate an account.
+  - Orgs that existed before migration 12 were set active for one month (none in production
+    yet).
+  - Demo seed orgs are active for a year.
+  - `BILLING_REQUIRED=false` is the shared test default; billing tests and the billing journey
+    turn enforcement on.
+  - Schemathesis accepts 402 as a business-state answer: the fuzzer can create and switch to an
+    unpaid org.
+  - Operator reads are cross-tenant with the owner role by design and are logged per request
+    (`operator_access_log`).
 
 ## Screens this phase must power (ADR-018)
 Android: caretaker offline shift, owner/host app, tenant pay. Web: billing/plan page, checkout

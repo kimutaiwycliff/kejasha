@@ -16,6 +16,7 @@ import { problemType } from './errors';
 import { registerModules } from './modules';
 import { errorsPlugin } from './plugins/errors';
 import { authPlugin } from './plugins/auth';
+import { billingGatePlugin } from './plugins/billing-gate';
 import { dateRangePlugin } from './plugins/date-range';
 import { idempotencyPlugin } from './plugins/idempotency';
 import { observabilityPlugin } from './plugins/observability';
@@ -77,6 +78,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   await app.register(securityPlugin, deps);
   // Before openapi: its onRoute hook stamps security onto each route schema.
   await app.register(authPlugin, deps);
+  await app.register(billingGatePlugin, deps);
   await app.register(dateRangePlugin);
   await app.register(openapiPlugin);
   await app.register(idempotencyPlugin, { db: deps.db });

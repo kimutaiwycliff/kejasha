@@ -7,10 +7,12 @@ import { complianceRoutes, createCompliance } from './compliance';
 import { createLeasing, leasingRoutes } from './leasing';
 import { createMaintenanceService, maintenanceRoutes } from './maintenance';
 import { createPayments, paymentsRoutes } from './payments';
+import { createOperatorService, operatorRoutes } from './operator';
 import { platformRoutes } from './platform';
 import { createPortalService, portalRoutes } from './portal';
 import { createReportingModule, reportingRoutes } from './reporting';
 import { createShortStay, shortStayRoutes } from './shortstay';
+import { createSubscriptionService, subscriptionRoutes } from './subscriptions';
 import { createSyncService, syncRoutes } from './sync';
 
 /**
@@ -34,6 +36,8 @@ export async function registerModules(app: FastifyInstance, deps: AppDeps): Prom
     },
   });
   orgCreated.push(accounts.onOrgCreated);
+  const billing = createSubscriptionService(deps, { staffContacts: identity.staffContacts });
+  orgCreated.push((tx, o) => billing.onOrgCreated(tx, o));
   memberRemoved.push(accounts.onMemberRemoved);
 
   await app.register(platformRoutes, deps);
@@ -56,4 +60,6 @@ export async function registerModules(app: FastifyInstance, deps: AppDeps): Prom
     deps,
   );
   await app.register(portalRoutes(createPortalService(deps)), deps);
+  await app.register(subscriptionRoutes(billing), deps);
+  await app.register(operatorRoutes(createOperatorService(deps)), deps);
 }

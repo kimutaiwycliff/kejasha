@@ -11,3 +11,4 @@ export * from './compliance';
 export * from './reporting';
 export * from './sync';
 export * from './portal';
+export * from './billing';

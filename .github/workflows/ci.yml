@@ -111,6 +111,7 @@ jobs:
             schemathesis/schemathesis:stable --config-file /cfg/schemathesis.toml \
             run http://localhost:4000/openapi.json --url http://localhost:4000 --checks all --max-examples 100 \
             --exclude-operation-id signOut \
+            --exclude-operation-id startCheckout \
             -H "Authorization: Bearer $(cat apps/api/.seed-token)"
       - if: failure()
         run: cat /tmp/api.log

@@ -7,6 +7,7 @@ max_response_time = 20
 
 [checks.positive_data_acceptance]
 # A schema-valid request may still be refused for business reasons: 422 means "valid shape, but not
-# allowed in the current state" (archived record, cross-field rule, unknown cursor). 400 is reserved
+# allowed in the current state" (archived record, cross-field rule, unknown cursor); 402 means the
+# org's subscription is unpaid (e.g. the fuzzer created a fresh org and switched to it). 400 is reserved
 # for requests that violate the schema, so it stays a failure here.
-expected-statuses = ["2xx", "401", "403", "404", "409", "422", "429"]
+expected-statuses = ["2xx", "401", "402", "403", "404", "409", "422", "429"]

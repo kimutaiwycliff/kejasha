@@ -4,6 +4,7 @@
  *   make db-seed   → prints the demo logins and a bearer token (used by `make test-contract`)
  */
 import { writeFileSync } from 'node:fs';
+import { eq, schema } from '@kejasha/db';
 import { buildApp } from '../src/app';
 import { closeDeps, createDeps } from '../src/runtime';
 
@@ -56,10 +57,22 @@ async function ensureOrg(
   const existing = me.body.memberships.find((m) => m.orgName === name);
   if (existing) {
     await call('POST', '/v1/identity/active-org', token, { orgId: existing.orgId });
+    await activate(existing.orgId);
     return false;
   }
-  await call('POST', '/v1/orgs', token, { name, kind, county });
+  const created = await call<{ id: string }>('POST', '/v1/orgs', token, { name, kind, county });
+  await activate(created.body.id);
   return true;
+}
+
+/** Demo orgs are paid up for a year so local writes are not blocked by billing (B6b). */
+async function activate(orgId: string) {
+  const today = new Date().toISOString().slice(0, 10);
+  const end = new Date(Date.now() + 365 * 86_400_000).toISOString().slice(0, 10);
+  await deps.db.owner
+    .update(schema.subscription)
+    .set({ status: 'active', currentPeriodStart: today, currentPeriodEnd: end })
+    .where(eq(schema.subscription.orgId, orgId));
 }
 
 async function property(token: string, body: object, units: object) {

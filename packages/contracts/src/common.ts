@@ -102,11 +102,12 @@ export function pageOf<T extends z.ZodType>(item: T, name: string) {
     .meta({ id: `${name}Page` });
 }
 
-type ErrorStatus = 400 | 401 | 403 | 404 | 405 | 409 | 422 | 429 | 500 | 503;
+type ErrorStatus = 400 | 401 | 402 | 403 | 404 | 405 | 409 | 422 | 429 | 500 | 503;
 
 const ERROR_DESCRIPTIONS: Record<ErrorStatus, string> = {
   400: 'Validation failed',
   401: 'Not signed in',
+  402: 'Subscription required (unpaid or suspended)',
   403: 'Not allowed',
   404: 'Not found',
   405: 'Method not allowed',

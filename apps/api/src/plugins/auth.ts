@@ -12,12 +12,14 @@ import { toFetchHeaders } from '../lib/headers';
  * - Routes under /v1 default to `auth: 'org'` (signed in with an active org). Public routes must
  *   opt out with `config: { auth: 'public' }`; `'user'` needs a session but no org.
  * - `minRole` enforces owner > manager > agent > caretaker.
+ * - `'operator'` routes need a Kejasha platform operator (`platform_operator`); every such request
+ *   is written to `operator_access_log` (cross-tenant access is always accounted for).
  * - `viewer` members are denied by default: only routes with `allowViewer` admit them, and in an
  *   agency they must be scoped to one client landlord (`member_scope`).
  * - Each route's OpenAPI `security` and 401/403 responses are derived from this config, so the
  *   documentation cannot drift from what is enforced.
  */
-export type AuthMode = 'public' | 'user' | 'org';
+export type AuthMode = 'public' | 'user' | 'org' | 'operator';
 
 declare module 'fastify' {
   interface FastifyContextConfig {
@@ -106,6 +108,23 @@ export const authPlugin = fp(async (app: FastifyInstance, deps: AppDeps) => {
       role,
     };
 
+    if (mode === 'operator') {
+      const [op] = await db.owner
+        .select({ userId: schema.platformOperator.userId })
+        .from(schema.platformOperator)
+        .where(eq(schema.platformOperator.userId, result.user.id));
+      if (!op)
+        throw new AppError(403, 'not_an_operator', 'Forbidden', 'This is for Kejasha staff only.');
+      const params = (req.params ?? {}) as { orgId?: string };
+      await db.owner.insert(schema.operatorAccessLog).values({
+        userId: result.user.id,
+        method: req.method,
+        route: req.routeOptions.url ?? req.url,
+        targetOrg: params.orgId && /^[0-9a-f-]{36}$/i.test(params.orgId) ? params.orgId : null,
+        requestId: req.id,
+      });
+      return;
+    }
     if (mode === 'org' && !req.actor.orgId) {
       throw new AppError(
         403,

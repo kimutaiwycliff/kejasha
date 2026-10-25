@@ -6,3 +6,4 @@ export * from './platform';
 export * from './portfolio';
 export * from './shortstay';
 export * from './operations';
+export * from './billing';

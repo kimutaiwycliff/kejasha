@@ -65,6 +65,14 @@ export const openapiPlugin = fp(async (app: FastifyInstance) => {
             'Tenant portal: tenancies by verified phone, statements, receipts, STK pay, repairs',
         },
         {
+          name: 'billing',
+          description: "Kejasha's own subscription: plan, usage, Paystack checkout and webhook",
+        },
+        {
+          name: 'operator',
+          description: 'Kejasha staff console (platform operators only; every request is logged)',
+        },
+        {
           name: 'daraja',
           description: 'Safaricom callbacks (public, authenticated by the channel token)',
         },

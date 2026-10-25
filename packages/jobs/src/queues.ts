@@ -6,6 +6,7 @@ export const QUEUES = [
   'payments',
   'ical',
   'compliance',
+  'billing',
   'reports',
 ] as const;
 export type QueueName = (typeof QUEUES)[number];

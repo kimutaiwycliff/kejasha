@@ -3,6 +3,7 @@ import type { Config } from '@kejasha/config';
 import type { Db } from '@kejasha/db';
 import type { SmsSender } from '@kejasha/integrations-africastalking';
 import type { DarajaClient } from '@kejasha/integrations-daraja';
+import type { PaystackClient } from '@kejasha/integrations-paystack';
 import type { Storage } from '@kejasha/integrations-storage';
 import type { Redis } from 'ioredis';
 
@@ -23,5 +24,7 @@ export interface AppDeps {
   auth: Auth;
   sms: SmsSender;
   daraja: DarajaClient;
+  /** Kejasha's own subscription billing (never rent). */
+  paystack: PaystackClient;
   version: string;
 }
