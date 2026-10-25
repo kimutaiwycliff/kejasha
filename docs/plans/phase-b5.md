@@ -1,6 +1,6 @@
 # Phase B5 — Operations, compliance, reporting
 
-> Status: **IN PROGRESS** · drafted 2026-10-21 · ADR-005, ADR-006, ADR-008, ADR-014, ADR-015
+> Status: **DONE** (pending CI) · drafted 2026-10-21 · ADR-005, ADR-006, ADR-008, ADR-014, ADR-015
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 
 ## Goal
@@ -77,25 +77,55 @@ can read their portfolio without being able to change anything.
 
 ## Tasks
 ### B5.1 Schema & core
-- [ ] Migration: maintenance_ticket, maintenance_update, cash_collection, mri_filing, licence,
+- [x] Migration: maintenance_ticket, maintenance_update, cash_collection, mri_filing, licence,
       member_scope; unit_expense.maintenance_ticket_id; reporting views; RLS + fixtures
-- [ ] Core `tax`: MRI rent attribution, 7.5%, band, due date + tests (hand-calculated fixtures)
+- [x] Core `tax`: MRI rent attribution, 7.5%, band, due date + tests (hand-calculated fixtures)
 ### B5.2 Maintenance & cash
-- [ ] Tickets CRUD + updates with photos, caretaker scoping, cost → unit expense
-- [ ] Cash collections: submit (caretaker), list, confirm (→ payment + allocation), reject
+- [x] Tickets CRUD + updates with photos, caretaker scoping, cost → unit expense
+- [x] Cash collections: submit (caretaker), list, confirm (→ payment + allocation), reject
 ### B5.3 Compliance
-- [ ] MRI monthly view per landlord, year band, mark filed (snapshot), eRITS CSV, PIN register
-- [ ] Licences CRUD; daily compliance job (licence + MRI reminders)
+- [x] MRI monthly view per landlord, year band, mark filed (snapshot), eRITS CSV, PIN register
+- [x] Licences CRUD; daily compliance job (licence + MRI reminders)
 ### B5.4 Reporting & statements
-- [ ] Rent roll, collections, occupancy; CSV exports
-- [ ] Owner statement JSON + PDF (white-label); owner dashboard
-- [ ] Viewer role: auth gate, member scope, scoped reporting
+- [x] Rent roll, collections, occupancy; CSV exports
+- [x] Owner statement JSON + PDF (white-label); owner dashboard
+- [x] Viewer role: auth gate, member scope, scoped reporting
 ### B5.5 Proof
-- [ ] Integration tests per module; RLS fixtures for every new table
-- [ ] Journeys: owner statement totals = ledger; MRI matches a hand-calculated fixture; cash
+- [x] Integration tests per module; RLS fixtures for every new table
+- [x] Journeys: owner statement totals = ledger; MRI matches a hand-calculated fixture; cash
       proposal → confirm → ledger; ticket with cost → expense in P&L; viewer sees only their
       landlord and cannot write
-- [ ] Spec + client regenerated; spec lint + Schemathesis green
+- [x] Spec + client regenerated; spec lint + Schemathesis green
+
+## Notes (2026-10-25)
+- **MRI is computed live** from all of an org's leases on each request. That is fine for v1
+  portfolios; B7 load testing decides whether a monthly materialisation is needed. Advance rent
+  counts when received. A month's figure can therefore move once later invoices absorb an
+  advance; filings snapshot what was sent to KRA and show the difference.
+- **Band** uses calendar-year rent received up to the end of the month (year to date), not a
+  full-year projection.
+- **Management fee** is computed on the statement, never posted (ADR-008). A flat fee applies
+  even in a month with no income, so net can be negative.
+- **Statements are not cached** (late receipts and reversals change them); receipts still are.
+- **Branding:** `brandColor` on the org (stored in `org_profile.branding`) heads statement PDFs.
+  A logo is a fast-follow (it needs an upload purpose and image embedding).
+- **Viewer role:** a fifth role ranked below caretaker. The auth plugin refuses viewers on every
+  org route without `allowViewer` (deny by default). Scoped via `PUT /v1/members/{id}/scope`; a
+  role change or removal clears the scope.
+- **Exports** read lists in full up to 50,000 rows; payments/tickets are filtered by date after
+  listing (no date filter on those list endpoints yet).
+- **Fix:** the compliance commit's gate skipped `pnpm typecheck`, so a test type error was
+  committed locally and fixed in the next commit before any push. The gate now always includes
+  typecheck.
+- **Schemathesis (local):** every B5 operation passed. Failures:
+  - ST112 on two older operations: the known client-side timing artifact (35 s and 68 s
+    client-side vs 34 ms and 64 ms server-side).
+  - One stateful ST202 false positive: link inference copied a null `leaseId` from an
+    unmatched payment into `/v1/leases/None/credit-notes`, and the API rightly answered 400.
+    Schemathesis has no switch for inference alone; it needs leftover unmatched payments, so a
+    fresh CI database is unlikely to hit it. Watched.
+- Tenant-reported tickets, iCal for caretakers and caretaker property scoping for short-stay
+  arrive with the tenant portal and sync API (B6).
 
 ## Screens this phase must power (ADR-018)
 Tickets board/detail · cash confirmations · MRI monthly view + export · licences · reports hub ·
