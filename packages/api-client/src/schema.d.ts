@@ -175,6 +175,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/identity/email/verify': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Confirm an email address with the token from the verification email */
+    post: operations['verifyEmail'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/identity/email/verification': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Send the verification email again (no-op when already verified) */
+    post: operations['resendEmailVerification'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/identity/me': {
     parameters: {
       query?: never;
@@ -2560,6 +2594,10 @@ export interface components {
     ResetPasswordBodyInput: {
       token: string;
       newPassword: string;
+    };
+    /** @description Token from the verification email link */
+    VerifyEmailBodyInput: {
+      token: string;
     };
     SetActiveOrgBodyInput: {
       /**
@@ -6754,6 +6792,138 @@ export interface operations {
       };
       /** @description Unprocessable */
       422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Rate limited */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  verifyEmail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['VerifyEmailBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Rate limited */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  resendEmailVerification: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Accepted'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
         headers: {
           [name: string]: unknown;
         };

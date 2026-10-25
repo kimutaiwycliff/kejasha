@@ -5,7 +5,7 @@ import type { SmsSender } from '@kejasha/integrations-africastalking';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { bearer, organization, phoneNumber } from 'better-auth/plugins';
-import { phoneEmail } from './phone-email';
+import { isPhoneEmail, phoneEmail } from './phone-email';
 import { ac, accessRoles } from './roles';
 
 export interface AuthDeps {
@@ -14,6 +14,8 @@ export interface AuthDeps {
   sms: SmsSender;
   /** Called with the reset token; the identity module enqueues the email (outbox). */
   onPasswordReset: (data: { email: string; name: string; token: string }) => Promise<void>;
+  /** Called with an email-verification token (sign-up or resend); the email goes via the outbox. */
+  onVerifyEmail: (data: { email: string; name: string; token: string }) => Promise<void>;
 }
 
 export const OTP_TTL_SECONDS = 300;
@@ -57,6 +59,16 @@ export function createAuth(deps: AuthDeps) {
         : {}),
     },
     session: { expiresIn: SESSION_TTL_SECONDS, updateAge: 60 * 60 * 24 },
+    // Email invitations are accepted only by verified addresses (security review H1).
+    emailVerification: {
+      sendOnSignUp: true,
+      autoSignInAfterVerification: false,
+      expiresIn: 60 * 60 * 24,
+      sendVerificationEmail: async ({ user, token }) => {
+        if (isPhoneEmail(user.email)) return;
+        await deps.onVerifyEmail({ email: user.email, name: user.name, token });
+      },
+    },
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 10,

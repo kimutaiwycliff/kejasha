@@ -30,6 +30,18 @@ export function passwordResetEmail(
   };
 }
 
+export function verifyEmailMessage(
+  config: Config,
+  d: { email: string; name: string; token: string },
+): EmailPayload {
+  const url = `${config.domain.webUrl}/verify-email?token=${encodeURIComponent(d.token)}`;
+  return {
+    to: d.email,
+    subject: 'Confirm your email for Kejasha',
+    text: `Hi ${d.name},\n\nConfirm this email address (valid for 24 hours):\n${url}\n\nIf you did not sign up for Kejasha, ignore this email.`,
+  };
+}
+
 export function invitationEmail(
   config: Config,
   d: { to: string; orgName: string; inviterName: string; role: string; invitationId: string },

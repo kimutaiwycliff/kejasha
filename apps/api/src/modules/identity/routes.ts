@@ -10,6 +10,7 @@ import {
   Me,
   MemberList,
   SetMemberScopeBody,
+  VerifyEmailBody,
   Org,
   OtpRequestBody,
   OtpRequestResult,
@@ -167,6 +168,42 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
         await hitLimit(deps.redis, `reset:ip:${req.ip}`, 10, 900);
         await identity.resetPassword(req.body);
         return reply.status(204).send();
+      },
+    );
+
+    app.post(
+      '/v1/identity/email/verify',
+      {
+        config: { auth: 'public', idempotency: 'off' },
+        schema: {
+          operationId: 'verifyEmail',
+          tags,
+          summary: 'Confirm an email address with the token from the verification email',
+          body: VerifyEmailBody,
+          response: { 204: NoContent, ...problemResponses(401, 429) },
+        },
+      },
+      async (req, reply) => {
+        await hitLimit(deps.redis, `verify:ip:${req.ip}`, 20, 900);
+        await identity.verifyEmail(req.body.token);
+        return reply.status(204).send();
+      },
+    );
+    app.post(
+      '/v1/identity/email/verification',
+      {
+        config: { auth: 'user' },
+        schema: {
+          operationId: 'resendEmailVerification',
+          tags,
+          summary: 'Send the verification email again (no-op when already verified)',
+          response: { 202: Accepted, ...problemResponses(429) },
+        },
+      },
+      async (req, reply) => {
+        await hitLimit(deps.redis, `verify:user:${req.actor!.userId}`, 3, 3600);
+        await identity.resendVerification(req);
+        return reply.status(202).send({ ok: true });
       },
     );
 

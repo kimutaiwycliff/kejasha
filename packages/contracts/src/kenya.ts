@@ -93,4 +93,6 @@ export const Email = z
   .email()
   .max(254)
   .refine((v) => (v.split('@')[0] ?? '').length <= 64, 'The part before @ is too long')
+  // Reserved for phone-only accounts (packages/auth phone-email.ts): only phone OTP may create them.
+  .refine((v) => !v.toLowerCase().endsWith('@phone.invalid'), 'This address is reserved')
   .transform((v) => v.toLowerCase());

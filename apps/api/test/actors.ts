@@ -95,3 +95,18 @@ export async function addPhoneMember(
   expect(accepted.statusCode, accepted.body).toBe(200);
   return { ...member, phone };
 }
+
+/** Read the verification link from the queued email and confirm the address (H1: invites need it). */
+export async function verifyEmailOf(api: TestApi, email: string) {
+  const { rows } = await api.deps.db.pools.owner.query(
+    `SELECT payload FROM outbox WHERE topic = 'notifications.email' AND payload->>'to' = $1
+       AND payload->>'subject' LIKE 'Confirm your email%' ORDER BY created_at DESC LIMIT 1`,
+    [email.toLowerCase()],
+  );
+  const token = /token=([^\s]+)/.exec(rows[0]?.payload?.text ?? '')?.[1];
+  expect(token, `no verification email for ${email}`).toBeTruthy();
+  const res = await client(api).post('/v1/identity/email/verify', {
+    token: decodeURIComponent(token!),
+  });
+  expect(res.statusCode, res.body).toBe(204);
+}

@@ -8,6 +8,7 @@ import {
   signUp,
   uniqueEmail,
   uniquePhone,
+  verifyEmailOf,
 } from './actors';
 import { buildTestApi, type TestApi } from './helpers';
 
@@ -179,6 +180,41 @@ describe('organizations', () => {
 });
 
 describe('members and invitations', () => {
+  it('phone invitations cannot be taken over with a placeholder email sign-up (review H1)', async () => {
+    const o = await ownerWithOrg(api, 'agency');
+    const phone = uniquePhone();
+    const e164 = `+254${phone.slice(1)}`;
+    const inv = await client(api, o.token).post('/v1/invitations', { phone, role: 'manager' });
+    expect(inv.statusCode, inv.body).toBe(201);
+    const placeholder = `${e164.slice(1)}@phone.invalid`;
+    // The reserved address cannot be registered by email, nor invited by email.
+    const squat = await client(api).post('/v1/identity/sign-up/email', {
+      name: 'Attacker',
+      email: placeholder,
+      password: 'correct-horse-battery',
+    });
+    expect(squat.statusCode).toBe(400);
+    expect(
+      (await client(api, o.token).post('/v1/invitations', { email: placeholder, role: 'owner' }))
+        .statusCode,
+    ).toBe(400);
+    // Someone else's unverified account sees nothing and cannot accept.
+    const other = await signUp(api, 'Other');
+    expect(
+      (await client(api, other.token).get('/v1/identity/me/invitations')).json().items,
+    ).toEqual([]);
+    expect(
+      (await client(api, other.token).post(`/v1/invitations/${inv.json().id}/accept`)).statusCode,
+    ).toBeGreaterThanOrEqual(403);
+    // The real owner of the phone signs in by OTP and accepts.
+    const real = await signInByOtp(api, phone);
+    const mine = (await client(api, real.token).get('/v1/identity/me/invitations')).json().items;
+    expect(mine.map((i: { id: string }) => i.id)).toEqual([inv.json().id]);
+    expect(
+      (await client(api, real.token).post(`/v1/invitations/${inv.json().id}/accept`)).statusCode,
+    ).toBe(200);
+  });
+
   it('invites by email; the invitee signs up and accepts', async () => {
     const o = await ownerWithOrg(api, 'agency');
     const email = uniqueEmail('manager');
@@ -198,6 +234,13 @@ describe('members and invitations', () => {
     ]);
 
     const invitee = await signUp(api, 'Manager', email);
+    // Unverified: the invitation is neither listed nor acceptable (security review H1).
+    expect(
+      (await client(api, invitee.token).get('/v1/identity/me/invitations')).json().items,
+    ).toEqual([]);
+    const early = await client(api, invitee.token).post(`/v1/invitations/${inv.json().id}/accept`);
+    expect(early.json().code).toBe('email_not_verified');
+    await verifyEmailOf(api, email);
     const mine = await client(api, invitee.token).get('/v1/identity/me/invitations');
     expect(mine.json().items).toEqual([
       expect.objectContaining({ id: inv.json().id, orgName: 'Test Org' }),
@@ -320,7 +363,7 @@ describe('password reset', () => {
       (await client(api).post('/v1/identity/password/forgot', { email: s.email })).statusCode,
     ).toBe(202);
     const { rows } = await api.deps.db.pools.owner.query(
-      "SELECT payload FROM outbox WHERE topic = 'notifications.email' AND payload->>'to' = $1",
+      "SELECT payload FROM outbox WHERE topic = 'notifications.email' AND payload->>'to' = $1 AND payload->>'subject' LIKE 'Reset%'",
       [s.email],
     );
     expect(rows).toHaveLength(1);

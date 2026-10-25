@@ -521,12 +521,46 @@ export function createIdentityService(
       return rows.map((r) => toInvitation(r.i, r.orgName));
     },
 
-    async myInvitations(req: FastifyRequest) {
-      const user = await db.owner
-        .select({ email: schema.user.email })
+    /**
+     * Invitations a user may see and accept (security review H1): a phone invitation only by the
+     * user who verified that phone; an email invitation only by a verified email address.
+     */
+    async invitationAddress(userId: string): Promise<string | null> {
+      const [u] = await db.owner.select().from(schema.user).where(eq(schema.user.id, userId));
+      if (!u) return null;
+      if (isPhoneEmail(u.email))
+        return u.phoneNumberVerified &&
+          u.phoneNumber &&
+          phoneEmail(u.phoneNumber) === u.email.toLowerCase()
+          ? u.email.toLowerCase()
+          : null;
+      return u.emailVerified ? u.email.toLowerCase() : null;
+    },
+
+    async verifyEmail(token: string) {
+      try {
+        await auth.api.verifyEmail({ query: { token } });
+      } catch {
+        throw new AppError(
+          401,
+          'invalid_token',
+          'Unauthorized',
+          'The link is invalid or has expired.',
+        );
+      }
+    },
+
+    async resendVerification(req: FastifyRequest) {
+      const [u] = await db.owner
+        .select()
         .from(schema.user)
         .where(eq(schema.user.id, req.actor!.userId));
-      const email = user[0]?.email;
+      if (!u || u.emailVerified || isPhoneEmail(u.email)) return;
+      await auth.api.sendVerificationEmail({ body: { email: u.email } });
+    },
+
+    async myInvitations(req: FastifyRequest) {
+      const email = await this.invitationAddress(req.actor!.userId);
       if (!email) return [];
       const rows = await db.owner
         .select({ i: schema.invitation, orgName: schema.organization.name })
@@ -565,6 +599,21 @@ export function createIdentityService(
     },
 
     async acceptInvitation(req: FastifyRequest, invitationId: string) {
+      const address = await this.invitationAddress(req.actor!.userId);
+      const [inv] = await db.owner
+        .select({ email: schema.invitation.email })
+        .from(schema.invitation)
+        .where(eq(schema.invitation.id, invitationId));
+      if (!inv || !address || inv.email.toLowerCase() !== address) {
+        if (inv && !address)
+          throw new AppError(
+            403,
+            'email_not_verified',
+            'Forbidden',
+            'Confirm your email (or sign in with the invited phone) before accepting.',
+          );
+        throw AppError.notFound('Invitation');
+      }
       const accepted = await auth.api.acceptInvitation({
         body: { invitationId },
         headers: toFetchHeaders(req),

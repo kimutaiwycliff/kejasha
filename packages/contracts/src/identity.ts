@@ -48,6 +48,9 @@ export const ForgotPasswordBody = z.object({ email: Email }).meta({ id: 'ForgotP
 export const ResetPasswordBody = z
   .object({ token: SafeString(512).min(1), newPassword: Password })
   .meta({ id: 'ResetPasswordBody' });
+export const VerifyEmailBody = z
+  .object({ token: SafeString(512).min(1) })
+  .meta({ id: 'VerifyEmailBody', description: 'Token from the verification email link' });
 export const Accepted = z.object({ ok: z.literal(true) }).meta({ id: 'Accepted' });
 
 export const Membership = z

@@ -211,6 +211,21 @@
           "newPassword"
         ]
       },
+      "VerifyEmailBodyInput": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^[^\\u0000]*$"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "description": "Token from the verification email link"
+      },
       "SetActiveOrgBodyInput": {
         "type": "object",
         "properties": {
@@ -13455,6 +13470,160 @@
           },
           "422": {
             "description": "Unprocessable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/identity/email/verify": {
+      "post": {
+        "operationId": "verifyEmail",
+        "summary": "Confirm an email address with the token from the verification email",
+        "tags": [
+          "identity"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailBodyInput"
+              }
+            }
+          }
+        },
+        "security": [],
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/identity/email/verification": {
+      "post": {
+        "operationId": "resendEmailVerification",
+        "summary": "Send the verification email again (no-op when already verified)",
+        "tags": [
+          "identity"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Accepted"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not signed in",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
             "content": {
               "application/problem+json": {
                 "schema": {
