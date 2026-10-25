@@ -2,8 +2,12 @@
  * Read-only iCal import (ADR-010): fetch with ETag/Last-Modified and parse RFC 5545 VEVENTs into
  * stays. Feed URLs come from users, so fetching is guarded against SSRF (private addresses).
  */
+import { lookup as dnsLookup } from 'node:dns';
 import { lookup } from 'node:dns/promises';
-import { isIP } from 'node:net';
+import { request as httpRequest } from 'node:http';
+import { request as httpsRequest } from 'node:https';
+import { Readable } from 'node:stream';
+import { BlockList, isIP, type LookupFunction } from 'node:net';
 
 export interface IcalEvent {
   uid: string;
@@ -98,30 +102,59 @@ export function parseIcal(text: string): IcalEvent[] {
 
 // ── Fetching (SSRF-guarded) ────────────────────────────────────────────────────────────────
 
-function isPrivate(address: string): boolean {
-  if (isIP(address) === 4) {
-    const [a, b] = address.split('.').map(Number) as [number, number];
-    return (
-      a === 10 ||
-      a === 127 ||
-      a === 0 ||
-      (a === 169 && b === 254) ||
-      (a === 172 && b >= 16 && b <= 31) ||
-      (a === 192 && b === 168) ||
-      (a === 100 && b >= 64 && b <= 127)
-    );
-  }
-  const v6 = address.toLowerCase();
-  return (
-    v6 === '::1' ||
-    v6 === '::' ||
-    v6.startsWith('fc') ||
-    v6.startsWith('fd') ||
-    v6.startsWith('fe80') ||
-    v6.startsWith('::ffff:127.') ||
-    v6.startsWith('::ffff:10.') ||
-    v6.startsWith('::ffff:192.168.')
-  );
+// Special-purpose ranges (RFC 6890 and friends): never fetch from these (review M1).
+const BLOCKED = new BlockList();
+for (const [net, prefix] of [
+  ['0.0.0.0', 8],
+  ['10.0.0.0', 8],
+  ['100.64.0.0', 10],
+  ['127.0.0.0', 8],
+  ['169.254.0.0', 16],
+  ['172.16.0.0', 12],
+  ['192.0.0.0', 24],
+  ['192.0.2.0', 24],
+  ['192.88.99.0', 24],
+  ['192.168.0.0', 16],
+  ['198.18.0.0', 15],
+  ['198.51.100.0', 24],
+  ['203.0.113.0', 24],
+  ['224.0.0.0', 4],
+  ['240.0.0.0', 4],
+] as const)
+  BLOCKED.addSubnet(net, prefix, 'ipv4');
+for (const [net, prefix] of [
+  ['::', 128],
+  ['::1', 128],
+  ['100::', 64],
+  ['2001:db8::', 32],
+  ['2002::', 16],
+  ['fc00::', 7],
+  ['fe80::', 10],
+  ['fec0::', 10],
+  ['ff00::', 8],
+] as const)
+  BLOCKED.addSubnet(net, prefix, 'ipv6');
+
+/** IPv4 hidden in an IPv6 address (IPv4-mapped ::ffff:a.b.c.d / ::ffff:xxxx:xxxx, NAT64 64:ff9b::/96). */
+function embeddedV4(v6: string): string | null {
+  const m = /^(?:::ffff:|64:ff9b::)(.+)$/i.exec(v6);
+  if (!m) return null;
+  const tail = m[1]!;
+  if (isIP(tail) === 4) return tail;
+  const hex = /^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i.exec(tail);
+  if (!hex) return null;
+  const hi = parseInt(hex[1]!, 16);
+  const lo = parseInt(hex[2]!, 16);
+  return `${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`;
+}
+
+export function isPrivate(address: string): boolean {
+  const kind = isIP(address);
+  if (kind === 4) return BLOCKED.check(address, 'ipv4');
+  if (kind !== 6) return true;
+  const v4 = embeddedV4(address);
+  if (v4) return BLOCKED.check(v4, 'ipv4');
+  return BLOCKED.check(address, 'ipv6');
 }
 
 export async function assertPublicUrl(
@@ -176,6 +209,64 @@ async function readCapped(res: Response): Promise<string> {
   return new TextDecoder().decode(Buffer.concat(chunks));
 }
 
+/**
+ * DNS lookup that validates every resolved address before the socket connects: the connection
+ * uses exactly the address that was checked, so a rebinding DNS answer cannot slip a private IP in
+ * between check and connect (review M1).
+ */
+function guardedLookup(allowPrivate: boolean): LookupFunction {
+  return (hostname, options, callback) => {
+    dnsLookup(hostname, { all: true }, (err, addresses) => {
+      if (err) return callback(err, '', 4);
+      if (!allowPrivate && addresses.some((a) => isPrivate(a.address)))
+        return callback(
+          new IcalError('forbidden_address', 'Feed URLs must point to the public internet.'),
+          '',
+          4,
+        );
+      if ((options as { all?: boolean }).all)
+        return (callback as unknown as (e: null, a: typeof addresses) => void)(null, addresses);
+      const first = addresses[0];
+      if (!first)
+        return callback(new IcalError('unreachable', `Cannot resolve ${hostname}.`), '', 4);
+      callback(null, first.address, first.family);
+    });
+  };
+}
+
+/** GET over node:http(s) with the guarded lookup; no redirects followed, 20 s timeout. */
+function pinnedGet(
+  url: string,
+  headers: Record<string, string>,
+  allowPrivate: boolean,
+): Promise<Response> {
+  const u = new URL(url);
+  const send = u.protocol === 'https:' ? httpsRequest : httpRequest;
+  return new Promise((resolve, reject) => {
+    const req = send(
+      u,
+      { method: 'GET', headers, lookup: guardedLookup(allowPrivate), timeout: 20_000 },
+      (res) => {
+        const h = new Headers();
+        for (const [k, v] of Object.entries(res.headers))
+          if (v !== undefined) h.set(k, Array.isArray(v) ? v.join(', ') : String(v));
+        const status = res.statusCode && res.statusCode >= 200 ? res.statusCode : 502;
+        const body =
+          status === 204 || status === 304
+            ? null
+            : (Readable.toWeb(res) as ReadableStream<Uint8Array>);
+        if (!body) res.resume();
+        resolve(new Response(body, { status, headers: h }));
+      },
+    );
+    req.on('timeout', () =>
+      req.destroy(new IcalError('timeout', 'The feed took too long to answer.')),
+    );
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 export async function fetchFeed(
   url: string,
   cache: { etag?: string | null; lastModified?: string | null },
@@ -186,11 +277,9 @@ export async function fetchFeed(
   if (cache.etag) headers['If-None-Match'] = cache.etag;
   if (cache.lastModified) headers['If-Modified-Since'] = cache.lastModified;
   // No redirects: a public URL must not bounce us to an internal one.
-  const res = await (opts.fetch ?? fetch)(url, {
-    headers,
-    redirect: 'manual',
-    signal: AbortSignal.timeout(20_000),
-  });
+  const res = opts.fetch
+    ? await opts.fetch(url, { headers, redirect: 'manual', signal: AbortSignal.timeout(20_000) })
+    : await pinnedGet(url, headers, Boolean(opts.allowPrivate));
   if (res.status === 304)
     return {
       notModified: true,

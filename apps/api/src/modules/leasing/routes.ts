@@ -53,6 +53,7 @@ import {
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import type { AppDeps } from '../../deps';
 import { ctxOf } from '../../lib/ctx';
+import { hitLimit } from '../../lib/rate-limit';
 import type { InvoiceOps } from './invoice-ops';
 import type { MeterService } from './meters';
 import type { LeasingOperations } from './operations';
@@ -74,7 +75,7 @@ export function leasingRoutes({
   ops,
   invoices,
 }: LeasingParts): FastifyPluginAsyncZod<AppDeps> {
-  return async (app) => {
+  return async (app, deps) => {
     const tags = ['leasing'];
     const agent = { minRole: 'agent' as const };
     const manager = { minRole: 'manager' as const };
@@ -602,7 +603,10 @@ export function leasingRoutes({
           response: { 201: UploadTicket, ...problemResponses(503) },
         },
       },
-      async (req, reply) => reply.status(201).send(await ops.createUpload(ctxOf(req), req.body)),
+      async (req, reply) => {
+        await hitLimit(deps.redis, `upload:user:${req.actor!.userId}`, 200, 3600);
+        return reply.status(201).send(await ops.createUpload(ctxOf(req), req.body));
+      },
     );
   };
 }

@@ -16,6 +16,7 @@ describe('loadConfig', () => {
       NODE_ENV: 'production',
       APP_DOMAIN: domain,
       BETTER_AUTH_SECRET: 'x'.repeat(32),
+      DARAJA_CALLBACK_IPS: '196.201.214.200',
     });
     expect(c.domain.apiUrl).toBe(`https://api.${domain}`);
     expect(c.domain.webUrl).toBe(`https://app.${domain}`);
@@ -58,8 +59,14 @@ describe('loadConfig', () => {
       NODE_ENV: 'production',
       APP_DOMAIN: domain,
       BETTER_AUTH_SECRET: 'x'.repeat(32),
+      DARAJA_CALLBACK_IPS: '196.201.214.200',
     };
     expect(() => loadConfig({ ...prod, TRUST_PROXY: 'true' })).toThrow(/TRUST_PROXY/);
+    // Daraja callbacks: production must list source IPs or explicitly accept any (review M7).
+    expect(() => loadConfig({ ...prod, DARAJA_CALLBACK_IPS: '' })).toThrow(/DARAJA_CALLBACK_IPS/);
+    expect(() =>
+      loadConfig({ ...prod, DARAJA_CALLBACK_IPS: '', DARAJA_ALLOW_ANY_CALLBACK_IP: 'true' }),
+    ).not.toThrow();
     expect(loadConfig({ ...prod, TRUST_PROXY: '173.245.48.0/20,127.0.0.1' }).api.trustProxy).toBe(
       '173.245.48.0/20,127.0.0.1',
     );

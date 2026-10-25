@@ -16,9 +16,18 @@ export const securityPlugin = fp(async (app: FastifyInstance, deps: AppDeps) => 
     exposedHeaders: ['x-request-id', 'idempotent-replayed'],
   });
   await app.register(helmet, {
-    // Scalar at /docs needs inline scripts/styles from its own bundle.
+    // Set per response below: strict for the API, none for Scalar's own bundle at /docs.
     contentSecurityPolicy: false,
     crossOriginResourcePolicy: { policy: 'same-site' },
+  });
+  // The API serves JSON, PDFs and CSV only: nothing may run, frame or load from them (review L4).
+  app.addHook('onSend', async (req, reply, payload) => {
+    if (!req.url.startsWith('/docs'))
+      reply.header(
+        'content-security-policy',
+        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+      );
+    return payload;
   });
   await app.register(rateLimit, {
     global: false,

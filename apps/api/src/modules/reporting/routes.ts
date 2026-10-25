@@ -21,6 +21,7 @@ import { z } from 'zod';
 import type { AppDeps } from '../../deps';
 import { sendCsv } from '../../lib/csv';
 import { ctxOf } from '../../lib/ctx';
+import { hitLimit } from '../../lib/rate-limit';
 import type { ExportCsv } from './exports';
 import type { Reporting } from './service';
 
@@ -40,7 +41,7 @@ export function reportingRoutes({
   statementPdf,
   exportCsv,
 }: ReportingParts): FastifyPluginAsyncZod<AppDeps> {
-  return async (app) => {
+  return async (app, deps) => {
     const tags = ['reporting'];
     const owners = { minRole: 'manager' as const, allowViewer: true };
 
@@ -172,6 +173,7 @@ export function reportingRoutes({
         },
       },
       async (req, reply) => {
+        await hitLimit(deps.redis, `export:user:${req.actor!.userId}`, 60, 3600);
         const out = await exportCsv(ctxOf(req), req.params.dataset, req.query);
         return sendCsv(reply, out.filename, out.body);
       },

@@ -23,7 +23,13 @@ export interface Storage {
   configured: boolean;
   ping(): Promise<void>;
   /** Presigned PUT the client uploads to directly (bytes never pass through the API). */
-  presignPut(key: string, contentType: string, expiresInSeconds?: number): Promise<string>;
+  /** `contentLength` is signed: the upload must be exactly that size (review M3). */
+  presignPut(
+    key: string,
+    contentType: string,
+    expiresInSeconds?: number,
+    contentLength?: number,
+  ): Promise<string>;
   presignGet(key: string, expiresInSeconds?: number): Promise<string>;
   getObject(key: string): Promise<Uint8Array | null>;
   putObject(key: string, body: Uint8Array, contentType: string): Promise<void>;
@@ -52,12 +58,18 @@ export function createStorage(cfg: StorageConfig): Storage {
     async ping() {
       await client.send(new HeadBucketCommand({ Bucket: cfg.bucketFiles }));
     },
-    presignPut(key, contentType, expiresInSeconds = 900) {
+    presignPut(key, contentType, expiresInSeconds = 900, contentLength) {
       return getSignedUrl(
         client,
-        new PutObjectCommand({ Bucket: cfg.bucketFiles, Key: key, ContentType: contentType }),
+        new PutObjectCommand({
+          Bucket: cfg.bucketFiles,
+          Key: key,
+          ContentType: contentType,
+          ...(contentLength !== undefined ? { ContentLength: contentLength } : {}),
+        }),
         {
           expiresIn: expiresInSeconds,
+          signableHeaders: new Set(['content-type', 'content-length']),
         },
       );
     },

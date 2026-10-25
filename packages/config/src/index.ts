@@ -60,6 +60,11 @@ const EnvSchema = z.object({
   DARAJA_ENV: z.enum(['sandbox', 'production']).default('sandbox'),
   // Optional allowlist of Safaricom callback source IPs (comma-separated). Empty = accept any.
   DARAJA_CALLBACK_IPS: csv,
+  // Production must name Safaricom's callback IPs, or explicitly accept any source (review M7).
+  DARAJA_ALLOW_ANY_CALLBACK_IP: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
   // Off only in tests that are not about billing: unpaid orgs may then write. Refused in production.
   BILLING_REQUIRED: z
     .enum(['true', 'false'])
@@ -166,6 +171,10 @@ export function loadConfig(source: Record<string, string | undefined> = process.
     if (e.ICAL_ALLOW_PRIVATE_HOSTS)
       missing.push('ICAL_ALLOW_PRIVATE_HOSTS: must be false in production');
     if (!e.BILLING_REQUIRED) missing.push('BILLING_REQUIRED: must be true in production');
+    if (!e.DARAJA_CALLBACK_IPS.length && !e.DARAJA_ALLOW_ANY_CALLBACK_IP)
+      missing.push(
+        'DARAJA_CALLBACK_IPS: list Safaricom callback IPs (or set DARAJA_ALLOW_ANY_CALLBACK_IP=true)',
+      );
     if (e.TRUST_PROXY === 'true')
       missing.push('TRUST_PROXY: must be a hop count or CIDRs in production, not true');
     if (!e.BETTER_AUTH_SECRET || e.BETTER_AUTH_SECRET.length < 32) {

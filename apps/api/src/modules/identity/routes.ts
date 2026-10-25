@@ -28,6 +28,9 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { AppDeps } from '../../deps';
 import { hitLimit } from '../../lib/rate-limit';
+
+/** OTP SMS sent per day across the platform (SMS-pumping guard); raise with real traffic. */
+const OTP_DAILY_CAP = 5_000;
 import type { IdentityService } from './service';
 
 const NoContent = z.undefined();
@@ -40,7 +43,7 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
     app.post(
       '/v1/identity/sign-up/email',
       {
-        config: { auth: 'public' },
+        config: { auth: 'public', idempotency: 'off' },
         schema: {
           operationId: 'signUpEmail',
           tags,
@@ -58,7 +61,7 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
     app.post(
       '/v1/identity/sign-in/email',
       {
-        config: { auth: 'public' },
+        config: { auth: 'public', idempotency: 'off' },
         schema: {
           operationId: 'signInEmail',
           tags,
@@ -78,7 +81,7 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
     app.post(
       '/v1/identity/otp/request',
       {
-        config: { auth: 'public' },
+        config: { auth: 'public', idempotency: 'off' },
         schema: {
           operationId: 'requestPhoneOtp',
           tags,
@@ -91,6 +94,13 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
       async (req, reply) => {
         await hitLimit(deps.redis, `otp:phone:${req.body.phone}`, 5, 900);
         await hitLimit(deps.redis, `otp:ip:${req.ip}`, 30, 900);
+        // Platform-wide SMS budget against SMS pumping (review M2).
+        await hitLimit(
+          deps.redis,
+          `otp:global:${new Date().toISOString().slice(0, 10)}`,
+          OTP_DAILY_CAP,
+          86_400,
+        );
         await identity.requestOtp(req, req.body.phone);
         return reply.status(202).send({ expiresInSeconds: OTP_TTL_SECONDS });
       },
@@ -99,7 +109,7 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
     app.post(
       '/v1/identity/otp/verify',
       {
-        config: { auth: 'public' },
+        config: { auth: 'public', idempotency: 'off' },
         schema: {
           operationId: 'verifyPhoneOtp',
           tags,
@@ -111,6 +121,7 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
       },
       async (req, reply) => {
         await hitLimit(deps.redis, `otp-verify:phone:${req.body.phone}`, 10, 900);
+        await hitLimit(deps.redis, `otp-verify:ip:${req.ip}`, 30, 900);
         return identity.verifyOtp(req, reply, req.body);
       },
     );
@@ -135,7 +146,7 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
     app.post(
       '/v1/identity/password/forgot',
       {
-        config: { auth: 'public' },
+        config: { auth: 'public', idempotency: 'off' },
         schema: {
           operationId: 'forgotPassword',
           tags,
@@ -146,6 +157,7 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
         },
       },
       async (req, reply) => {
+        await hitLimit(deps.redis, `forgot:ip:${req.ip}`, 10, 3600);
         await hitLimit(deps.redis, `forgot:email:${req.body.email}`, 3, 3600);
         await identity.forgotPassword(req.body.email);
         return reply.status(202).send({ ok: true });
@@ -155,7 +167,7 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
     app.post(
       '/v1/identity/password/reset',
       {
-        config: { auth: 'public' },
+        config: { auth: 'public', idempotency: 'off' },
         schema: {
           operationId: 'resetPassword',
           tags,
@@ -285,6 +297,7 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
     app.get(
       '/v1/members',
       {
+        config: { minRole: 'manager' },
         schema: {
           operationId: 'listMembers',
           tags,

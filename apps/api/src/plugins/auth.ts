@@ -36,6 +36,15 @@ declare module 'fastify' {
 
 const SECURED = [{ bearerAuth: [] }, { cookieAuth: [] }];
 
+function originOf(referer: string | undefined): string | undefined {
+  if (!referer) return undefined;
+  try {
+    return new URL(referer).origin;
+  } catch {
+    return 'invalid';
+  }
+}
+
 function modeOf(url: string | undefined, configured: AuthMode | undefined): AuthMode {
   if (configured) return configured;
   return url?.startsWith('/v1/') ? 'org' : 'public';
@@ -77,6 +86,17 @@ export const authPlugin = fp(async (app: FastifyInstance, deps: AppDeps) => {
     const mode = modeOf(req.routeOptions.url, req.routeOptions.config.auth);
     if (mode === 'public') return;
 
+    // CSRF (review M5): a cookie-authenticated write must come from a trusted origin. Bearer
+    // clients (Android) send no cookie; browsers always send Origin on cross-site writes.
+    if (
+      !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+      !req.headers.authorization &&
+      req.headers.cookie
+    ) {
+      const origin = req.headers.origin ?? originOf(req.headers.referer);
+      if (origin && !deps.config.domain.trustedOrigins.includes(origin))
+        throw new AppError(403, 'origin_not_allowed', 'Forbidden', 'Cross-site request refused.');
+    }
     const result = await auth.api.getSession({ headers: toFetchHeaders(req) });
     if (!result) {
       throw new AppError(
@@ -113,8 +133,17 @@ export const authPlugin = fp(async (app: FastifyInstance, deps: AppDeps) => {
         .select({ userId: schema.platformOperator.userId })
         .from(schema.platformOperator)
         .where(eq(schema.platformOperator.userId, result.user.id));
-      if (!op)
+      if (!op) {
+        // Denied attempts are accounted for too (review L2).
+        await db.owner.insert(schema.operatorAccessLog).values({
+          userId: result.user.id,
+          method: `DENIED ${req.method}`,
+          route: req.routeOptions.url ?? req.url,
+          targetOrg: null,
+          requestId: req.id,
+        });
         throw new AppError(403, 'not_an_operator', 'Forbidden', 'This is for Kejasha staff only.');
+      }
       const params = (req.params ?? {}) as { orgId?: string };
       await db.owner.insert(schema.operatorAccessLog).values({
         userId: result.user.id,

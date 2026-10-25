@@ -225,7 +225,7 @@ export function createLeasingOperations(deps: AppDeps) {
       const expiresIn = 900;
       return {
         key,
-        uploadUrl: await storage.presignPut(key, body.contentType, expiresIn),
+        uploadUrl: await storage.presignPut(key, body.contentType, expiresIn, body.sizeBytes),
         method: 'PUT' as const,
         headers: { 'content-type': body.contentType },
         expiresAt: new Date(clock.now().getTime() + expiresIn * 1000).toISOString(),
