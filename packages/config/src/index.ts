@@ -60,6 +60,8 @@ const EnvSchema = z.object({
   DARAJA_ENV: z.enum(['sandbox', 'production']).default('sandbox'),
   // Optional allowlist of Safaricom callback source IPs (comma-separated). Empty = accept any.
   DARAJA_CALLBACK_IPS: csv,
+  // Sync pull stays this far behind now() so rows of still-open transactions are not skipped.
+  SYNC_LAG_SECONDS: z.coerce.number().int().min(0).max(300).default(10),
   // Tests only: let iCal feeds point at local servers. Refused in production (SSRF guard).
   ICAL_ALLOW_PRIVATE_HOSTS: z
     .enum(['true', 'false'])
@@ -112,6 +114,7 @@ export interface Config {
   };
   daraja: { env: 'sandbox' | 'production'; callbackIps: string[] };
   ical: { allowPrivateHosts: boolean };
+  sync: { lagSeconds: number };
   paystack: { secretKey: string | undefined; publicKey: string | undefined };
   cronSecret: string | undefined;
   observability: { glitchtipDsn: string | undefined; otlpEndpoint: string | undefined };
@@ -194,6 +197,7 @@ export function loadConfig(source: Record<string, string | undefined> = process.
     },
     daraja: { env: e.DARAJA_ENV, callbackIps: e.DARAJA_CALLBACK_IPS },
     ical: { allowPrivateHosts: e.ICAL_ALLOW_PRIVATE_HOSTS },
+    sync: { lagSeconds: e.SYNC_LAG_SECONDS },
     paystack: { secretKey: e.PAYSTACK_SECRET_KEY, publicKey: e.PAYSTACK_PUBLIC_KEY },
     cronSecret: e.CRON_SECRET,
     observability: { glitchtipDsn: e.GLITCHTIP_DSN, otlpEndpoint: e.OTEL_EXPORTER_OTLP_ENDPOINT },

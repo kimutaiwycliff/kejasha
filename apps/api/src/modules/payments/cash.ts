@@ -78,7 +78,8 @@ export function createCashCollections(deps: AppDeps) {
   }
 
   return {
-    async submit(ctx: Ctx, body: z.infer<typeof CreateCashCollectionBody>) {
+    /** `id` lets offline clients (sync push) choose the record id. */
+    async submit(ctx: Ctx, body: z.infer<typeof CreateCashCollectionBody>, id?: string) {
       const target = targetOf(body);
       if (!target)
         throw AppError.unprocessable(
@@ -102,7 +103,7 @@ export function createCashCollections(deps: AppDeps) {
         const [row] = await tx
           .insert(cc)
           .values({
-            id: uuidv7(),
+            id: id ?? uuidv7(),
             orgId: ctx.orgId,
             leaseId: target.leaseId ?? null,
             bookingId: target.bookingId ?? null,

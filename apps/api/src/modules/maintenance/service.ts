@@ -202,7 +202,8 @@ export function createMaintenanceService(deps: AppDeps, members: MaintenanceDeps
       return inTenant(db, ctx, async (tx) => detail(tx, await load(tx, ctx, id)));
     },
 
-    async create(ctx: Ctx, body: z.infer<typeof CreateTicketBody>) {
+    /** `ticketId` lets offline clients (sync push) choose the record id. */
+    async create(ctx: Ctx, body: z.infer<typeof CreateTicketBody>, ticketId?: string) {
       if (!body.unitId && !body.propertyId)
         throw AppError.unprocessable('target_required', 'Send a unitId or a propertyId.');
       if (body.photoKeys?.length) assertUploadKeys(ctx, PHOTO, body.photoKeys);
@@ -225,7 +226,7 @@ export function createMaintenanceService(deps: AppDeps, members: MaintenanceDeps
         if (body.tenantId && !(await leasing.tenantsById(tx, [body.tenantId])).has(body.tenantId))
           throw AppError.notFound('Tenant');
 
-        const id = uuidv7();
+        const id = ticketId ?? uuidv7();
         const [row] = await tx
           .insert(mt)
           .values({
@@ -294,7 +295,12 @@ export function createMaintenanceService(deps: AppDeps, members: MaintenanceDeps
     },
 
     /** Notes, photos, cost and status changes — the ticket's timeline. */
-    async addUpdate(ctx: Ctx, id: string, body: z.infer<typeof AddTicketUpdateBody>) {
+    async addUpdate(
+      ctx: Ctx,
+      id: string,
+      body: z.infer<typeof AddTicketUpdateBody>,
+      updateId?: string,
+    ) {
       if (!body.note && !body.status && body.costCents === undefined && !body.photoKeys?.length)
         throw AppError.unprocessable('empty_update', 'Send a note, status, cost or photos.');
       if (body.photoKeys?.length) assertUploadKeys(ctx, PHOTO, body.photoKeys);
@@ -328,7 +334,7 @@ export function createMaintenanceService(deps: AppDeps, members: MaintenanceDeps
           ? await tx.update(mt).set(set).where(eq(mt.id, id)).returning()
           : [row];
         await tx.insert(mu).values({
-          id: uuidv7(),
+          id: updateId ?? uuidv7(),
           orgId: ctx.orgId,
           ticketId: id,
           authorId: ctx.userId ?? null,
