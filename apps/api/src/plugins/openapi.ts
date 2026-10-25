@@ -42,6 +42,19 @@ export const openapiPlugin = fp(async (app: FastifyInstance) => {
             'Rates, quotes, guests, bookings, calendar & blocks, read-only iCal import, unit expenses, profit',
         },
         {
+          name: 'maintenance',
+          description: 'Maintenance tickets with photos; repair costs flow into unit expenses',
+        },
+        {
+          name: 'compliance',
+          description: 'KRA Monthly Rental Income, tenant PIN register, licences and permits',
+        },
+        {
+          name: 'reporting',
+          description:
+            'Owner dashboard and statements, rent roll, collections, occupancy, CSV exports (read-only owners allowed)',
+        },
+        {
           name: 'daraja',
           description: 'Safaricom callbacks (public, authenticated by the channel token)',
         },

@@ -9,6 +9,8 @@ export interface Actor {
   sessionId: string;
   orgId?: string | undefined;
   role?: Role | undefined;
+  /** Viewers scoped to one client landlord see only that landlord's figures. */
+  scope?: string | undefined;
 }
 
 declare module 'fastify' {

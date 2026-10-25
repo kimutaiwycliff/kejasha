@@ -1,9 +1,15 @@
 export {
   assignedPropertyIds,
+  landlords,
+  propertiesOf,
+  propertiesById,
   shortStayUnitIds,
   unitIdByCode,
   unitIdsInProperty,
   unitsById,
+  unitsOfProperties,
+  type LandlordInfo,
+  type PropertyInfo,
   type UnitInfo,
 } from './lookups';
 export { accountsRoutes } from './routes';

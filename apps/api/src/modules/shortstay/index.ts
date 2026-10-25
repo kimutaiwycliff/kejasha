@@ -15,4 +15,11 @@ export {
   owingBookingIdsByGuestPhone,
   type BookingForPayment,
 } from './lookups';
+export {
+  expenseIdsByTicket,
+  expensesIn,
+  recordUnitExpense,
+  setTicketExpense,
+  type UnitExpenseInput,
+} from './service';
 export { shortStayRoutes, type ShortStayParts };

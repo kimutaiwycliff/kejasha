@@ -58,6 +58,9 @@ export const BusinessDateInput = z.iso.date().meta({
 });
 export const Timestamp = z.iso.datetime({ offset: true }).meta({ description: 'RFC 3339 instant' });
 
+/** A stored file with a short-lived download link (empty when storage is not configured). */
+export const FileLink = z.object({ key: z.string(), url: z.string() }).meta({ id: 'FileLink' });
+
 export const FieldError = z
   .object({
     path: z.string().meta({ description: 'Dotted path to the offending field, e.g. body.phone' }),
@@ -130,4 +133,9 @@ export function problemResponses<S extends ErrorStatus = never>(...statuses: S[]
     S | 400 | 500,
     ProblemResponse
   >;
+}
+
+/** A `text/csv` download response (exports). */
+export function csvResponse(description: string) {
+  return { description, content: { 'text/csv': { schema: z.string() } } };
 }

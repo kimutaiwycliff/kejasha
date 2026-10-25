@@ -80,6 +80,20 @@ describe('meta, docs and errors', () => {
     });
   });
 
+  it('renders router rejections (overlong path parameter) as problem+json', async () => {
+    const res = await api.app.inject({
+      method: 'GET',
+      url: `/v1/meters/${'x'.repeat(500)}/readings`,
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.headers['content-type']).toMatch(/application\/problem\+json/);
+    expect(res.json()).toMatchObject({
+      status: 400,
+      code: 'path_too_long',
+      requestId: expect.any(String),
+    });
+  });
+
   it('answers 405 with Allow for a wrong method on a real path', async () => {
     const res = await api.app.inject({ method: 'POST', url: '/v1/health?x=1' });
     expect(res.statusCode).toBe(405);

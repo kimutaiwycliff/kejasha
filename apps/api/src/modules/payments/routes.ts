@@ -1,5 +1,9 @@
 import {
   AllocatePaymentBody,
+  CashCollection,
+  CashCollectionPage,
+  CashCollectionQuery,
+  CreateCashCollectionBody,
   ChannelTokenParam,
   CreateChannelBody,
   DarajaAck,
@@ -27,6 +31,7 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { AppDeps } from '../../deps';
 import { ctxOf } from '../../lib/ctx';
+import type { CashCollections } from './cash';
 import type { ChannelService } from './channels';
 import type { DarajaFlows } from './daraja-flows';
 import type { Imports } from './imports';
@@ -39,6 +44,7 @@ export interface PaymentsParts {
   daraja: DarajaFlows;
   imports: Imports;
   receipts: Receipts;
+  cash: CashCollections;
 }
 
 export function paymentsRoutes({
@@ -47,6 +53,7 @@ export function paymentsRoutes({
   daraja,
   imports,
   receipts,
+  cash,
 }: PaymentsParts): FastifyPluginAsyncZod<AppDeps> {
   return async (app) => {
     const tags = ['payments'];
@@ -348,6 +355,80 @@ export function paymentsRoutes({
       async (req) => imports.getImport(ctxOf(req), req.params.id),
     );
 
+    // ── Cash collected by caretakers (ledger only on confirmation) ─────────────────────────
+    const caretaker = { minRole: 'caretaker' as const };
+    app.get(
+      '/v1/cash-collections',
+      {
+        config: caretaker,
+        schema: {
+          operationId: 'listCashCollections',
+          tags,
+          summary: 'Cash entries, newest first (caretakers: their own)',
+          querystring: CashCollectionQuery,
+          response: { 200: CashCollectionPage, ...problemResponses(422) },
+        },
+      },
+      async (req) => cash.list(ctxOf(req), req.query),
+    );
+    app.post(
+      '/v1/cash-collections',
+      {
+        config: caretaker,
+        schema: {
+          operationId: 'submitCashCollection',
+          tags,
+          summary: 'Log cash received from a tenant or guest (awaits confirmation)',
+          body: CreateCashCollectionBody,
+          response: { 201: CashCollection, ...problemResponses(404, 422) },
+        },
+      },
+      async (req, reply) => reply.status(201).send(await cash.submit(ctxOf(req), req.body)),
+    );
+    app.get(
+      '/v1/cash-collections/:id',
+      {
+        config: caretaker,
+        schema: {
+          operationId: 'getCashCollection',
+          tags,
+          summary: 'A cash entry',
+          params: IdParam,
+          response: { 200: CashCollection, ...problemResponses(404) },
+        },
+      },
+      async (req) => cash.get(ctxOf(req), req.params.id),
+    );
+    app.post(
+      '/v1/cash-collections/:id/confirm',
+      {
+        config: manager,
+        schema: {
+          operationId: 'confirmCashCollection',
+          tags,
+          summary: 'Accept the cash: records and allocates a cash payment with a receipt',
+          params: IdParam,
+          response: { 200: CashCollection, ...problemResponses(404, 409, 422) },
+        },
+      },
+      async (req) => cash.confirm(ctxOf(req), req.params.id),
+    );
+    app.post(
+      '/v1/cash-collections/:id/reject',
+      {
+        config: manager,
+        schema: {
+          operationId: 'rejectCashCollection',
+          tags,
+          summary: 'Refuse the cash entry (nothing is booked)',
+          params: IdParam,
+          body: ReasonBody,
+          response: { 200: CashCollection, ...problemResponses(404, 409) },
+        },
+      },
+      async (req) => cash.reject(ctxOf(req), req.params.id, req.body.reason),
+    );
+
     // ── Daraja callbacks (public; gated by the channel token) ─────────────────────────────
     const cbSchema = (operationId: string, summary: string) => ({
       operationId,
@@ -357,6 +438,7 @@ export function paymentsRoutes({
       body: DarajaCallbackBody,
       response: { 200: DarajaAck, ...problemResponses(403, 404) },
     });
+
     app.post(
       '/v1/payments/daraja/:channelToken/c2b/validation',
       {

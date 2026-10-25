@@ -9,6 +9,7 @@ import {
   InvitationList,
   Me,
   MemberList,
+  SetMemberScopeBody,
   Org,
   OtpRequestBody,
   OtpRequestResult,
@@ -217,6 +218,7 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
     app.get(
       '/v1/org',
       {
+        config: { allowViewer: true },
         schema: {
           operationId: 'getOrg',
           tags,
@@ -271,6 +273,25 @@ export function identityRoutes(identity: IdentityService): FastifyPluginAsyncZod
       },
       async (req) => {
         await identity.updateMemberRole(req, req.params.id, req.body.role);
+        return { items: await identity.listMembers(req) };
+      },
+    );
+
+    app.put(
+      '/v1/members/:id/scope',
+      {
+        config: { minRole: 'manager' },
+        schema: {
+          operationId: 'setMemberScope',
+          tags,
+          summary: "Limit a read-only member to one landlord's figures",
+          params: IdParam,
+          body: SetMemberScopeBody,
+          response: { 200: MemberList, ...problemResponses(404, 422) },
+        },
+      },
+      async (req) => {
+        await identity.setMemberScope(req, req.params.id, req.body.clientLandlordId);
         return { items: await identity.listMembers(req) };
       },
     );

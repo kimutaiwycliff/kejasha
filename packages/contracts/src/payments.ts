@@ -3,6 +3,7 @@ import {
   BusinessDateInput,
   Cents,
   CursorQuery,
+  FileLink,
   IdInput,
   pageOf,
   RequiredTextInput,
@@ -256,3 +257,46 @@ export const DarajaAck = z
 export const ChannelTokenParam = z.object({
   channelToken: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/),
 });
+
+// ── Cash collected by caretakers ──────────────────────────────────────────────────────────────
+export const CashCollectionStatus = z
+  .enum(['pending', 'confirmed', 'rejected'])
+  .meta({ id: 'CashCollectionStatus' });
+export const CashCollection = z
+  .object({
+    id: z.uuid(),
+    leaseId: z.uuid().nullable(),
+    bookingId: z.uuid().nullable(),
+    unitCode: z.string().nullable(),
+    payerName: z.string().nullable(),
+    amountCents: Cents,
+    receivedOn: z.iso.date(),
+    note: z.string().nullable(),
+    receipt: FileLink.nullable(),
+    status: CashCollectionStatus,
+    submittedBy: z.uuid(),
+    decidedBy: z.uuid().nullable(),
+    decidedAt: Timestamp.nullable(),
+    rejectReason: z.string().nullable(),
+    paymentId: z.uuid().nullable().meta({ description: 'The payment recorded on confirmation' }),
+    createdAt: Timestamp,
+  })
+  .meta({ id: 'CashCollection' });
+export const CashCollectionPage = pageOf(CashCollection, 'CashCollection');
+export const CreateCashCollectionBody = z
+  .object({
+    leaseId: IdInput.optional(),
+    bookingId: IdInput.optional(),
+    amountCents: Cents.min(1),
+    receivedOn: BusinessDateInput,
+    payerName: TextInput(120).optional(),
+    note: TextInput(500).optional(),
+    receiptKey: SafeString(300).optional().meta({
+      description: 'Photo of the receipt: key from POST /v1/uploads (purpose cash_receipt)',
+    }),
+  })
+  .meta({
+    id: 'CreateCashCollectionBody',
+    description: 'Exactly one of leaseId or bookingId (422 target_required)',
+  });
+export const CashCollectionQuery = CursorQuery.extend({ status: CashCollectionStatus.optional() });

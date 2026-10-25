@@ -1,10 +1,10 @@
-import { and, eq, inArray, isNull, schema, type Tx } from '@kejasha/db';
+import { and, eq, inArray, isNull, schema, sql, type Tx } from '@kejasha/db';
 
 /**
  * Read helpers other modules use instead of touching accounts tables (ADR-001). They run inside
  * the caller's tenant transaction, so RLS still scopes them to the org.
  */
-const { unit: un, property: pr, propertyStaff: ps } = schema;
+const { unit: un, property: pr, propertyStaff: ps, clientLandlord: cl } = schema;
 
 export interface UnitInfo {
   id: string;
@@ -15,6 +15,7 @@ export interface UnitInfo {
   propertyId: string;
   propertyName: string;
   clientLandlordId: string;
+  rentCents: bigint | null;
   baseNightlyCents: bigint | null;
 }
 
@@ -37,7 +38,36 @@ export async function unitsById(tx: Tx, ids: string[]): Promise<Map<string, Unit
         propertyId: u.propertyId,
         propertyName,
         clientLandlordId,
+        rentCents: u.rentCents,
         baseNightlyCents: u.baseNightlyCents,
+      },
+    ]),
+  );
+}
+
+export interface PropertyInfo {
+  id: string;
+  name: string;
+  kind: 'residential' | 'commercial' | 'mixed';
+  clientLandlordId: string;
+  archived: boolean;
+}
+
+export async function propertiesById(tx: Tx, ids: string[]): Promise<Map<string, PropertyInfo>> {
+  if (!ids.length) return new Map();
+  const rows = await tx
+    .select()
+    .from(pr)
+    .where(inArray(pr.id, [...new Set(ids)]));
+  return new Map(
+    rows.map((p) => [
+      p.id,
+      {
+        id: p.id,
+        name: p.name,
+        kind: p.kind,
+        clientLandlordId: p.clientLandlordId,
+        archived: p.archivedAt !== null,
       },
     ]),
   );
@@ -76,4 +106,70 @@ export async function shortStayUnitIds(tx: Tx, propertyId?: string): Promise<str
     )
     .orderBy(un.code);
   return rows.map((r) => r.id);
+}
+
+export interface LandlordInfo {
+  id: string;
+  name: string;
+  isSelf: boolean;
+  kraPin: string | null;
+  phone: string | null;
+  email: string | null;
+  mgmtFee: { kind: 'none' | 'percent' | 'flat'; bps: number | null; flatCents: bigint | null };
+  archived: boolean;
+}
+
+/** The org's landlords (its own "self" landlord first), optionally only some. */
+export async function landlords(tx: Tx, ids?: string[]): Promise<LandlordInfo[]> {
+  const rows = await tx
+    .select()
+    .from(cl)
+    .where(
+      ids ? inArray(cl.id, ids.length ? ids : ['00000000-0000-0000-0000-000000000000']) : undefined,
+    )
+    .orderBy(sql`${cl.isSelf} DESC`, sql`lower(${cl.name})`);
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    isSelf: r.isSelf,
+    kraPin: r.kraPin,
+    phone: r.phone,
+    email: r.email,
+    mgmtFee: { kind: r.mgmtFeeKind, bps: r.mgmtFeeBps, flatCents: r.mgmtFeeFlatCents },
+    archived: r.archivedAt !== null,
+  }));
+}
+
+/** All properties of the org (or of one landlord). */
+export async function propertiesOf(tx: Tx, clientLandlordId?: string): Promise<PropertyInfo[]> {
+  const rows = await tx
+    .select()
+    .from(pr)
+    .where(clientLandlordId ? eq(pr.clientLandlordId, clientLandlordId) : undefined)
+    .orderBy(sql`lower(${pr.name})`);
+  return rows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    kind: p.kind,
+    clientLandlordId: p.clientLandlordId,
+    archived: p.archivedAt !== null,
+  }));
+}
+
+/** Every unit (archived included) on the given properties. */
+export async function unitsOfProperties(tx: Tx, propertyIds: string[]): Promise<UnitInfo[]> {
+  if (!propertyIds.length) return [];
+  const rows = await tx.select({ id: un.id }).from(un).where(inArray(un.propertyId, propertyIds));
+  return [
+    ...(
+      await unitsById(
+        tx,
+        rows.map((r) => r.id),
+      )
+    ).values(),
+  ].sort((a, b) =>
+    a.propertyName === b.propertyName
+      ? a.code.localeCompare(b.code)
+      : a.propertyName.localeCompare(b.propertyName),
+  );
 }

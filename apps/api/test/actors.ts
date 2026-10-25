@@ -85,7 +85,7 @@ export async function ownerWithOrg(
 export async function addPhoneMember(
   api: TestApi,
   inviter: Session,
-  role: 'manager' | 'agent' | 'caretaker',
+  role: 'manager' | 'agent' | 'caretaker' | 'viewer',
 ) {
   const phone = uniquePhone();
   const inv = await client(api, inviter.token).post('/v1/invitations', { phone, role });

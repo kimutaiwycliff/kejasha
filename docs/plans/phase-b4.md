@@ -1,6 +1,6 @@
 # Phase B4 — Short-stay
 
-> Status: **DONE** (pending CI) · drafted 2026-10-21 · ADR-006, ADR-007, ADR-010
+> Status: **DONE** · DoD green locally and in CI (PR #5, 2026-10-21) · drafted 2026-10-21 · ADR-006, ADR-007, ADR-010
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 
 ## Goal

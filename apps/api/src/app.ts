@@ -1,12 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
-import Fastify, { LogController, type FastifyInstance, type FastifyServerOptions } from 'fastify';
+import Fastify, {
+  LogController,
+  type FastifyInstance,
+  type FastifyReply,
+  type FastifyServerOptions,
+} from 'fastify';
 import {
   serializerCompiler,
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import type { AppDeps } from './deps';
+import { problemType } from './errors';
 import { registerModules } from './modules';
 import { errorsPlugin } from './plugins/errors';
 import { authPlugin } from './plugins/auth';
@@ -39,6 +45,24 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     // server is created here with a 2 s check.
     serverFactory: (handler) =>
       createServer({ requestTimeout: 15_000, connectionsCheckingInterval: 2_000 }, handler),
+    // Router-level rejections (malformed URL encoding, path parameter longer than the router
+    // allows) answer like every other bad request: 400 problem+json, not Fastify's own body.
+    frameworkErrors: (err, req, reply) => {
+      const code = err.code === 'FST_ERR_MAX_PARAM_LENGTH' ? 'path_too_long' : 'invalid_path';
+      return (reply as unknown as FastifyReply)
+        .status(400)
+        .type('application/problem+json')
+        .send({
+          type: problemType(code),
+          title: 'Bad request',
+          status: 400,
+          code,
+          detail:
+            code === 'path_too_long' ? 'A path parameter is too long.' : 'The URL is malformed.',
+          requestId: req.id,
+          instance: req.url,
+        });
+    },
     // Strip prototype-polluting keys rather than rejecting otherwise valid requests.
     onProtoPoisoning: 'remove',
     onConstructorPoisoning: 'remove',

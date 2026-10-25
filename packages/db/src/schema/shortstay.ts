@@ -143,8 +143,11 @@ export const calendarBlock = pgTable('calendar_block', {
 export const unitExpense = pgTable('unit_expense', {
   id: uuid('id').primaryKey(),
   orgId: uuid('org_id').notNull(),
-  unitId: uuid('unit_id').notNull(),
+  propertyId: uuid('property_id').notNull(),
+  /** Null for property-wide costs (common areas). */
+  unitId: uuid('unit_id'),
   bookingId: uuid('booking_id'),
+  maintenanceTicketId: uuid('maintenance_ticket_id'),
   incurredOn: day('incurred_on').notNull(),
   category: text('category', { enum: EXPENSE_CATEGORIES }).notNull(),
   amountCents: cents('amount_cents').notNull(),

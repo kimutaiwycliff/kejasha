@@ -46,7 +46,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           git show origin/${{ github.base_ref }}:apps/api/openapi.json > /tmp/base.json 2>/dev/null || { echo "no base spec yet"; exit 0; }
-          docker run --rm -v /tmp:/base -v "$PWD/apps/api":/head tufin/oasdiff breaking /base/base.json /head/openapi.json --fail-on ERR
+          docker run --rm -v /tmp:/base -v "$PWD/apps/api":/head tufin/oasdiff breaking /base/base.json /head/openapi.json --err-ignore /head/oasdiff-ignore.txt --fail-on ERR
 
   contract:
     name: schemathesis

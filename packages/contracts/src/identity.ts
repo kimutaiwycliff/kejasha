@@ -2,9 +2,11 @@ import { z } from 'zod';
 import { IdInput, RequiredTextInput, SafeString } from './common';
 import { County, Email, KraPin, Phone, PhoneInput } from './kenya';
 
-export const Role = z
-  .enum(['owner', 'manager', 'agent', 'caretaker'])
-  .meta({ id: 'Role', description: 'owner > manager > agent > caretaker' });
+export const Role = z.enum(['owner', 'manager', 'agent', 'caretaker', 'viewer']).meta({
+  id: 'Role',
+  description:
+    'owner > manager > agent > caretaker; viewer is read-only (dashboards, statements, reports)',
+});
 export const OrgKind = z.enum(['landlord', 'agency', 'host']).meta({ id: 'OrgKind' });
 
 export const User = z
@@ -66,6 +68,10 @@ export const Org = z
     phone: Phone.nullable(),
     email: z.string().nullable(),
     county: County.nullable(),
+    brandColor: z
+      .string()
+      .nullable()
+      .meta({ description: 'Accent colour on statements (agencies white-label with it)' }),
     createdAt: z.iso.datetime({ offset: true }),
   })
   .meta({ id: 'Org' });
@@ -86,6 +92,11 @@ export const UpdateOrgBody = z
     phone: PhoneInput.nullable().optional(),
     email: Email.nullable().optional(),
     county: County.nullable().optional(),
+    brandColor: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Use a hex colour like #0F766E')
+      .nullable()
+      .optional(),
   })
   .meta({ id: 'UpdateOrgBody' });
 
@@ -97,9 +108,18 @@ export const Member = z
     email: z.string().nullable(),
     phone: Phone.nullable(),
     role: Role,
+    clientLandlordId: z
+      .uuid()
+      .nullable()
+      .meta({ description: 'Viewers only: the one landlord whose figures they see' }),
     createdAt: z.iso.datetime({ offset: true }),
   })
   .meta({ id: 'Member' });
+export const SetMemberScopeBody = z.object({ clientLandlordId: IdInput.nullable() }).meta({
+  id: 'SetMemberScopeBody',
+  description:
+    'Viewers only (422 not_a_viewer). In an agency a viewer needs a landlord to see anything.',
+});
 export const MemberList = z.object({ items: z.array(Member) }).meta({ id: 'MemberList' });
 export const UpdateMemberBody = z.object({ role: Role }).meta({ id: 'UpdateMemberBody' });
 
