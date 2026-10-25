@@ -53,6 +53,7 @@ export const maintenanceUpdate = pgTable('maintenance_update', {
   statusTo: text('status_to'),
   photoKeys: text('photo_keys').array().notNull().default([]),
   createdAt: ts('created_at').notNull().defaultNow(),
+  updatedAt: ts('updated_at').notNull().defaultNow(),
 });
 
 export const cashCollection = pgTable('cash_collection', {
@@ -74,6 +75,7 @@ export const cashCollection = pgTable('cash_collection', {
   rejectReason: text('reject_reason'),
   paymentId: uuid('payment_id'),
   createdAt: ts('created_at').notNull().defaultNow(),
+  updatedAt: ts('updated_at').notNull().defaultNow(),
 });
 
 export const mriFiling = pgTable('mri_filing', {

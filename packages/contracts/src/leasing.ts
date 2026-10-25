@@ -295,7 +295,7 @@ export const LeaseCalendar = z
 
 // ── Meters ──────────────────────────────────────────────────────────────────────────────────
 export const MeterKind = z.enum(['water', 'electricity']).meta({ id: 'MeterKind' });
-const ReadingValue = z
+export const ReadingValue = z
   .string()
   .regex(/^\d{1,11}(\.\d{1,3})?$/, 'Reading like 1234.567 (max 3 decimals)')
   .meta({ description: 'Decimal reading as a string (no float rounding)', example: '1234.5' });

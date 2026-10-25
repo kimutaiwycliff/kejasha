@@ -8,8 +8,10 @@ import { createLeasing, leasingRoutes } from './leasing';
 import { createMaintenanceService, maintenanceRoutes } from './maintenance';
 import { createPayments, paymentsRoutes } from './payments';
 import { platformRoutes } from './platform';
+import { createPortalService, portalRoutes } from './portal';
 import { createReportingModule, reportingRoutes } from './reporting';
 import { createShortStay, shortStayRoutes } from './shortstay';
+import { createSyncService, syncRoutes } from './sync';
 
 /**
  * Composition root (ADR-001): builds module services, wires cross-module hooks, registers routes.
@@ -49,4 +51,9 @@ export async function registerModules(app: FastifyInstance, deps: AppDeps): Prom
     deps,
   );
   await app.register(reportingRoutes(createReportingModule(deps)), deps);
+  await app.register(
+    syncRoutes(createSyncService(deps, { memberRoles: identity.memberRoles })),
+    deps,
+  );
+  await app.register(portalRoutes(createPortalService(deps)), deps);
 }

@@ -55,6 +55,16 @@ export const openapiPlugin = fp(async (app: FastifyInstance) => {
             'Owner dashboard and statements, rent roll, collections, occupancy, CSV exports (read-only owners allowed)',
         },
         {
+          name: 'sync',
+          description:
+            'Offline sync for the Android app: pull changes, push records created offline',
+        },
+        {
+          name: 'portal',
+          description:
+            'Tenant portal: tenancies by verified phone, statements, receipts, STK pay, repairs',
+        },
+        {
           name: 'daraja',
           description: 'Safaricom callbacks (public, authenticated by the channel token)',
         },

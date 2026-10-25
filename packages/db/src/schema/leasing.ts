@@ -86,6 +86,7 @@ export const meter = pgTable('meter', {
   unitLabel: text('unit_label').notNull().default('units'),
   archivedAt: ts('archived_at'),
   createdAt: ts('created_at').notNull().defaultNow(),
+  updatedAt: ts('updated_at').notNull().defaultNow(),
 });
 
 export const meterReading = pgTable('meter_reading', {
@@ -98,6 +99,7 @@ export const meterReading = pgTable('meter_reading', {
   note: text('note'),
   recordedBy: uuid('recorded_by'),
   createdAt: ts('created_at').notNull().defaultNow(),
+  updatedAt: ts('updated_at').notNull().defaultNow(),
 });
 
 export const chargeRule = pgTable('charge_rule', {

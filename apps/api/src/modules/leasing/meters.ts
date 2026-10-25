@@ -83,6 +83,7 @@ export function createMeterService(deps: AppDeps) {
     ctx: Ctx,
     meterId: string,
     body: { readOn: string; reading: string; note?: string | undefined },
+    id: string = uuidv7(),
   ) {
     const value = billing.toMilli(body.reading);
     const [prev] = await tx
@@ -112,7 +113,7 @@ export function createMeterService(deps: AppDeps) {
     const [row] = await tx
       .insert(mr)
       .values({
-        id: uuidv7(),
+        id,
         orgId: ctx.orgId,
         meterId,
         readOn: body.readOn,
@@ -203,12 +204,18 @@ export function createMeterService(deps: AppDeps) {
       });
     },
 
-    async addReading(ctx: Ctx, meterId: string, body: z.infer<typeof CreateReadingBody>) {
+    /** `id` lets offline clients (sync push) choose the record id. */
+    async addReading(
+      ctx: Ctx,
+      meterId: string,
+      body: z.infer<typeof CreateReadingBody>,
+      id?: string,
+    ) {
       return inTenant(db, ctx, async (tx) => {
         const { meter } = await loadMeter(tx, ctx, meterId);
         if (meter.archivedAt)
           throw AppError.unprocessable('meter_archived', 'The meter is archived.');
-        const reading = await insertReading(tx, ctx, meterId, body);
+        const reading = await insertReading(tx, ctx, meterId, body, id);
         await record(tx, ctx, {
           action: 'meter.reading_added',
           entityType: 'meter',
