@@ -124,16 +124,18 @@ export function subscriptionRoutes(billing: SubscriptionService): FastifyPluginA
               req.headers['x-paystack-signature'] as string | undefined,
             ),
           );
+          // Postgres text/jsonb cannot hold NUL; the signature was already checked on the raw bytes.
+          const clean = (v: string) => v.replaceAll('\u0000', '');
           const reference =
             typeof req.body.data.reference === 'string'
-              ? req.body.data.reference.slice(0, 200)
+              ? clean(req.body.data.reference).slice(0, 200)
               : null;
           const id = uuidv7();
           await deps.db.owner.insert(schema.paystackEvent).values({
             id,
-            event: req.body.event.slice(0, 100),
+            event: clean(req.body.event).slice(0, 100),
             reference,
-            body: req.body,
+            body: JSON.parse(JSON.stringify(req.body).replace(/\\u0000/g, '')) as object,
             signatureOk: signed,
           });
           if (!signed)

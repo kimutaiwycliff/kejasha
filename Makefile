@@ -85,11 +85,13 @@ test-journeys:
 
 API_BASE ?= http://host.docker.internal:4000
 # signOut is excluded: fuzzing it would revoke the very token the run authenticates with.
+# startCheckout is excluded: it calls Paystack, and contract runs have no Paystack keys (503).
 test-contract: ## Schemathesis against a running API (make up, make db-seed, make dev-api first)
 	docker run --rm --add-host=host.docker.internal:host-gateway -v "$(CURDIR)/schemathesis.toml:/cfg/schemathesis.toml:ro" \
 	  schemathesis/schemathesis:stable --config-file /cfg/schemathesis.toml \
 	  run $(API_BASE)/openapi.json --url $(API_BASE) --checks all --max-examples 50 \
 	  --exclude-operation-id signOut \
+	  --exclude-operation-id startCheckout \
 	  $(if $(wildcard apps/api/.seed-token),-H "Authorization: Bearer $$(cat apps/api/.seed-token)",)
 
 test-e2e:

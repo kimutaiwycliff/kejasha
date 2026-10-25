@@ -259,3 +259,15 @@ describe('gate ordering', () => {
     expect((await c.post('/v1/tenants', { fullName: 'Valid' })).statusCode).toBe(402);
   });
 });
+
+describe('webhook robustness', () => {
+  it('an unsigned body with NUL characters is stored cleaned and refused with 401', async () => {
+    const res = await webhook(
+      'charge.success\u0000',
+      { reference: 'KJ-\u0000X', note: 'a\u0000b' },
+      'f'.repeat(128),
+    );
+    expect(res.statusCode).toBe(401);
+    expect(res.json().code).toBe('invalid_signature');
+  });
+});
