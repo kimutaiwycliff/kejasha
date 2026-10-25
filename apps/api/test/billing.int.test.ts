@@ -250,3 +250,12 @@ describe('operator console', () => {
     ]);
   });
 });
+
+describe('gate ordering', () => {
+  it('a malformed request to an unpaid org is still a 400, not a 402', async () => {
+    const { c } = await newLandlord();
+    const bad = await c.patch('/v1/bookings/not-a-uuid', {});
+    expect(bad.statusCode).toBe(400);
+    expect((await c.post('/v1/tenants', { fullName: 'Valid' })).statusCode).toBe(402);
+  });
+});

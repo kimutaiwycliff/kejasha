@@ -49,7 +49,8 @@ export const billingGatePlugin = fp(async (app: FastifyInstance, deps: AppDeps) 
     }
   });
 
-  app.addHook('onRequest', async (req) => {
+  // preHandler: after schema validation, so a malformed request is still a 400 (not a 402).
+  app.addHook('preHandler', async (req) => {
     if (!config.billing.required || !WRITE.has(req.method)) return;
     // Only org routes act on the org; user routes (portal, identity) do not, even with an active org.
     const auth = req.routeOptions.config.auth;
