@@ -9,7 +9,8 @@ DBMATE  := pnpm exec dbmate --no-dump-schema --migrations-dir infra/migrations
 .PHONY: up down restart logs db-migrate db-rollback db-seed db-reset db-shell db-dump \
         dev-reset-limits dev-api dev-worker api-spec spec-check spec-lint client-gen \
         test test-unit test-int test-rls test-journeys test-contract test-e2e \
-        typecheck lint build build-image deploy rollback daraja-reregister operator-grant
+        typecheck lint build build-image deploy rollback daraja-reregister operator-grant \
+        backup restore-drill
 
 up: ## start postgres, redis, seaweedfs (S3), create buckets, apply migrations
 	$(COMPOSE) up -d --wait postgres redis seaweedfs
@@ -112,6 +113,15 @@ build-image:
 
 deploy rollback:
 	@echo "$@: arrives with B7 (hardening & launch)"
+
+# Dev runs pg_dump/pg_restore inside the compose Postgres container (same major as the server).
+PG_TOOLS ?= docker compose -f '$(CURDIR)/infra/compose.yml' --env-file '$(CURDIR)/.env' exec -T postgres
+
+backup: ## dump the database to the backups bucket now (nightly job does the same)
+	PG_TOOLS_PREFIX="$(PG_TOOLS)" pnpm --filter @kejasha/api exec tsx --env-file-if-exists=../../.env scripts/backup.ts
+
+restore-drill: ## restore the newest backup into a scratch DB and check invariants
+	PG_TOOLS_PREFIX="$(PG_TOOLS)" pnpm --filter @kejasha/api exec tsx --env-file-if-exists=../../.env scripts/restore-drill.ts
 
 operator-grant: ## grant Kejasha operator access: make operator-grant EMAIL=you@example.com [ARGS=--revoke]
 	pnpm --filter @kejasha/api exec tsx --env-file-if-exists=../../.env scripts/operator-grant.ts $(EMAIL) $(ARGS)

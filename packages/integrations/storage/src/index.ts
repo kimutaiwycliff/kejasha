@@ -6,6 +6,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type { Readable } from 'node:stream';
 
 export interface StorageConfig {
   endpoint: string | undefined;
@@ -29,7 +30,7 @@ export interface Storage {
   close(): void;
 }
 
-/** S3-compatible object storage (MinIO self-hosted). Path-style addressing for MinIO. */
+/** S3-compatible object storage (R2 in production, SeaweedFS in dev/CI — ADR-019). Path-style addressing. */
 export function createStorage(cfg: StorageConfig): Storage {
   const configured = Boolean(cfg.endpoint && cfg.accessKey && cfg.secretKey);
   const client = new S3Client({
@@ -86,6 +87,72 @@ export function createStorage(cfg: StorageConfig): Storage {
     },
     close() {
       client.destroy();
+    },
+  };
+}
+
+// ── Backups bucket (ADR-019: R2 in production, off the VM) ─────────────────────────────────────
+
+export interface BackupObject {
+  key: string;
+  size: number;
+  lastModified: Date;
+}
+
+export interface BackupStore {
+  configured: boolean;
+  bucket: string;
+  /** Streams `body` (e.g. pg_dump stdout) with multipart upload; never buffers the whole dump. */
+  upload(key: string, body: Readable, contentType: string): Promise<void>;
+  list(prefix: string): Promise<BackupObject[]>;
+  download(key: string): Promise<Readable>;
+  remove(key: string): Promise<void>;
+}
+
+export function createBackupStore(
+  cfg: Omit<StorageConfig, 'bucketFiles'> & { bucketBackups: string },
+): BackupStore {
+  const storage = createStorage({ ...cfg, bucketFiles: cfg.bucketBackups });
+  const { client } = storage;
+  const Bucket = cfg.bucketBackups;
+  return {
+    configured: storage.configured,
+    bucket: Bucket,
+    async upload(key, body, contentType) {
+      const { Upload } = await import('@aws-sdk/lib-storage');
+      await new Upload({
+        client,
+        params: { Bucket, Key: key, Body: body, ContentType: contentType },
+        partSize: 16 * 1024 * 1024,
+        queueSize: 2,
+      }).done();
+    },
+    async list(prefix) {
+      const { ListObjectsV2Command } = await import('@aws-sdk/client-s3');
+      const out: BackupObject[] = [];
+      let token: string | undefined;
+      do {
+        const res = await client.send(
+          new ListObjectsV2Command({ Bucket, Prefix: prefix, ContinuationToken: token }),
+        );
+        for (const o of res.Contents ?? [])
+          if (o.Key)
+            out.push({
+              key: o.Key,
+              size: o.Size ?? 0,
+              lastModified: o.LastModified ?? new Date(0),
+            });
+        token = res.IsTruncated ? res.NextContinuationToken : undefined;
+      } while (token);
+      return out.sort((a, b) => a.key.localeCompare(b.key));
+    },
+    async download(key) {
+      const res = await client.send(new GetObjectCommand({ Bucket, Key: key }));
+      return res.Body as Readable;
+    },
+    async remove(key) {
+      const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+      await client.send(new DeleteObjectCommand({ Bucket, Key: key }));
     },
   };
 }

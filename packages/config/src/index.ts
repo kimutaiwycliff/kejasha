@@ -65,6 +65,10 @@ const EnvSchema = z.object({
     .enum(['true', 'false'])
     .default('true')
     .transform((v) => v === 'true'),
+  // Database backups (B7): days kept in the backups bucket, and an optional command prefix for the
+  // Postgres tools (dev: run pg_dump inside the compose container, e.g. "docker compose … exec -T postgres").
+  BACKUP_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(30),
+  PG_TOOLS_PREFIX: optionalString,
   // Sync pull stays this far behind now() so rows of still-open transactions are not skipped.
   SYNC_LAG_SECONDS: z.coerce.number().int().min(0).max(300).default(10),
   // Tests only: let iCal feeds point at local servers. Refused in production (SSRF guard).
@@ -121,6 +125,7 @@ export interface Config {
   ical: { allowPrivateHosts: boolean };
   sync: { lagSeconds: number };
   billing: { required: boolean };
+  backups: { retentionDays: number; pgToolsPrefix: string | undefined };
   paystack: { secretKey: string | undefined; publicKey: string | undefined };
   cronSecret: string | undefined;
   observability: { glitchtipDsn: string | undefined; otlpEndpoint: string | undefined };
@@ -206,6 +211,7 @@ export function loadConfig(source: Record<string, string | undefined> = process.
     ical: { allowPrivateHosts: e.ICAL_ALLOW_PRIVATE_HOSTS },
     sync: { lagSeconds: e.SYNC_LAG_SECONDS },
     billing: { required: e.BILLING_REQUIRED },
+    backups: { retentionDays: e.BACKUP_RETENTION_DAYS, pgToolsPrefix: e.PG_TOOLS_PREFIX },
     paystack: { secretKey: e.PAYSTACK_SECRET_KEY, publicKey: e.PAYSTACK_PUBLIC_KEY },
     cronSecret: e.CRON_SECRET,
     observability: { glitchtipDsn: e.GLITCHTIP_DSN, otlpEndpoint: e.OTEL_EXPORTER_OTLP_ENDPOINT },

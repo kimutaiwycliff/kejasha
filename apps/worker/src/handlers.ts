@@ -30,6 +30,7 @@ export function buildHandlers(config: Config, log: Logger): Record<QueueName, To
     ical: jobs.ical,
     compliance: jobs.compliance,
     billing: jobs.billing,
+    ops: jobs.ops,
     reports: {},
   };
 }
