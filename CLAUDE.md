@@ -106,6 +106,7 @@ kejasha/
 │  ├─ api/                    # Fastify API — the product. /v1/*, /docs, /openapi.json
 │  ├─ worker/                 # BullMQ workers + cron (invoices, reminders, iCal, reconciliation)
 │  ├─ web/                    # Next.js — landlord/agency/host dashboard + tenant portal
+│  ├─ docs/                   # Fumadocs (Next.js 16, static) — guides + generated API reference (ADR-020)
 │  └─ android/                # Kotlin Android (Gradle) — owner/host, caretaker (offline), tenant
 ├─ packages/
 │  ├─ config/                 # Zod env parsing; all URLs derived from APP_DOMAIN (ADR-016)
@@ -321,6 +322,7 @@ task plans live in `docs/plans/phase-<id>.md`, written before each phase starts.
 | 017 | Android: native Kotlin (Compose, Room, WorkManager); generated Kotlin client; sync protocol |
 | 018 | Backend-first sequencing; journey tests; contract freeze before clients |
 | 019 | Object storage: Cloudflare R2 in production, SeaweedFS for dev/CI |
+| 020 | Documentation site: Fumadocs on Next.js 16 (`apps/docs`), generated API reference |
 
 ---
 
