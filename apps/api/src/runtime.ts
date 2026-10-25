@@ -5,6 +5,7 @@ import { phone, time } from '@kejasha/core';
 import { createDb, withAdmin } from '@kejasha/db';
 import { createSmsSender, type SmsSender } from '@kejasha/integrations-africastalking';
 import { createDarajaClient, type DarajaClient } from '@kejasha/integrations-daraja';
+import { createPaystackClient, type PaystackClient } from '@kejasha/integrations-paystack';
 import { createStorage } from '@kejasha/integrations-storage';
 import { enqueueInTx } from '@kejasha/jobs';
 import { Redis } from 'ioredis';
@@ -20,7 +21,12 @@ export const systemClock: Clock = { today: () => time.nairobiDate(), now: () => 
 
 export function createDeps(
   config: Config = loadConfig(),
-  overrides: { sms?: SmsSender; clock?: Clock; daraja?: DarajaClient } = {},
+  overrides: {
+    sms?: SmsSender;
+    clock?: Clock;
+    daraja?: DarajaClient;
+    paystack?: PaystackClient;
+  } = {},
 ): AppDeps {
   const db = createDb({
     ownerUrl: config.db.ownerUrl,
@@ -62,6 +68,7 @@ export function createDeps(
     auth,
     sms,
     daraja: overrides.daraja ?? createDarajaClient(),
+    paystack: overrides.paystack ?? createPaystackClient({ secretKey: config.paystack.secretKey }),
   };
 }
 

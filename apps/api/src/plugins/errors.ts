@@ -12,6 +12,7 @@ import { AppError, problemType } from '../errors';
 const TITLES: Record<number, string> = {
   400: 'Bad request',
   401: 'Unauthorized',
+  402: 'Payment required',
   403: 'Forbidden',
   404: 'Not found',
   405: 'Method not allowed',

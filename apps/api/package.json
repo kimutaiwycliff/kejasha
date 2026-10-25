@@ -30,6 +30,7 @@
     "@kejasha/integrations-africastalking": "workspace:^",
     "@kejasha/integrations-daraja": "workspace:^",
     "@kejasha/integrations-ical": "workspace:^",
+    "@kejasha/integrations-paystack": "workspace:^",
     "@kejasha/integrations-storage": "workspace:^",
     "@kejasha/jobs": "workspace:^",
     "@react-pdf/renderer": "^4.9.0",

@@ -49,6 +49,8 @@ const ssUnit = (orgId: string) =>
   sql`INSERT INTO unit (id, org_id, property_id, code, mode, base_nightly_cents) VALUES (${uid(orgId, 'ss')}, ${orgId}, ${orgId}, 'SS1', 'short_stay', 100) ON CONFLICT DO NOTHING`;
 const ticket = (orgId: string) =>
   sql`INSERT INTO maintenance_ticket (id, org_id, number, property_id, title, category, reporter_kind) VALUES (${uid(orgId, 'tk')}, ${orgId}, 'MT-FX', ${orgId}, 'Leak', 'plumbing', 'staff') ON CONFLICT DO NOTHING`;
+const subInvoice = (orgId: string) =>
+  sql`INSERT INTO subscription_invoice (id, org_id, number, plan_code, period_start, period_end, units, listings, amount_cents, reference) VALUES (${uid(orgId, 'si')}, ${orgId}, 'KJ-FX', 'landlord', '2026-10-01', '2026-10-31', 5, 0, 50000, ${`ref-${orgId}`}) ON CONFLICT DO NOTHING`;
 const portfolio = [org, landlord, property, unit, tenant];
 
 const all =
@@ -389,5 +391,29 @@ export const tenantTableFixtures: TenantTableFixture[] = [
       sql`INSERT INTO member_scope (org_id, user_id, client_landlord_id) VALUES (${o}, ${o}, ${o})`,
     grants: { select: true, update: true, delete: true },
     updateSet: sql`created_at = now()`,
+  },
+  {
+    table: 'subscription',
+    prepare: all(org),
+    insert: (o) =>
+      sql`INSERT INTO subscription (org_id, plan_code, status) VALUES (${o}, 'landlord', 'incomplete')`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`billing_email = 'hijacked@example.test'`,
+  },
+  {
+    table: 'subscription_invoice',
+    prepare: all(org),
+    insert: (o) =>
+      sql`INSERT INTO subscription_invoice (id, org_id, number, plan_code, period_start, period_end, units, listings, amount_cents, reference) VALUES (gen_random_uuid(), ${o}, gen_random_uuid()::text, 'landlord', (date '2000-01-01' + (random() * 3000)::int), (date '2000-01-01' + 9000), 1, 0, 50000, gen_random_uuid()::text)`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`attempts = 99`,
+  },
+  {
+    table: 'subscription_payment',
+    prepare: all(org, subInvoice),
+    insert: (o) =>
+      sql`INSERT INTO subscription_payment (id, org_id, invoice_id, reference, amount_cents, paid_at) VALUES (gen_random_uuid(), ${o}, ${uid(o, 'si')}, gen_random_uuid()::text, 50000, now())`,
+    grants: { select: true, update: true, delete: true },
+    updateSet: sql`channel = 'hijacked'`,
   },
 ];

@@ -116,6 +116,9 @@ importers:
       '@kejasha/integrations-ical':
         specifier: workspace:^
         version: link:../../packages/integrations/ical
+      '@kejasha/integrations-paystack':
+        specifier: workspace:^
+        version: link:../../packages/integrations/paystack
       '@kejasha/integrations-storage':
         specifier: workspace:^
         version: link:../../packages/integrations/storage
@@ -272,6 +275,8 @@ importers:
   packages/integrations/daraja: {}
 
   packages/integrations/ical: {}
+
+  packages/integrations/paystack: {}
 
   packages/integrations/resend: {}
 

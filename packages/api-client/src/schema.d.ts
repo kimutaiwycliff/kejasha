@@ -2277,6 +2277,193 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/billing': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Plan, status, usage, next amount and the open invoice */
+    get: operations['getBilling'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/billing/invoices': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Kejasha invoices, newest first */
+    get: operations['listSubscriptionInvoices'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/billing/checkout': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Pay the month that is due (Paystack: card or M-Pesa) */
+    post: operations['startCheckout'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/billing/verify': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Confirm a checkout after the Paystack redirect */
+    post: operations['verifyCheckout'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/billing/paystack/webhook': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Paystack events (signed with HMAC-SHA512; re-verified with Paystack) */
+    post: operations['paystackWebhook'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/operator/orgs': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Customer organizations with plan, status, members and units */
+    get: operations['operatorListOrgs'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/operator/orgs/{orgId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** An organization with owners and Kejasha invoices */
+    get: operations['operatorGetOrg'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/operator/orgs/{orgId}/subscription': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Grant a trial, extend, change plan, suspend, reactivate or cancel */
+    post: operations['operatorSubscriptionAction'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/operator/orgs/{orgId}/audit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The organization's audit log (latest 200) */
+    get: operations['operatorOrgAudit'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/operator/plans': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Plan prices */
+    get: operations['operatorListPlans'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/operator/plans/{code}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Change plan prices (applies from each org’s next invoice) */
+    patch: operations['operatorUpdatePlan'];
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3563,6 +3750,66 @@ export interface components {
       title: string;
       description?: string;
       category: components['schemas']['TicketCategoryInput'];
+    };
+    /** @enum {string} */
+    PlanCodeInput: 'landlord' | 'host' | 'agency';
+    /**
+     * @description incomplete = not paid yet (setup only); past_due = renewal unpaid (grace, all works); suspended = writes blocked, reads allowed
+     * @enum {string}
+     */
+    SubscriptionStatusInput:
+      'incomplete' | 'trialing' | 'active' | 'past_due' | 'suspended' | 'cancelled';
+    CheckoutBodyInput: {
+      /**
+       * Format: email
+       * @description Receipt email; defaults to the billing email or yours
+       */
+      email?: string;
+    };
+    /** @description After the Paystack redirect; safe to repeat */
+    VerifyCheckoutBodyInput: {
+      reference: string;
+    };
+    PaystackWebhookBodyInput: {
+      event: string;
+      data: {
+        [key: string]: unknown;
+      };
+    };
+    SubscriptionActionInput: {
+      /** @enum {string} */
+      action: 'grant_trial' | 'extend_period' | 'change_plan' | 'suspend' | 'reactivate' | 'cancel';
+      /** @description grant_trial / extend_period */
+      days?: number;
+      /** @description change_plan */
+      planCode?: components['schemas']['PlanCodeInput'];
+      /** @description Why (kept in the audit log) */
+      note: string;
+    };
+    /** @description Takes effect from each org’s next invoice */
+    UpdatePlanBodyInput: {
+      name?: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      baseCents?: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      unitPriceCents?: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      listingPriceCents?: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      minimumCents?: number;
+      whiteLabel?: boolean;
     };
     FileLink: {
       key: string;
@@ -5818,6 +6065,180 @@ export interface components {
     PortalTicketList: {
       items: components['schemas']['Ticket'][];
     };
+    /** @enum {string} */
+    PlanCode: 'landlord' | 'host' | 'agency';
+    /**
+     * @description incomplete = not paid yet (setup only); past_due = renewal unpaid (grace, all works); suspended = writes blocked, reads allowed
+     * @enum {string}
+     */
+    SubscriptionStatus:
+      'incomplete' | 'trialing' | 'active' | 'past_due' | 'suspended' | 'cancelled';
+    Plan: {
+      code: components['schemas']['PlanCode'];
+      name: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      baseCents: number;
+      /**
+       * Format: int64
+       * @description Per occupied long-term unit per month
+       */
+      unitPriceCents: number;
+      /**
+       * Format: int64
+       * @description Per active short-stay listing per month
+       */
+      listingPriceCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      minimumCents: number;
+      whiteLabel: boolean;
+    };
+    SubscriptionInvoice: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      planCode: components['schemas']['PlanCode'];
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      periodStart: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      periodEnd: string;
+      units: number;
+      listings: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents: number;
+      /** @enum {string} */
+      status: 'open' | 'paid' | 'void';
+      reference: string;
+      attempts: number;
+      paidAt: string | null;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      createdAt: string;
+    };
+    Billing: {
+      plan: components['schemas']['Plan'];
+      status: components['schemas']['SubscriptionStatus'];
+      trialEndsOn: string | null;
+      currentPeriodStart: string | null;
+      currentPeriodEnd: string | null;
+      pastDueSince: string | null;
+      usage: {
+        units: number;
+        listings: number;
+      };
+      /**
+       * Format: int64
+       * @description What the next month costs at today’s usage
+       */
+      nextAmountCents: number;
+      card: {
+        brand: string | null;
+        last4: string | null;
+      } | null;
+      billingEmail: string | null;
+      openInvoice: components['schemas']['SubscriptionInvoice'] | null;
+    };
+    Checkout: {
+      /** @description Open in a browser to pay with card or M-Pesa */
+      authorizationUrl: string;
+      reference: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents: number;
+      invoice: components['schemas']['SubscriptionInvoice'];
+    };
+    WebhookAck: {
+      received: boolean;
+    };
+    OperatorOrg: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** @enum {string} */
+      kind: 'landlord' | 'agency' | 'host';
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      createdAt: string;
+      planCode: components['schemas']['PlanCode'] | null;
+      status: components['schemas']['SubscriptionStatus'] | null;
+      currentPeriodEnd: string | null;
+      trialEndsOn: string | null;
+      members: number;
+      units: number;
+    };
+    OperatorOrgPage: {
+      items: components['schemas']['OperatorOrg'][];
+      nextCursor: string | null;
+    };
+    OperatorOrgDetail: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** @enum {string} */
+      kind: 'landlord' | 'agency' | 'host';
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      createdAt: string;
+      planCode: components['schemas']['PlanCode'] | null;
+      status: components['schemas']['SubscriptionStatus'] | null;
+      currentPeriodEnd: string | null;
+      trialEndsOn: string | null;
+      members: number;
+      units: number;
+      billingEmail: string | null;
+      invoices: components['schemas']['SubscriptionInvoice'][];
+      owners: {
+        name: string;
+        email: string | null;
+        phone: string | null;
+      }[];
+    };
+    PlanList: {
+      items: components['schemas']['Plan'][];
+    };
+    AuditEntry: {
+      id: string;
+      /** @enum {string} */
+      actorKind: 'user' | 'system' | 'operator';
+      actorUserId: string | null;
+      action: string;
+      entityType: string;
+      entityId: string | null;
+      diff: unknown | null;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      occurredAt: string;
+    };
+    AuditList: {
+      items: components['schemas']['AuditEntry'][];
+    };
+    SubscriptionInvoiceList: {
+      items: components['schemas']['SubscriptionInvoice'][];
+    };
   };
   responses: never;
   parameters: never;
@@ -7425,6 +7846,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -7565,6 +7995,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -7635,6 +8074,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -7793,6 +8241,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -7942,6 +8399,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -8012,6 +8478,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -8161,6 +8636,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -8391,6 +8875,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -8474,6 +8967,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -8639,6 +9141,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -8718,6 +9229,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -8865,6 +9385,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -9005,6 +9534,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -9075,6 +9613,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -9229,6 +9776,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -9464,6 +10020,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -9545,6 +10110,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -9619,6 +10193,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -9716,6 +10299,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -9790,6 +10382,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -10037,6 +10638,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -10111,6 +10721,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -10260,6 +10879,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -10425,6 +11053,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -10505,6 +11142,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -10728,6 +11374,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -10802,6 +11457,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -10892,6 +11556,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -11041,6 +11714,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -11097,6 +11779,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -11262,6 +11953,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -11333,6 +12033,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -11474,6 +12183,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -11548,6 +12266,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -11636,6 +12363,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -11715,6 +12451,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -11950,6 +12695,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -12030,6 +12784,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -12245,6 +13008,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -12335,6 +13107,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -12418,6 +13199,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -12589,6 +13379,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -12728,6 +13527,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -12942,6 +13750,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -13087,6 +13904,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -13170,6 +13996,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -13557,6 +14392,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -13631,6 +14475,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -13715,6 +14568,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -13943,6 +14805,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -14085,6 +14956,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -14256,6 +15136,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -14414,6 +15303,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -14500,6 +15398,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -14570,6 +15477,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -14654,6 +15570,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -14728,6 +15653,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -14894,6 +15828,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -14971,6 +15914,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -15124,6 +16076,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -15208,6 +16169,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -15273,6 +16243,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -15350,6 +16329,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -15500,6 +16488,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -15568,6 +16565,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -15790,6 +16796,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -15939,6 +16954,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -16022,6 +17046,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -16347,6 +17380,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -16424,6 +17466,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -16626,6 +17677,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -16701,6 +17761,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -16766,6 +17835,15 @@ export interface operations {
       };
       /** @description Not signed in */
       401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
         headers: {
           [name: string]: unknown;
         };
@@ -17561,6 +18639,15 @@ export interface operations {
           'application/problem+json': components['schemas']['ProblemDetails'];
         };
       };
+      /** @description Subscription required (unpaid or suspended) */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
       /** @description Not allowed */
       403: {
         headers: {
@@ -17962,6 +19049,767 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['TicketDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getBilling: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Billing'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listSubscriptionInvoices: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SubscriptionInvoiceList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  startCheckout: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CheckoutBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Checkout'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  verifyCheckout: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['VerifyCheckoutBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Billing'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  paystackWebhook: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PaystackWebhookBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WebhookAck'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  operatorListOrgs: {
+    parameters: {
+      query?: {
+        /** @description Opaque cursor from `nextCursor`; an unknown cursor answers 422 invalid_cursor */
+        cursor?: string;
+        limit?: number;
+        q?: string;
+        status?: components['schemas']['SubscriptionStatusInput'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OperatorOrgPage'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  operatorGetOrg: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        orgId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OperatorOrgDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  operatorSubscriptionAction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        orgId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SubscriptionActionInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OperatorOrgDetail'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  operatorOrgAudit: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        orgId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AuditList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  operatorListPlans: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlanList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  operatorUpdatePlan: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        code: components['schemas']['PlanCodeInput'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdatePlanBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Plan'];
         };
       };
       /** @description Validation failed */

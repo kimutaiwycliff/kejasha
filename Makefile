@@ -9,7 +9,7 @@ DBMATE  := pnpm exec dbmate --no-dump-schema --migrations-dir infra/migrations
 .PHONY: up down restart logs db-migrate db-rollback db-seed db-reset db-shell db-dump \
         dev-reset-limits dev-api dev-worker api-spec spec-check spec-lint client-gen \
         test test-unit test-int test-rls test-journeys test-contract test-e2e \
-        typecheck lint build build-image deploy rollback daraja-reregister
+        typecheck lint build build-image deploy rollback daraja-reregister operator-grant
 
 up: ## start postgres, redis, seaweedfs (S3), create buckets, apply migrations
 	$(COMPOSE) up -d --wait postgres redis seaweedfs
@@ -110,6 +110,9 @@ build-image:
 
 deploy rollback:
 	@echo "$@: arrives with B7 (hardening & launch)"
+
+operator-grant: ## grant Kejasha operator access: make operator-grant EMAIL=you@example.com [ARGS=--revoke]
+	pnpm --filter @kejasha/api exec tsx --env-file-if-exists=../../.env scripts/operator-grant.ts $(EMAIL) $(ARGS)
 
 daraja-reregister: ## re-register C2B URLs for every channel (after a domain change, ADR-016)
 	pnpm --filter @kejasha/api exec tsx --env-file-if-exists=../../.env scripts/daraja-reregister.ts

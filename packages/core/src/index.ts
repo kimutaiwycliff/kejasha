@@ -8,3 +8,4 @@ export { uuidv7, uuidv7Timestamp } from './id';
 export * as billing from './billing';
 export * as shortstay from './shortstay';
 export * as tax from './tax';
+export * as subscriptions from './subscriptions';

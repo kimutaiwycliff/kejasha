@@ -6,6 +6,7 @@ import { createLeasing } from '../modules/leasing';
 import { createCompliance } from '../modules/compliance';
 import { createIdentityService } from '../modules/identity';
 import { createPayments } from '../modules/payments';
+import { createSubscriptionService } from '../modules/subscriptions';
 import { createShortStay } from '../modules/shortstay';
 
 export interface JobLogger {
@@ -37,6 +38,13 @@ export const SCHEDULES = [
     tz: 'Africa/Nairobi',
   },
   {
+    id: 'billing-daily',
+    queue: 'billing',
+    topic: 'billing.daily_run',
+    pattern: '0 6 * * *',
+    tz: 'Africa/Nairobi',
+  },
+  {
     id: 'ical-sync',
     queue: 'ical',
     topic: 'ical.sync_all',
@@ -58,13 +66,37 @@ export function createJobHandlers(
   payments: TopicHandlers;
   ical: TopicHandlers;
   compliance: TopicHandlers;
+  billing: TopicHandlers;
 } {
   const leasing = createLeasing(deps);
   const payments = createPayments(deps);
   const shortStay = createShortStay(deps);
   const identity = createIdentityService(deps, { orgCreated: [], memberRemoved: [] });
   const compliance = createCompliance(deps, { staffContacts: identity.staffContacts });
+  const subscriptions = createSubscriptionService(deps, { staffContacts: identity.staffContacts });
   return {
+    billing: {
+      // Renewals (saved card), reminders on days 0/1/3/7, suspension after the grace period.
+      'billing.daily_run': async () => {
+        const today = deps.clock.today();
+        const orgs = await deps.db.owner
+          .select({ id: schema.organization.id })
+          .from(schema.organization);
+        const failed: string[] = [];
+        for (const { id } of orgs) {
+          try {
+            const outcome = await subscriptions.runDaily(id, today);
+            if (outcome !== 'ok' && outcome !== 'none')
+              log.info({ orgId: id, outcome }, 'billing run');
+          } catch (err) {
+            failed.push(id);
+            log.error({ orgId: id, err }, 'billing run failed for org');
+          }
+        }
+        if (failed.length)
+          throw new Error(`Billing run failed for ${failed.length} org(s): ${failed.join(', ')}`);
+      },
+    },
     compliance: {
       // Licence expiry reminders and the MRI reminder on the 15th (deduped per recipient).
       'compliance.daily_run': async () => {

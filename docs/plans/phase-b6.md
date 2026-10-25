@@ -1,6 +1,6 @@
 # Phase B6 — Sync API, tenant portal, SaaS billing, operator
 
-> Status: **IN PROGRESS** · drafted 2026-10-25 · ADR-004, ADR-008, ADR-014, ADR-017
+> Status: **DONE** (pending CI) · drafted 2026-10-25 · ADR-004, ADR-008, ADR-014, ADR-017
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 > Shipped as two PRs: **B6a** (sync + tenant portal) and **B6b** (billing + operator).
 
@@ -93,11 +93,11 @@ ever blocking their reads; platform staff can support orgs through an audited op
 - [x] Tenant portal: leases, statement, receipt PDF, pay (STK), tickets
 - [x] Tests: replay of 50 readings applies once; closed-ticket conflict rejected; caretaker scope + reset; portal isolation
 ### B6b — Billing & operator
-- [ ] Migration: plan (seeded with the 2026-10-25 prices), subscription, subscription_invoice, subscription_payment, platform_operator; RLS
-- [ ] Core pricing; Paystack client (+ fake); checkout, webhook, renewal/dunning job; gate plugin (incomplete/suspended)
-- [ ] Operator auth mode, CLI grant, orgs/subscriptions/plans/audit endpoints, audited reads
-- [ ] Journey: new org incomplete (setup only) → paid → active → lapsed → past_due → suspended (writes blocked, reads allowed) → paid → active
-- [ ] Spec + client regenerated; spec lint + Schemathesis green (both PRs)
+- [x] Migration: plan (seeded with the 2026-10-25 prices), subscription, subscription_invoice, subscription_payment, platform_operator; RLS
+- [x] Core pricing; Paystack client (+ fake); checkout, webhook, renewal/dunning job; gate plugin (incomplete/suspended)
+- [x] Operator auth mode, CLI grant, orgs/subscriptions/plans/audit endpoints, audited reads
+- [x] Journey: new org incomplete (setup only) → paid → active → lapsed → past_due → suspended (writes blocked, reads allowed) → paid → active
+- [x] Spec + client regenerated; spec lint + Schemathesis green (both PRs)
 
 ## Notes (2026-10-25)
 - **B6a:**
@@ -106,6 +106,22 @@ ever blocking their reads; platform staff can support orgs through an audited op
   - The push body has one array per record type, not a polymorphic list, so the generated
     Kotlin client stays simple.
   - Portal tickets have no photos yet (uploads are an org route).
+
+- **B6b:**
+  - Paystack runs through `FakePaystackClient` in tests (checkout, verify, saved-card charge).
+    Before launch it needs a live smoke test with Kejasha's own test keys (B7 checklist), like
+    Daraja.
+  - The webhook is re-verified with `GET /transaction/verify` before money is applied, so a
+    forged or replayed body cannot activate an account.
+  - Orgs that existed before migration 12 were set active for one month (none in production
+    yet).
+  - Demo seed orgs are active for a year.
+  - `BILLING_REQUIRED=false` is the shared test default; billing tests and the billing journey
+    turn enforcement on.
+  - Schemathesis accepts 402 as a business-state answer: the fuzzer can create and switch to an
+    unpaid org.
+  - Operator reads are cross-tenant with the owner role by design and are logged per request
+    (`operator_access_log`).
 
 ## Screens this phase must power (ADR-018)
 Android: caretaker offline shift, owner/host app, tenant pay. Web: billing/plan page, checkout
