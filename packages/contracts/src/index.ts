@@ -8,3 +8,4 @@ export * from './platform';
 export * from './shortstay';
 export * from './maintenance';
 export * from './compliance';
+export * from './reporting';

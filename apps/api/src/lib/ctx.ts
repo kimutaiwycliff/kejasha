@@ -15,6 +15,8 @@ export interface Ctx {
   orgId: string;
   userId?: string | undefined;
   role?: Role | undefined;
+  /** Client landlord a viewer is limited to (reporting filters by it). */
+  scope?: string | undefined;
   actorKind: 'user' | 'system';
   requestId?: string | undefined;
 }
@@ -28,7 +30,14 @@ export function ctxOf(req: FastifyRequest): Ctx {
       'No active organization',
       'Select an organization first.',
     );
-  return { orgId: a.orgId, userId: a.userId, role: a.role, actorKind: 'user', requestId: req.id };
+  return {
+    orgId: a.orgId,
+    userId: a.userId,
+    role: a.role,
+    scope: a.scope,
+    actorKind: 'user',
+    requestId: req.id,
+  };
 }
 
 export function systemCtx(orgId: string): Ctx {

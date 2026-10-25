@@ -42,7 +42,7 @@ export function complianceRoutes({
     app.get(
       '/v1/compliance/mri',
       {
-        config: manager,
+        config: { ...manager, allowViewer: true },
         schema: {
           operationId: 'getMriMonth',
           tags,
@@ -51,7 +51,10 @@ export function complianceRoutes({
           response: { 200: MriMonth, ...problemResponses() },
         },
       },
-      async (req) => mri.month(ctxOf(req), req.query.period),
+      async (req) => {
+        const ctx = ctxOf(req);
+        return mri.month(ctx, req.query.period, ctx.scope);
+      },
     );
     app.get(
       '/v1/compliance/mri/:clientLandlordId',

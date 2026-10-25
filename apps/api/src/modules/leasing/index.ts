@@ -21,9 +21,11 @@ export {
   leaseIdsByTenantPhone,
   leaseOnUnitAt,
   leaseTaxInputs,
+  rentRollLeases,
   leasesForMatching,
   sumOpen,
   tenantsById,
   type LeaseForMatching,
   type LeaseTaxInputs,
+  type RentRollLease,
 } from './lookups';

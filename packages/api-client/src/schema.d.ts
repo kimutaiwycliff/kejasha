@@ -279,6 +279,23 @@ export interface paths {
     patch: operations['updateMemberRole'];
     trace?: never;
   };
+  '/v1/members/{id}/scope': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Limit a read-only member to one landlord's figures */
+    put: operations['setMemberScope'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/invitations': {
     parameters: {
       query?: never;
@@ -1998,6 +2015,145 @@ export interface paths {
     patch: operations['updateLicence'];
     trace?: never;
   };
+  '/v1/reports/owner-dashboard': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Collected, spent, fees, net, arrears, occupancy and a 6-month trend */
+    get: operations['getOwnerDashboard'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/owner-statements': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Monthly statement totals per landlord */
+    get: operations['listOwnerStatements'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/owner-statements/{clientLandlordId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** A landlord's monthly statement: income per unit, expenses, fee, net */
+    get: operations['getOwnerStatement'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/owner-statements/{clientLandlordId}/pdf': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** The monthly statement as a PDF (agency-branded for client landlords) */
+    get: operations['getOwnerStatementPdf'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/reports/rent-roll': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Every long-term unit: tenant, current rent, lease dates, balance */
+    get: operations['getRentRoll'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/reports/collections': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Money received by day, method, source and property */
+    get: operations['getCollectionsReport'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/reports/occupancy': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Long-term units let and short-stay nights sold for a month */
+    get: operations['getOccupancyReport'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/exports/{dataset}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Download a list as CSV
+     * @description clientLandlordId narrows rent-roll, collections and unit-expenses. Viewers may export only those three.
+     */
+    get: operations['exportCsv'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2055,10 +2211,10 @@ export interface components {
       | 'Wajir'
       | 'West Pokot';
     /**
-     * @description owner > manager > agent > caretaker
+     * @description owner > manager > agent > caretaker; viewer is read-only (dashboards, statements, reports)
      * @enum {string}
      */
-    RoleInput: 'owner' | 'manager' | 'agent' | 'caretaker';
+    RoleInput: 'owner' | 'manager' | 'agent' | 'caretaker' | 'viewer';
     /** @enum {string} */
     OrgKindInput: 'landlord' | 'agency' | 'host';
     SignUpEmailBodyInput: {
@@ -2122,6 +2278,11 @@ export interface components {
       phone?: string | null;
       email?: string | null;
       county?: components['schemas']['CountyInput'] | null;
+      brandColor?: string | null;
+    };
+    /** @description Viewers only (422 not_a_viewer). In an agency a viewer needs a landlord to see anything. */
+    SetMemberScopeBodyInput: {
+      clientLandlordId: string | null;
     };
     UpdateMemberBodyInput: {
       role: components['schemas']['RoleInput'];
@@ -3135,6 +3296,19 @@ export interface components {
       documentKey?: string | null;
       notes?: string | null;
     };
+    /**
+     * @description Viewers may export rent-roll, collections and unit-expenses
+     * @enum {string}
+     */
+    ExportDatasetInput:
+      | 'rent-roll'
+      | 'collections'
+      | 'payments'
+      | 'unit-expenses'
+      | 'bookings'
+      | 'tickets'
+      | 'tenants'
+      | 'arrears';
     FileLink: {
       key: string;
       url: string;
@@ -3207,10 +3381,10 @@ export interface components {
       | 'Wajir'
       | 'West Pokot';
     /**
-     * @description owner > manager > agent > caretaker
+     * @description owner > manager > agent > caretaker; viewer is read-only (dashboards, statements, reports)
      * @enum {string}
      */
-    Role: 'owner' | 'manager' | 'agent' | 'caretaker';
+    Role: 'owner' | 'manager' | 'agent' | 'caretaker' | 'viewer';
     /** @enum {string} */
     OrgKind: 'landlord' | 'agency' | 'host';
     User: {
@@ -3257,6 +3431,8 @@ export interface components {
       phone: string | null;
       email: string | null;
       county: components['schemas']['County'] | null;
+      /** @description Accent colour on statements (agencies white-label with it) */
+      brandColor: string | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -3269,6 +3445,8 @@ export interface components {
       email: string | null;
       phone: string | null;
       role: components['schemas']['Role'];
+      /** @description Viewers only: the one landlord whose figures they see */
+      clientLandlordId: string | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -4817,6 +4995,280 @@ export interface components {
     LicenceList: {
       items: components['schemas']['Licence'][];
     };
+    OwnerStatementSummary: {
+      /** Format: uuid */
+      clientLandlordId: string;
+      landlordName: string;
+      /**
+       * Format: int64
+       * @description Money received in the month (ledger payment entries, net of reversals)
+       */
+      incomeCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      expensesCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      managementFeeCents: number;
+      /**
+       * Format: int64
+       * @description income − expenses − management fee
+       */
+      netCents: number;
+    };
+    OwnerStatementList: {
+      period: string;
+      items: components['schemas']['OwnerStatementSummary'][];
+    };
+    OwnerStatement: {
+      period: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      from: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      to: string;
+      /** Format: uuid */
+      clientLandlordId: string;
+      landlordName: string;
+      /** @description Agency name for client landlords */
+      managedBy: string | null;
+      managementFee: {
+        /** @enum {string} */
+        kind: 'none' | 'percent' | 'flat';
+        bps: number | null;
+        flatCents: number | null;
+      };
+      /**
+       * Format: int64
+       * @description Money received in the month (ledger payment entries, net of reversals)
+       */
+      incomeCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      expensesCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      managementFeeCents: number;
+      /**
+       * Format: int64
+       * @description income − expenses − management fee
+       */
+      netCents: number;
+      income: {
+        /** Format: uuid */
+        unitId: string;
+        unitCode: string;
+        propertyName: string;
+        payments: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        receivedCents: number;
+      }[];
+      expenses: {
+        /** Format: uuid */
+        id: string;
+        /**
+         * Format: date
+         * @description Africa/Nairobi business date (YYYY-MM-DD)
+         */
+        incurredOn: string;
+        propertyName: string;
+        unitCode: string | null;
+        category: components['schemas']['ExpenseCategory'];
+        description: string | null;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        amountCents: number;
+      }[];
+    };
+    RentRoll: {
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      asOf: string;
+      items: {
+        /** Format: uuid */
+        unitId: string;
+        unitCode: string;
+        propertyName: string;
+        /** @enum {string} */
+        status: 'occupied' | 'vacant';
+        leaseId: string | null;
+        tenantName: string | null;
+        /**
+         * Format: int64
+         * @description Current rent (asking rent when vacant)
+         */
+        rentCents: number;
+        leaseStart: string | null;
+        leaseEnd: string | null;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        balanceCents: number;
+      }[];
+      totals: {
+        units: number;
+        occupied: number;
+        occupancyBps: number;
+        /**
+         * Format: int64
+         * @description Rent of occupied units
+         */
+        rentCents: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        balanceCents: number;
+      };
+    };
+    /** @description Money matched to leases and bookings (ledger), by date received */
+    CollectionsReport: {
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      from: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      to: string;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      totalCents: number;
+      count: number;
+      byDay: {
+        /**
+         * Format: date
+         * @description Africa/Nairobi business date (YYYY-MM-DD)
+         */
+        date: string;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        amountCents: number;
+        count: number;
+      }[];
+      byMethod: {
+        key: string;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        amountCents: number;
+        count: number;
+      }[];
+      bySource: {
+        key: string;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        amountCents: number;
+        count: number;
+      }[];
+      byProperty: {
+        key: string;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        amountCents: number;
+        count: number;
+        propertyName: string;
+      }[];
+    };
+    /** @description Long-term: units let at month end. Short-stay: nights sold. */
+    OccupancyReport: {
+      period: string;
+      longTerm: {
+        units: number;
+        occupied: number;
+        occupancyBps: number;
+      };
+      shortStay: {
+        units: number;
+        nightsSold: number;
+        availableNights: number;
+        occupancyBps: number;
+      };
+    };
+    /** @description Read-only overview for owners (and viewers) */
+    OwnerDashboard: {
+      period: string;
+      /** @description Set when limited to one landlord */
+      landlordName: string | null;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      collectedCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      expensesCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      managementFeeCents: number;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      netCents: number;
+      /**
+       * Format: int64
+       * @description Owed by current tenants now
+       */
+      arrearsCents: number;
+      longTermOccupancyBps: number;
+      shortStayOccupancyBps: number;
+      activeTickets: number;
+      trend: {
+        period: string;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        collectedCents: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        expensesCents: number;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        netCents: number;
+      }[];
+    };
   };
   responses: never;
   parameters: never;
@@ -5881,6 +6333,87 @@ export interface operations {
       };
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  setMemberScope: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetMemberScopeBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MemberList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
         headers: {
           [name: string]: unknown;
         };
@@ -15671,6 +16204,648 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Licence'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getOwnerDashboard: {
+    parameters: {
+      query: {
+        /** @description Calendar month, YYYY-MM */
+        period: string;
+        /** @description One landlord only (viewers are always limited to their own) */
+        clientLandlordId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OwnerDashboard'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  listOwnerStatements: {
+    parameters: {
+      query: {
+        /** @description Calendar month, YYYY-MM */
+        period: string;
+        /** @description One landlord only (viewers are always limited to their own) */
+        clientLandlordId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OwnerStatementList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getOwnerStatement: {
+    parameters: {
+      query: {
+        /** @description Calendar month, YYYY-MM */
+        period: string;
+      };
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        clientLandlordId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OwnerStatement'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getOwnerStatementPdf: {
+    parameters: {
+      query: {
+        /** @description Calendar month, YYYY-MM */
+        period: string;
+      };
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        clientLandlordId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description PDF statement */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/pdf': string;
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getRentRoll: {
+    parameters: {
+      query?: {
+        /** @description Defaults to today */
+        asOf?: string;
+        /** @description UUID identifier */
+        propertyId?: string;
+        /** @description One landlord only (viewers are always limited to their own) */
+        clientLandlordId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RentRoll'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getCollectionsReport: {
+    parameters: {
+      query: {
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        from: string;
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        to: string;
+        /** @description One landlord only (viewers are always limited to their own) */
+        clientLandlordId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CollectionsReport'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  getOccupancyReport: {
+    parameters: {
+      query: {
+        /** @description Calendar month, YYYY-MM */
+        period: string;
+        /** @description One landlord only (viewers are always limited to their own) */
+        clientLandlordId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OccupancyReport'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  exportCsv: {
+    parameters: {
+      query?: {
+        /** @description Date-ranged datasets; defaults to this month */
+        from?: string;
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        to?: string;
+        /** @description One landlord only (viewers are always limited to their own) */
+        clientLandlordId?: string;
+      };
+      header?: never;
+      path: {
+        dataset: components['schemas']['ExportDatasetInput'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The dataset as CSV */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
         };
       };
       /** @description Validation failed */

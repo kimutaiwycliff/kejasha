@@ -1,10 +1,17 @@
-import { money, type tax } from '@kejasha/core';
+import { billing, money, type tax } from '@kejasha/core';
 import { and, eq, inArray, ne, schema, sql, type Tx } from '@kejasha/db';
 import * as ledger from '../ledger';
 import { outstandingByLease } from './invoicing';
 
 /** Read helpers the payments module uses for matching (ADR-001: no direct table access). */
-const { lease: ls, tenant: tn, invoice: inv, creditNote: cn, depositSettlement: ds } = schema;
+const {
+  lease: ls,
+  tenant: tn,
+  invoice: inv,
+  creditNote: cn,
+  depositSettlement: ds,
+  leaseRentStep: rs,
+} = schema;
 
 export interface LeaseForMatching {
   leaseId: string;
@@ -174,4 +181,60 @@ export async function leaseTaxInputs(tx: Tx): Promise<LeaseTaxInputs[]> {
         })),
     ],
   }));
+}
+
+export interface RentRollLease {
+  leaseId: string;
+  unitId: string;
+  tenantId: string;
+  tenantName: string;
+  startDate: string;
+  endDate: string | null;
+  currentRentCents: bigint;
+  balanceCents: bigint;
+}
+
+/** The lease occupying each unit on `date` with its current rent and balance (rent roll). */
+export async function rentRollLeases(
+  tx: Tx,
+  unitIds: string[],
+  date: string,
+): Promise<RentRollLease[]> {
+  if (!unitIds.length) return [];
+  const rows = await tx
+    .select({ l: ls, tenantName: tn.fullName })
+    .from(ls)
+    .innerJoin(tn, eq(tn.id, ls.tenantId))
+    .where(
+      and(
+        inArray(ls.unitId, unitIds),
+        ne(ls.status, 'cancelled'),
+        sql`${ls.startDate} <= ${date}::date AND (${ls.endDate} IS NULL OR ${ls.endDate} >= ${date}::date)`,
+      ),
+    );
+  if (!rows.length) return [];
+  const ids = rows.map((r) => r.l.id);
+  const steps = await tx.select().from(rs).where(inArray(rs.leaseId, ids));
+  const balances = await ledger.leaseBalances(tx, ids);
+  return rows.map(({ l, tenantName }) => {
+    const schedule: billing.RentSchedule = {
+      startDate: l.startDate,
+      rentCents: l.rentCents,
+      escalationBps: l.escalationBps,
+      escalationEveryMonths: l.escalationEveryMonths,
+      steps: steps
+        .filter((x) => x.leaseId === l.id)
+        .map((x) => ({ effectivePeriod: x.effectivePeriod.slice(0, 7), rentCents: x.rentCents })),
+    };
+    return {
+      leaseId: l.id,
+      unitId: l.unitId,
+      tenantId: l.tenantId,
+      tenantName,
+      startDate: l.startDate,
+      endDate: l.endDate,
+      currentRentCents: billing.rentForPeriod(schedule, date.slice(0, 7)),
+      balanceCents: balances.get(l.id)?.receivable ?? 0n,
+    };
+  });
 }

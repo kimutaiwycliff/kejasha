@@ -523,3 +523,23 @@ export async function leasePaymentCredits(tx: Tx) {
     },
   }));
 }
+
+/** Method, source and channel of payments (reports). */
+export async function paymentsInfo(tx: Tx, ids: string[]) {
+  if (!ids.length)
+    return new Map<
+      string,
+      { method: string; source: string; channelId: string | null; providerRef: string }
+    >();
+  const rows = await tx
+    .select({
+      id: pm.id,
+      method: pm.method,
+      source: pm.source,
+      channelId: pm.channelId,
+      providerRef: pm.providerRef,
+    })
+    .from(pm)
+    .where(inArray(pm.id, ids));
+  return new Map(rows.map((r) => [r.id, r]));
+}

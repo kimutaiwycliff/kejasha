@@ -15,6 +15,7 @@ export interface UnitInfo {
   propertyId: string;
   propertyName: string;
   clientLandlordId: string;
+  rentCents: bigint | null;
   baseNightlyCents: bigint | null;
 }
 
@@ -37,6 +38,7 @@ export async function unitsById(tx: Tx, ids: string[]): Promise<Map<string, Unit
         propertyId: u.propertyId,
         propertyName,
         clientLandlordId,
+        rentCents: u.rentCents,
         baseNightlyCents: u.baseNightlyCents,
       },
     ]),
@@ -152,4 +154,22 @@ export async function propertiesOf(tx: Tx, clientLandlordId?: string): Promise<P
     clientLandlordId: p.clientLandlordId,
     archived: p.archivedAt !== null,
   }));
+}
+
+/** Every unit (archived included) on the given properties. */
+export async function unitsOfProperties(tx: Tx, propertyIds: string[]): Promise<UnitInfo[]> {
+  if (!propertyIds.length) return [];
+  const rows = await tx.select({ id: un.id }).from(un).where(inArray(un.propertyId, propertyIds));
+  return [
+    ...(
+      await unitsById(
+        tx,
+        rows.map((r) => r.id),
+      )
+    ).values(),
+  ].sort((a, b) =>
+    a.propertyName === b.propertyName
+      ? a.code.localeCompare(b.code)
+      : a.propertyName.localeCompare(b.propertyName),
+  );
 }

@@ -78,7 +78,7 @@ export const member = pgTable('member', {
   userId: uuid('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-  role: text('role', { enum: ['owner', 'manager', 'agent', 'caretaker'] }).notNull(),
+  role: text('role', { enum: ['owner', 'manager', 'agent', 'caretaker', 'viewer'] }).notNull(),
   createdAt: ts('created_at').notNull().defaultNow(),
 });
 
@@ -88,7 +88,7 @@ export const invitation = pgTable('invitation', {
     .notNull()
     .references(() => organization.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
-  role: text('role', { enum: ['owner', 'manager', 'agent', 'caretaker'] }),
+  role: text('role', { enum: ['owner', 'manager', 'agent', 'caretaker', 'viewer'] }),
   status: text('status').notNull().default('pending'),
   expiresAt: ts('expires_at').notNull(),
   inviterId: uuid('inviter_id')

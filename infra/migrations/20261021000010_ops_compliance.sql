@@ -133,7 +133,12 @@ SELECT app.enable_tenant_rls('public.licence');
 CREATE TRIGGER licence_touch BEFORE UPDATE ON licence
   FOR EACH ROW EXECUTE FUNCTION app.touch_updated_at();
 
--- ── Viewer scope (diaspora owners of an agency's client landlord) ───────────────────────────
+-- ── Viewer role (read-only owners) and its scope (an agency's client landlord) ───────────────
+ALTER TABLE member DROP CONSTRAINT member_role_check;
+ALTER TABLE member ADD CONSTRAINT member_role_check CHECK (role IN ('owner', 'manager', 'agent', 'caretaker', 'viewer'));
+ALTER TABLE invitation DROP CONSTRAINT invitation_role_check;
+ALTER TABLE invitation ADD CONSTRAINT invitation_role_check CHECK (role IN ('owner', 'manager', 'agent', 'caretaker', 'viewer'));
+
 CREATE TABLE member_scope (
   org_id             uuid        NOT NULL,
   user_id            uuid        NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
@@ -170,6 +175,12 @@ REVOKE INSERT, UPDATE, DELETE ON report_collection_entry FROM app_authenticated;
 -- migrate:down
 DROP VIEW report_collection_entry;
 DROP TABLE member_scope;
+DELETE FROM invitation WHERE role = 'viewer';
+DELETE FROM member WHERE role = 'viewer';
+ALTER TABLE invitation DROP CONSTRAINT invitation_role_check;
+ALTER TABLE invitation ADD CONSTRAINT invitation_role_check CHECK (role IN ('owner', 'manager', 'agent', 'caretaker'));
+ALTER TABLE member DROP CONSTRAINT member_role_check;
+ALTER TABLE member ADD CONSTRAINT member_role_check CHECK (role IN ('owner', 'manager', 'agent', 'caretaker'));
 DROP TABLE licence;
 DROP TABLE mri_filing;
 DROP TABLE cash_collection;

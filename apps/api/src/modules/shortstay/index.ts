@@ -17,6 +17,7 @@ export {
 } from './lookups';
 export {
   expenseIdsByTicket,
+  expensesIn,
   recordUnitExpense,
   setTicketExpense,
   type UnitExpenseInput,

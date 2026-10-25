@@ -36,6 +36,21 @@ const NEXT: Record<Status, Status[]> = {
 };
 const PHOTO = 'maintenance_photo';
 
+/** Open/in-progress/resolved tickets per property (dashboards). */
+export async function activeTicketCount(tx: Tx, propertyIds: string[]): Promise<number> {
+  if (!propertyIds.length) return 0;
+  const [row] = await tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(mt)
+    .where(
+      and(
+        inArray(mt.propertyId, propertyIds),
+        sql`${mt.status} IN ('open', 'in_progress', 'resolved')`,
+      ),
+    );
+  return row?.n ?? 0;
+}
+
 export interface MaintenanceDeps {
   memberRoles(orgId: string, userIds: string[]): Promise<Map<string, Role>>;
 }

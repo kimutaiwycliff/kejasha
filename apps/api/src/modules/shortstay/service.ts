@@ -126,6 +126,21 @@ export async function setTicketExpense(
   return e ? recordUnitExpense(tx, ctx, { ...e, maintenanceTicketId: ticketId }) : null;
 }
 
+/** Expenses on the given properties between two dates (inclusive), for statements and reports. */
+export async function expensesIn(tx: Tx, propertyIds: string[], from: string, to: string) {
+  if (!propertyIds.length) return [];
+  return tx
+    .select()
+    .from(ex)
+    .where(
+      and(
+        inArray(ex.propertyId, propertyIds),
+        sql`${ex.incurredOn} BETWEEN ${from}::date AND ${to}::date`,
+      ),
+    )
+    .orderBy(asc(ex.incurredOn), asc(ex.id));
+}
+
 /** Expense ids recorded for maintenance tickets. */
 export async function expenseIdsByTicket(
   tx: Tx,

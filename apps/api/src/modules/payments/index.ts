@@ -22,4 +22,4 @@ export function createPayments(deps: AppDeps): PaymentsParts {
 
 export { paymentsRoutes, type PaymentsParts };
 
-export { leasePaymentCredits } from './service';
+export { leasePaymentCredits, paymentsInfo } from './service';

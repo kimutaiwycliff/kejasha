@@ -142,6 +142,7 @@ export function createIdentityService(
       phone: profile?.phone ?? null,
       email: profile?.email ?? null,
       county: (profile?.county as OrgDto['county']) ?? null,
+      brandColor: (profile?.branding as { brandColor?: string } | undefined)?.brandColor ?? null,
       createdAt: iso(org.createdAt),
     };
   }
@@ -288,7 +289,11 @@ export function createIdentityService(
           .set({ name: body.name })
           .where(eq(schema.organization.id, orgId));
       }
-      const { name: _name, ...profile } = body;
+      const { name: _name, brandColor, ...rest } = body;
+      const profile = {
+        ...rest,
+        ...(brandColor !== undefined ? { branding: brandColor ? { brandColor } : {} } : {}),
+      };
       await req.tenant(async (tx) => {
         if (Object.keys(profile).length) {
           await tx
@@ -313,6 +318,8 @@ export function createIdentityService(
         .innerJoin(schema.user, eq(schema.user.id, schema.member.userId))
         .where(eq(schema.member.organizationId, req.actor!.orgId!))
         .orderBy(schema.member.createdAt);
+      const scopes = await req.tenant((tx) => tx.select().from(schema.memberScope));
+      const scopeOf = new Map(scopes.map((x) => [x.userId, x.clientLandlordId]));
       return rows.map(({ m, u }) => {
         const user = toUser(u);
         return {
@@ -322,8 +329,39 @@ export function createIdentityService(
           email: user.email,
           phone: user.phone,
           role: m.role,
+          clientLandlordId: m.role === 'viewer' ? (scopeOf.get(u.id) ?? null) : null,
           createdAt: iso(m.createdAt),
         };
+      });
+    },
+
+    /** Limit a viewer to one client landlord (null = whole org; not allowed for agencies). */
+    async setMemberScope(req: FastifyRequest, memberId: string, clientLandlordId: string | null) {
+      const orgId = req.actor!.orgId!;
+      const target = await memberOf(orgId, memberId);
+      if (target.role !== 'viewer')
+        throw AppError.unprocessable(
+          'not_a_viewer',
+          'Only read-only members (viewers) have a scope.',
+        );
+      await req.tenant(async (tx) => {
+        await tx.delete(schema.memberScope).where(eq(schema.memberScope.userId, target.userId));
+        if (clientLandlordId) {
+          const [l] = await tx
+            .select({ id: schema.clientLandlord.id })
+            .from(schema.clientLandlord)
+            .where(eq(schema.clientLandlord.id, clientLandlordId));
+          if (!l) throw AppError.notFound('Landlord');
+          await tx
+            .insert(schema.memberScope)
+            .values({ orgId, userId: target.userId, clientLandlordId });
+        }
+        await audit(tx, req, {
+          action: 'member.scope_changed',
+          entityType: 'member',
+          entityId: memberId,
+          diff: { clientLandlordId },
+        });
       });
     },
 
@@ -366,14 +404,15 @@ export function createIdentityService(
         body: { memberId, role, organizationId: orgId },
         headers: toFetchHeaders(req),
       });
-      await req.tenant((tx) =>
-        audit(tx, req, {
+      await req.tenant(async (tx) => {
+        await tx.delete(schema.memberScope).where(eq(schema.memberScope.userId, target.userId));
+        await audit(tx, req, {
           action: 'member.role_changed',
           entityType: 'member',
           entityId: memberId,
           diff: { from: target.role, to: role },
-        }),
-      );
+        });
+      });
     },
 
     async removeMember(req: FastifyRequest, memberId: string) {
@@ -393,6 +432,7 @@ export function createIdentityService(
         headers: toFetchHeaders(req),
       });
       await req.tenant(async (tx) => {
+        await tx.delete(schema.memberScope).where(eq(schema.memberScope.userId, target.userId));
         for (const hook of hooks.memberRemoved) await hook(tx, target.userId);
         await audit(tx, req, {
           action: 'member.removed',

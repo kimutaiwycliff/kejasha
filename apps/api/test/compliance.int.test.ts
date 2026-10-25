@@ -196,8 +196,8 @@ describe('Monthly Rental Income', () => {
     await pay(c, l.id, 300_000, '2026-10-02'); // KES 300,000 → eligible band
     clock.set('2026-11-15');
     const jobs = createJobHandlers(api.deps, silent);
-    await jobs.compliance['compliance.daily_run']!({ payload: {} } as never);
-    await jobs.compliance['compliance.daily_run']!({ payload: {} } as never);
+    await jobs.compliance['compliance.daily_run']!({} as never, {} as never);
+    await jobs.compliance['compliance.daily_run']!({} as never, {} as never);
     const { rows } = await api.deps.db.pools.owner.query(
       `SELECT payload FROM outbox WHERE org_id = $1 AND dedupe_key LIKE 'mri:%'`,
       [o.org.id],
@@ -253,7 +253,7 @@ describe('licences', () => {
     ).toEqual([permit.id]);
 
     const jobs = createJobHandlers(api.deps, silent);
-    await jobs.compliance['compliance.daily_run']!({ payload: {} } as never);
+    await jobs.compliance['compliance.daily_run']!({} as never, {} as never);
     const sent = async () =>
       (
         await api.deps.db.pools.owner.query(
@@ -265,7 +265,7 @@ describe('licences', () => {
       'TRA short-stay licence for DV1 (Diani Villas) is expiring',
     ]);
     clock.set('2026-11-19');
-    await jobs.compliance['compliance.daily_run']!({ payload: {} } as never);
+    await jobs.compliance['compliance.daily_run']!({} as never, {} as never);
     expect(await sent()).toHaveLength(2);
 
     // Renewal moves the expiry; archiving stops reminders.

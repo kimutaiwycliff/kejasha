@@ -7,6 +7,7 @@ export {
   unitIdByCode,
   unitIdsInProperty,
   unitsById,
+  unitsOfProperties,
   type LandlordInfo,
   type PropertyInfo,
   type UnitInfo,
