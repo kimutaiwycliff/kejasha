@@ -1,5 +1,5 @@
 import { billing, money, type tax } from '@kejasha/core';
-import { and, eq, inArray, ne, schema, sql, type Tx } from '@kejasha/db';
+import { and, eq, inArray, isNull, ne, schema, sql, type Db, type Tx } from '@kejasha/db';
 import * as ledger from '../ledger';
 import { outstandingByLease } from './invoicing';
 
@@ -237,4 +237,24 @@ export async function rentRollLeases(
       balanceCents: balances.get(l.id)?.receivable ?? 0n,
     };
   });
+}
+
+/**
+ * Tenant portal (B6): tenant records holding this phone in every org. Cross-org by design, so it
+ * runs with the owner role — callers must pass a phone the user has verified.
+ */
+export async function tenantRecordsByPhone(db: Db, phone: string) {
+  return db.owner
+    .select({ tenantId: tn.id, orgId: tn.orgId, fullName: tn.fullName })
+    .from(tn)
+    .where(and(eq(tn.phone, phone), isNull(tn.archivedAt)));
+}
+
+/** Org and tenant of a lease (portal access checks; owner role, read-only). */
+export async function leaseOwnerOf(db: Db, leaseId: string) {
+  const [row] = await db.owner
+    .select({ orgId: ls.orgId, tenantId: ls.tenantId, unitId: ls.unitId, status: ls.status })
+    .from(ls)
+    .where(eq(ls.id, leaseId));
+  return row ?? null;
 }

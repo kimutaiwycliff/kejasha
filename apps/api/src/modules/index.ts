@@ -8,6 +8,7 @@ import { createLeasing, leasingRoutes } from './leasing';
 import { createMaintenanceService, maintenanceRoutes } from './maintenance';
 import { createPayments, paymentsRoutes } from './payments';
 import { platformRoutes } from './platform';
+import { createPortalService, portalRoutes } from './portal';
 import { createReportingModule, reportingRoutes } from './reporting';
 import { createShortStay, shortStayRoutes } from './shortstay';
 import { createSyncService, syncRoutes } from './sync';
@@ -54,4 +55,5 @@ export async function registerModules(app: FastifyInstance, deps: AppDeps): Prom
     syncRoutes(createSyncService(deps, { memberRoles: identity.memberRoles })),
     deps,
   );
+  await app.register(portalRoutes(createPortalService(deps)), deps);
 }

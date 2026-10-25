@@ -50,3 +50,31 @@ describe('RLS: reporting views (security_invoker)', () => {
     expect(['55000', '42501']).toContain(write);
   });
 });
+
+const SYNC_VIEWS = [
+  'sync_property',
+  'sync_unit',
+  'sync_meter',
+  'sync_meter_reading',
+  'sync_ticket',
+  'sync_ticket_update',
+  'sync_cash_collection',
+  'sync_tenant',
+  'sync_lease',
+];
+
+describe.each(SYNC_VIEWS)('RLS: %s (security_invoker)', (view) => {
+  it('shows nothing without an org and only the current org with one', async () => {
+    const [a, b] = [newOrgId(), newOrgId()];
+    await orgWithCollection(a);
+    await orgWithCollection(b);
+    const none = await db.authenticated.execute(
+      sql`SELECT count(*)::int AS n FROM ${sql.identifier(view)}`,
+    );
+    expect(none.rows[0]).toEqual({ n: 0 });
+    const seen = await withTenant(db, { orgId: a }, (tx) =>
+      tx.execute(sql`SELECT DISTINCT org_id FROM ${sql.identifier(view)}`),
+    );
+    expect(seen.rows.every((r) => r.org_id === a)).toBe(true);
+  });
+});

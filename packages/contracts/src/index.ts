@@ -10,3 +10,4 @@ export * from './maintenance';
 export * from './compliance';
 export * from './reporting';
 export * from './sync';
+export * from './portal';

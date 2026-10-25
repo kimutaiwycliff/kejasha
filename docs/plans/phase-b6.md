@@ -81,17 +81,25 @@ ever blocking their reads; platform staff can support orgs through an audited op
 
 ## Tasks
 ### B6a — Sync & tenant portal
-- [ ] Migration: `updated_at` (+ touch) on meter, meter_reading, maintenance_update, cash_collection; tenant phone index
-- [ ] Services accept client ids (readings, tickets, updates, cash)
-- [ ] Sync pull (scoped, cursor, reset) + push (per-record results, duplicates)
-- [ ] Tenant portal: leases, statement, receipt PDF, pay (STK), tickets
-- [ ] Tests: replay of 50 readings applies once; closed-ticket conflict rejected; caretaker scope + reset; portal isolation
+- [x] Migration: `updated_at` (+ touch) on meter, meter_reading, maintenance_update, cash_collection; tenant phone index
+- [x] Services accept client ids (readings, tickets, updates, cash)
+- [x] Sync pull (scoped, cursor, reset) + push (per-record results, duplicates)
+- [x] Tenant portal: leases, statement, receipt PDF, pay (STK), tickets
+- [x] Tests: replay of 50 readings applies once; closed-ticket conflict rejected; caretaker scope + reset; portal isolation
 ### B6b — Billing & operator
 - [ ] Migration: plan (seeded placeholders), subscription, subscription_invoice, subscription_payment, platform_operator; RLS
 - [ ] Core pricing; Paystack client (+ fake); checkout, webhook, renewal/dunning job; gate plugin; plan limits
 - [ ] Operator auth mode, CLI grant, orgs/subscriptions/plans/audit endpoints, audited reads
 - [ ] Journey: trial → paid → lapsed → suspended (writes blocked, reads allowed) → paid → active
 - [ ] Spec + client regenerated; spec lint + Schemathesis green (both PRs)
+
+## Notes (2026-10-25)
+- **B6a:**
+  - Sync reads only the sync module's own `sync_*` views (security_invoker), like reporting.
+  - The pull lag is `SYNC_LAG_SECONDS` (default 10; 0 in tests).
+  - The push body has one array per record type, not a polymorphic list, so the generated
+    Kotlin client stays simple.
+  - Portal tickets have no photos yet (uploads are an org route).
 
 ## Screens this phase must power (ADR-018)
 Android: caretaker offline shift, owner/host app, tenant pay. Web: billing/plan page, checkout

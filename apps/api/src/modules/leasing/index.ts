@@ -20,8 +20,10 @@ export { leasingRoutes, type LeasingParts };
 export {
   leaseIdsByTenantPhone,
   leaseOnUnitAt,
+  leaseOwnerOf,
   leaseTaxInputs,
   rentRollLeases,
+  tenantRecordsByPhone,
   leasesForMatching,
   sumOpen,
   tenantsById,

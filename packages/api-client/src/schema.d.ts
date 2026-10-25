@@ -2154,6 +2154,129 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/sync/pull': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Changes since the cursor (full snapshot without one)
+     * @description Changes are visible ~10 s after they are written. When `reset` is true the device keeps only what this snapshot (and its `hasMore` follow-ups) contains.
+     */
+    get: operations['syncPull'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/sync/push': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Apply records created offline; each answers applied, duplicate or rejected */
+    post: operations['syncPush'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/portal/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Your tenancies with every landlord on Kejasha */
+    get: operations['portalMe'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/portal/leases/{leaseId}/statement': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Your invoices and payments with a running balance */
+    get: operations['portalLeaseStatement'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/portal/leases/{leaseId}/pay': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Pay rent: an M-Pesa prompt is sent to your phone */
+    post: operations['portalPay'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/portal/payments/{id}/receipt': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Receipt PDF for one of your payments */
+    get: operations['portalReceipt'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/portal/tickets': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Repairs you reported */
+    get: operations['portalTickets'];
+    put?: never;
+    /** Report a problem in your unit */
+    post: operations['portalReportTicket'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3309,6 +3432,138 @@ export interface components {
       | 'tickets'
       | 'tenants'
       | 'arrears';
+    /** @description Applied in order tickets → ticketUpdates → meterReadings → cashCollections, each record on its own; at most 200 records in total (422 too_many_records) */
+    SyncPushBodyInput: {
+      tickets?: {
+        /**
+         * Format: uuid
+         * @description UUID identifier
+         */
+        propertyId?: string;
+        /**
+         * Format: uuid
+         * @description Implies the property
+         */
+        unitId?: string;
+        title: string;
+        description?: string;
+        category: components['schemas']['TicketCategoryInput'];
+        priority?: components['schemas']['TicketPriorityInput'];
+        /**
+         * @description Defaults to caretaker for caretakers, staff otherwise; 'tenant' when entering a tenant's report
+         * @enum {string}
+         */
+        reporterKind?: 'staff' | 'caretaker' | 'tenant';
+        /**
+         * Format: uuid
+         * @description UUID identifier
+         */
+        tenantId?: string;
+        /** @description Keys from POST /v1/uploads with purpose maintenance_photo */
+        photoKeys?: string[];
+        /**
+         * Format: uuid
+         * @description Client-generated UUIDv7; a repeat is a duplicate
+         */
+        id: string;
+      }[];
+      ticketUpdates?: {
+        note?: string;
+        /** @description open ↔ in_progress → resolved → closed; resolved can reopen; open/in_progress can be cancelled (409 invalid_ticket_transition). Caretakers cannot close or cancel. */
+        status?: components['schemas']['TicketStatusInput'];
+        /**
+         * Format: int64
+         * @description Final cost, usually sent when resolving
+         */
+        costCents?: number;
+        /** @description Keys from POST /v1/uploads with purpose maintenance_photo */
+        photoKeys?: string[];
+        /**
+         * Format: uuid
+         * @description Client-generated UUIDv7; a repeat is a duplicate
+         */
+        id: string;
+        /**
+         * Format: uuid
+         * @description UUID identifier
+         */
+        ticketId: string;
+      }[];
+      meterReadings?: {
+        /**
+         * Format: uuid
+         * @description Client-generated UUIDv7; a repeat is a duplicate
+         */
+        id: string;
+        /**
+         * Format: uuid
+         * @description UUID identifier
+         */
+        meterId: string;
+        /**
+         * Format: date
+         * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+         * @example 2026-10-21
+         */
+        readOn: string;
+        /**
+         * @description Decimal reading as a string (no float rounding)
+         * @example 1234.5
+         */
+        reading: string;
+        note?: string;
+      }[];
+      cashCollections?: {
+        /**
+         * Format: uuid
+         * @description UUID identifier
+         */
+        leaseId?: string;
+        /**
+         * Format: uuid
+         * @description UUID identifier
+         */
+        bookingId?: string;
+        /**
+         * Format: int64
+         * @description Amount in minor units (cents). KES 1.00 = 100.
+         */
+        amountCents: number;
+        /**
+         * Format: date
+         * @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199
+         * @example 2026-10-21
+         */
+        receivedOn: string;
+        payerName?: string;
+        note?: string;
+        /** @description Photo of the receipt: key from POST /v1/uploads (purpose cash_receipt) */
+        receiptKey?: string;
+        /**
+         * Format: uuid
+         * @description Client-generated UUIDv7; a repeat is a duplicate
+         */
+        id: string;
+      }[];
+    };
+    /** @description Sends an M-Pesa prompt to your phone (the landlord’s own Paybill/Till) */
+    PortalPayBodyInput: {
+      /**
+       * Format: int64
+       * @description Whole shillings; defaults to your balance rounded up
+       */
+      amountCents?: number;
+    };
+    PortalTicketBodyInput: {
+      /**
+       * Format: uuid
+       * @description UUID identifier
+       */
+      leaseId: string;
+      title: string;
+      description?: string;
+      category: components['schemas']['TicketCategoryInput'];
+    };
     FileLink: {
       key: string;
       url: string;
@@ -5268,6 +5523,300 @@ export interface components {
          */
         netCents: number;
       }[];
+    };
+    SyncProperty: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      kind: string;
+      county: string;
+      area: string | null;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      updatedAt: string;
+    };
+    SyncUnit: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      propertyId: string;
+      code: string;
+      label: string | null;
+      /** @enum {string} */
+      mode: 'long_term' | 'short_stay';
+      /** @enum {string} */
+      status: 'active' | 'inactive';
+      bedrooms: number | null;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      updatedAt: string;
+    };
+    SyncMeter: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      unitId: string;
+      /** @enum {string} */
+      kind: 'water' | 'electricity';
+      serial: string | null;
+      unitLabel: string;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      updatedAt: string;
+    };
+    SyncMeterReading: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      meterId: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      readOn: string;
+      reading: string;
+      note: string | null;
+      recordedBy: string | null;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      updatedAt: string;
+    };
+    SyncTicket: {
+      /** Format: uuid */
+      id: string;
+      number: string;
+      /** Format: uuid */
+      propertyId: string;
+      unitId: string | null;
+      title: string;
+      description: string | null;
+      category: components['schemas']['TicketCategory'];
+      priority: components['schemas']['TicketPriority'];
+      status: components['schemas']['TicketStatus'];
+      /** @enum {string} */
+      reporterKind: 'staff' | 'caretaker' | 'tenant';
+      costCents: number | null;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      updatedAt: string;
+    };
+    SyncTicketUpdate: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      ticketId: string;
+      authorId: string | null;
+      note: string | null;
+      statusFrom: components['schemas']['TicketStatus'] | null;
+      statusTo: components['schemas']['TicketStatus'] | null;
+      photoKeys: string[];
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      updatedAt: string;
+    };
+    SyncCashCollection: {
+      /** Format: uuid */
+      id: string;
+      leaseId: string | null;
+      bookingId: string | null;
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      amountCents: number;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      receivedOn: string;
+      payerName: string | null;
+      note: string | null;
+      /** @enum {string} */
+      status: 'pending' | 'confirmed' | 'rejected';
+      rejectReason: string | null;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      updatedAt: string;
+    };
+    /** @description Owners, managers and agents only */
+    SyncTenant: {
+      /** Format: uuid */
+      id: string;
+      fullName: string;
+      phone: string | null;
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      updatedAt: string;
+    };
+    /** @description Owners, managers and agents only */
+    SyncLease: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      unitId: string;
+      /** Format: uuid */
+      tenantId: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      startDate: string;
+      endDate: string | null;
+      /** @enum {string} */
+      status: 'active' | 'terminated' | 'cancelled';
+      /**
+       * Format: date-time
+       * @description RFC 3339 instant
+       */
+      updatedAt: string;
+    };
+    SyncPropertyChanges: {
+      upserted: components['schemas']['SyncProperty'][];
+      /** @description Archived/removed (or no longer visible) ids */
+      deleted: string[];
+    };
+    SyncUnitChanges: {
+      upserted: components['schemas']['SyncUnit'][];
+      /** @description Archived/removed (or no longer visible) ids */
+      deleted: string[];
+    };
+    SyncMeterChanges: {
+      upserted: components['schemas']['SyncMeter'][];
+      /** @description Archived/removed (or no longer visible) ids */
+      deleted: string[];
+    };
+    SyncMeterReadingChanges: {
+      upserted: components['schemas']['SyncMeterReading'][];
+      /** @description Archived/removed (or no longer visible) ids */
+      deleted: string[];
+    };
+    SyncTicketChanges: {
+      upserted: components['schemas']['SyncTicket'][];
+      /** @description Archived/removed (or no longer visible) ids */
+      deleted: string[];
+    };
+    SyncTicketUpdateChanges: {
+      upserted: components['schemas']['SyncTicketUpdate'][];
+      /** @description Archived/removed (or no longer visible) ids */
+      deleted: string[];
+    };
+    SyncCashCollectionChanges: {
+      upserted: components['schemas']['SyncCashCollection'][];
+      /** @description Archived/removed (or no longer visible) ids */
+      deleted: string[];
+    };
+    SyncTenantChanges: {
+      upserted: components['schemas']['SyncTenant'][];
+      /** @description Archived/removed (or no longer visible) ids */
+      deleted: string[];
+    };
+    SyncLeaseChanges: {
+      upserted: components['schemas']['SyncLease'][];
+      /** @description Archived/removed (or no longer visible) ids */
+      deleted: string[];
+    };
+    SyncPullResponse: {
+      /** @description Send back on the next pull */
+      cursor: string;
+      /** @description true = this is a full snapshot; drop local copies not in it (access changed or first pull) */
+      reset: boolean;
+      /** @description Pull again immediately with the new cursor */
+      hasMore: boolean;
+      changes: {
+        properties: components['schemas']['SyncPropertyChanges'];
+        units: components['schemas']['SyncUnitChanges'];
+        meters: components['schemas']['SyncMeterChanges'];
+        meterReadings: components['schemas']['SyncMeterReadingChanges'];
+        tickets: components['schemas']['SyncTicketChanges'];
+        ticketUpdates: components['schemas']['SyncTicketUpdateChanges'];
+        cashCollections: components['schemas']['SyncCashCollectionChanges'];
+        tenants: components['schemas']['SyncTenantChanges'];
+        leases: components['schemas']['SyncLeaseChanges'];
+      };
+    };
+    SyncPushResult: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      type: 'ticket' | 'ticket_update' | 'meter_reading' | 'cash_collection';
+      /** @enum {string} */
+      status: 'applied' | 'duplicate' | 'rejected';
+      /** @description Problem code when rejected, e.g. ticket_finished */
+      code: string | null;
+      message: string | null;
+    };
+    SyncPushResponse: {
+      results: components['schemas']['SyncPushResult'][];
+    };
+    PortalLease: {
+      /** Format: uuid */
+      leaseId: string;
+      unitCode: string;
+      propertyName: string;
+      /**
+       * Format: date
+       * @description Africa/Nairobi business date (YYYY-MM-DD)
+       */
+      startDate: string;
+      endDate: string | null;
+      /** @enum {string} */
+      status: 'active' | 'terminated';
+      /**
+       * Format: int64
+       * @description Amount in minor units (cents). KES 1.00 = 100.
+       */
+      currentRentCents: number;
+      /**
+       * Format: int64
+       * @description What you owe now; negative = credit
+       */
+      balanceCents: number;
+    };
+    PortalTenancy: {
+      /** Format: uuid */
+      orgId: string;
+      landlordName: string;
+      leases: components['schemas']['PortalLease'][];
+    };
+    PortalMe: {
+      phone: string | null;
+      phoneVerified: boolean;
+      /** @description Landlords holding your verified phone on a tenant record (sign in by phone OTP) */
+      tenancies: components['schemas']['PortalTenancy'][];
+    };
+    PortalTicketList: {
+      items: components['schemas']['Ticket'][];
     };
   };
   responses: never;
@@ -16846,6 +17395,573 @@ export interface operations {
         };
         content: {
           'text/csv': string;
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  syncPull: {
+    parameters: {
+      query?: {
+        /** @description From the previous pull; omit for a full snapshot */
+        cursor?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SyncPullResponse'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  syncPush: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SyncPushBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SyncPushResponse'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  portalMe: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PortalMe'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  portalLeaseStatement: {
+    parameters: {
+      query?: {
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        from?: string;
+        /** @description Africa/Nairobi business date (YYYY-MM-DD); years 1900–2199 */
+        to?: string;
+      };
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        leaseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaseStatement'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  portalPay: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        leaseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PortalPayBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StkRequest'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  portalReceipt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UUID identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description PDF receipt */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/pdf': string;
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Unprocessable */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  portalTickets: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PortalTicketList'];
+        };
+      };
+      /** @description Validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not signed in */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Not allowed */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+      /** @description Internal error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': components['schemas']['ProblemDetails'];
+        };
+      };
+    };
+  };
+  portalReportTicket: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PortalTicketBodyInput'];
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TicketDetail'];
         };
       };
       /** @description Validation failed */

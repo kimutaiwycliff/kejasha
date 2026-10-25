@@ -198,6 +198,21 @@ export function createMaintenanceService(deps: AppDeps, members: MaintenanceDeps
       });
     },
 
+    /** Tickets a tenant reported or that concern them (tenant portal). */
+    async forTenant(ctx: Ctx, tenantId: string) {
+      return inTenant(db, ctx, async (tx) =>
+        toDtos(
+          tx,
+          await tx
+            .select()
+            .from(mt)
+            .where(eq(mt.tenantId, tenantId))
+            .orderBy(desc(mt.createdAt), desc(mt.id))
+            .limit(100),
+        ),
+      );
+    },
+
     async get(ctx: Ctx, id: string) {
       return inTenant(db, ctx, async (tx) => detail(tx, await load(tx, ctx, id)));
     },
