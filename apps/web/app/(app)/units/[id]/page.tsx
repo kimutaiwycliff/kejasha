@@ -3,7 +3,6 @@ import { LinkButton } from '@/components/link-button';
 import { Badge } from '@kejasha/ui/components/badge';
 import { Button } from '@kejasha/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kejasha/ui/components/card';
-import { Skeleton } from '@kejasha/ui/components/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { Pencil, Plus } from 'lucide-react';
 import Link from 'next/link';
@@ -13,8 +12,10 @@ import { BackLink, Details } from '@/components/detail';
 import { ConfirmButton } from '@/components/dialogs';
 import { LeaseTable } from '@/components/leasing/lease-table';
 import { PageHeader } from '@/components/page-header';
+import { QueryFallback } from '@/components/query-fallback';
 import { MetersCard } from '@/components/portfolio/meters';
 import { UnitDialog } from '@/components/portfolio/unit-dialogs';
+import { UnitStaySection } from '@/components/shortstay/unit-stay';
 import { api, unwrap } from '@/lib/api';
 import { formatKes } from '@/lib/format';
 import { toastError, useCan, useWrite } from '@/lib/hooks';
@@ -26,10 +27,11 @@ export default function UnitPage() {
   const canEdit = useCan('manager');
   const seesLeases = useCan('agent');
   const [editing, setEditing] = useState(false);
-  const { data: u } = useQuery({
+  const uQuery = useQuery({
     queryKey: ['unit', id],
     queryFn: async () => unwrap(await api.GET('/v1/units/{id}', { params: { path: { id } } })),
   });
+  const u = uQuery.data;
   const invalidate = [['units'], ['unit'], ['property'], ['properties']];
   const archive = useWrite(
     async (_: void, headers) =>
@@ -43,7 +45,7 @@ export default function UnitPage() {
       ),
     { invalidate, success: (r) => (r.status === 'active' ? 'Unit is active' : 'Unit is inactive') },
   );
-  if (!u) return <Skeleton className="h-64" />;
+  if (!u) return <QueryFallback query={uQuery} className="h-64" />;
   const live = !u.archivedAt;
   const shortStay = u.mode === 'short_stay';
   return (
@@ -142,6 +144,7 @@ export default function UnitPage() {
           </CardContent>
         </Card>
       )}
+      {shortStay && seesLeases && <UnitStaySection unitId={u.id} live={live} />}
       <UnitDialog open={editing} onOpenChange={setEditing} unit={u} />
     </>
   );

@@ -164,14 +164,15 @@ function pgConstraint(err: unknown): ProblemDetails | undefined {
     [PG.exclusionViolation]: [409, 'overlap', 'This overlaps an existing record.'],
     [PG.checkViolation]: [422, 'constraint_violation', 'The values are not consistent.'],
     [PG.foreignKeyViolation]: [422, 'invalid_reference', 'A referenced record does not exist.'],
-    // Backstop: contracts already reject NUL; anything else Postgres cannot encode is still a 400.
+    // Backstop: contracts reject NUL; any other text Postgres cannot encode is a documented 422
+    // (a schema-valid request must never be answered with 400).
     [PG.invalidByteSequence]: [
-      400,
+      422,
       'invalid_text',
       'The text contains characters that cannot be stored.',
     ],
     [PG.untranslatableCharacter]: [
-      400,
+      422,
       'invalid_text',
       'The text contains characters that cannot be stored.',
     ],

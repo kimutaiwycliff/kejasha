@@ -4,7 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 import { createJsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-provider-zod';
 
-export const CONTRACT_VERSION = '1.1.0';
+export const CONTRACT_VERSION = '1.1.1';
 
 /** OpenAPI 3.1 generated from the Zod route schemas (ADR-002); Scalar UI at /docs. */
 export const openapiPlugin = fp(async (app: FastifyInstance) => {

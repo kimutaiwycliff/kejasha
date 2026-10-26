@@ -12,6 +12,8 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: ci,
+  // Journeys hit a real API and database; 5 s is too tight on a busy laptop or CI runner.
+  expect: { timeout: 10_000 },
   retries: ci ? 1 : 0,
   reporter: ci ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {

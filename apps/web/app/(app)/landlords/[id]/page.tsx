@@ -2,7 +2,6 @@
 import { Badge } from '@kejasha/ui/components/badge';
 import { Button } from '@kejasha/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kejasha/ui/components/card';
-import { Skeleton } from '@kejasha/ui/components/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { Pencil, Plus } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -10,6 +9,7 @@ import { useState } from 'react';
 import { BackLink, Details } from '@/components/detail';
 import { ConfirmButton } from '@/components/dialogs';
 import { PageHeader } from '@/components/page-header';
+import { QueryFallback } from '@/components/query-fallback';
 import { LandlordDialog } from '@/components/portfolio/landlord-dialog';
 import { PropertyDialog } from '@/components/portfolio/property-dialog';
 import { PropertyTable } from '@/components/portfolio/property-table';
@@ -24,11 +24,12 @@ export default function LandlordPage() {
   const canEdit = useCan('manager');
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
-  const { data: l } = useQuery({
+  const lQuery = useQuery({
     queryKey: ['client-landlord', id],
     queryFn: async () =>
       unwrap(await api.GET('/v1/client-landlords/{id}', { params: { path: { id } } })),
   });
+  const l = lQuery.data;
   const archive = useWrite(
     async (_: void, headers) =>
       unwrap(
@@ -36,7 +37,7 @@ export default function LandlordPage() {
       ),
     { invalidate: [['client-landlords'], ['client-landlord']], success: 'Landlord archived' },
   );
-  if (!l) return <Skeleton className="h-64" />;
+  if (!l) return <QueryFallback query={lQuery} className="h-64" />;
   return (
     <>
       <BackLink href="/landlords" label="Landlords" />

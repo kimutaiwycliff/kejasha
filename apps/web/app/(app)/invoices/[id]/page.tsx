@@ -3,7 +3,6 @@ import { VoidInvoiceBody } from '@kejasha/contracts';
 import { Badge } from '@kejasha/ui/components/badge';
 import { Button } from '@kejasha/ui/components/button';
 import { Card, CardContent } from '@kejasha/ui/components/card';
-import { Skeleton } from '@kejasha/ui/components/skeleton';
 import {
   Table,
   TableBody,
@@ -26,6 +25,7 @@ import { TextareaField } from '@/components/fields';
 import { applyProblem } from '@/components/form';
 import { leaseKeys } from '@/components/leasing/lease-dialogs';
 import { PageHeader } from '@/components/page-header';
+import { QueryFallback } from '@/components/query-fallback';
 import { api, unwrap } from '@/lib/api';
 import { formatDate, formatKes } from '@/lib/format';
 import { useCan, useWrite } from '@/lib/hooks';
@@ -35,10 +35,11 @@ export default function InvoicePage() {
   const { id } = useParams<{ id: string }>();
   const manager = useCan('manager');
   const [voiding, setVoiding] = useState(false);
-  const { data: inv } = useQuery({
+  const invQuery = useQuery({
     queryKey: ['invoice', id],
     queryFn: async () => unwrap(await api.GET('/v1/invoices/{id}', { params: { path: { id } } })),
   });
+  const inv = invQuery.data;
   const form = useForm<z.input<typeof VoidInvoiceBody>, unknown, z.output<typeof VoidInvoiceBody>>({
     resolver: zodResolver(VoidInvoiceBody),
     defaultValues: { reason: '' },
@@ -48,7 +49,7 @@ export default function InvoicePage() {
       unwrap(await api.POST('/v1/invoices/{id}/void', { params: { path: { id } }, body, headers })),
     { invalidate: inv ? leaseKeys(inv.leaseId) : [['invoice']], success: 'Invoice voided' },
   );
-  if (!inv) return <Skeleton className="h-96" />;
+  if (!inv) return <QueryFallback query={invQuery} className="h-96" />;
   const isVoid = inv.paymentStatus === 'void';
   return (
     <>

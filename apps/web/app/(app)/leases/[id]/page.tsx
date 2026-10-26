@@ -9,7 +9,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@kejasha/ui/components/dropdown-menu';
-import { Skeleton } from '@kejasha/ui/components/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@kejasha/ui/components/tabs';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, Pencil, Plus, Smartphone } from 'lucide-react';
@@ -34,6 +33,7 @@ import {
 } from '@/components/leasing/money-dialogs';
 import { Statement } from '@/components/leasing/statement';
 import { PageHeader } from '@/components/page-header';
+import { QueryFallback } from '@/components/query-fallback';
 import { ManualPaymentDialog, StkDialog } from '@/components/payments/dialogs';
 import { PaymentTable } from '@/components/payments/payment-table';
 import { api, unwrap } from '@/lib/api';
@@ -70,11 +70,12 @@ export default function LeasePage() {
   const [dialog, setDialog] = useState<Dialog>(null);
   const [editCharge, setEditCharge] = useState<string | null>(null);
   const close = (o: boolean) => !o && setDialog(null);
-  const { data: l } = useQuery({
+  const lQuery = useQuery({
     queryKey: ['lease', id],
     queryFn: async () => unwrap(await api.GET('/v1/leases/{id}', { params: { path: { id } } })),
   });
-  if (!l) return <Skeleton className="h-96" />;
+  const l = lQuery.data;
+  if (!l) return <QueryFallback query={lQuery} className="h-96" />;
   const active = l.status === 'active';
   const lateFee =
     l.lateFeeKind === 'flat'

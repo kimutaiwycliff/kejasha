@@ -28,6 +28,9 @@ interface Props {
 
 /** Everything a payment write can change on screen. */
 export const paymentKeys = [
+  ['bookings'],
+  ['booking'],
+
   ['payments'],
   ['payment'],
   ['leases'],
@@ -41,13 +44,18 @@ export const paymentKeys = [
 ];
 
 type ManualValues = z.input<typeof ManualPaymentBody>;
-export function ManualPaymentDialog({ open, onOpenChange, leaseId }: Props & { leaseId?: string }) {
+export function ManualPaymentDialog({
+  open,
+  onOpenChange,
+  leaseId,
+  bookingId,
+}: Props & { leaseId?: string; bookingId?: string }) {
   const form = useForm<ManualValues, unknown, z.output<typeof ManualPaymentBody>>({
     resolver: zodResolver(ManualPaymentBody),
   });
   useEffect(() => {
-    if (open) form.reset({ method: 'cash', paidOn: todayNairobi(), leaseId });
-  }, [open, form, leaseId]);
+    if (open) form.reset({ method: 'cash', paidOn: todayNairobi(), leaseId, bookingId });
+  }, [open, form, leaseId, bookingId]);
   const save = useWrite(
     async (body: z.output<typeof ManualPaymentBody>, headers) =>
       unwrap(await api.POST('/v1/payments', { body, headers })),
@@ -88,7 +96,7 @@ export function ManualPaymentDialog({ open, onOpenChange, leaseId }: Props & { l
           description="Generated if blank"
         />
       </div>
-      {!leaseId && (
+      {!leaseId && !bookingId && (
         <ComboField
           form={form}
           name="leaseId"
@@ -272,17 +280,22 @@ const STK_STATUS = {
 
 type StkValues = z.input<typeof StkRequestBody>;
 /** Send an M-Pesa payment prompt (STK Push) to the tenant's phone via your own Paybill/Till. */
-export function StkDialog({ open, onOpenChange, leaseId }: Props & { leaseId?: string }) {
+export function StkDialog({
+  open,
+  onOpenChange,
+  leaseId,
+  bookingId,
+}: Props & { leaseId?: string; bookingId?: string }) {
   const form = useForm<StkValues, unknown, z.output<typeof StkRequestBody>>({
     resolver: zodResolver(StkRequestBody),
   });
   const [requestId, setRequestId] = useState<string | null>(null);
   useEffect(() => {
     if (open) {
-      form.reset({ leaseId });
+      form.reset({ leaseId, bookingId });
       setRequestId(null);
     }
-  }, [open, form, leaseId]);
+  }, [open, form, leaseId, bookingId]);
   const req = useQuery({
     queryKey: ['stk', requestId],
     queryFn: async () =>
@@ -336,7 +349,7 @@ export function StkDialog({ open, onOpenChange, leaseId }: Props & { leaseId?: s
         </div>
       ) : (
         <>
-          {!leaseId && (
+          {!leaseId && !bookingId && (
             <ComboField
               form={form}
               name="leaseId"
@@ -357,7 +370,9 @@ export function StkDialog({ open, onOpenChange, leaseId }: Props & { leaseId?: s
             label="Phone (optional)"
             type="tel"
             empty={undefined}
-            description="Defaults to the tenant's phone."
+            description={
+              bookingId ? "Defaults to the guest's phone." : "Defaults to the tenant's phone."
+            }
           />
         </>
       )}

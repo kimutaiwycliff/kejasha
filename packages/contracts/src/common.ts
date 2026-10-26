@@ -28,8 +28,10 @@ export const RequiredTextInput = (max: number, min = 1) =>
     .string()
     .min(min)
     .max(max)
+    // The required character is `[^\s\u0000]`, not `\S`: NUL is not whitespace, so `\S` let a
+    // single NUL through. One pattern keeps the OpenAPI schema simple for generated clients.
     // eslint-disable-next-line no-control-regex -- NUL is exactly what must be rejected
-    .regex(/^[^\u0000]*\S[^\u0000]*$/, 'Must not be blank')
+    .regex(/^[^\u0000]*[^\s\u0000][^\u0000]*$/, 'Must not be blank or contain NUL characters')
     .transform((v) => v.trim());
 
 /** Money in minor units (cents) — int64 on the wire, `bigint` in the domain (ADR-006). */
