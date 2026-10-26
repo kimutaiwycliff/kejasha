@@ -95,8 +95,8 @@ test-contract: ## Schemathesis against a running API (make up, make db-seed, mak
 	  --exclude-operation-id startCheckout \
 	  $(if $(wildcard apps/api/.seed-token),-H "Authorization: Bearer $$(cat apps/api/.seed-token)",)
 
-test-e2e:
-	@echo "test-e2e: Playwright arrives with track W (web), after the contract freeze (ADR-018)"
+test-e2e: ## Playwright web journeys (needs `make up` + `make dev-api`; starts the web dev server)
+	pnpm --filter @kejasha/web test:e2e
 
 typecheck:
 	pnpm typecheck

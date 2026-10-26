@@ -15,6 +15,11 @@ export default tseslint.config(
       'apps/docs/out/**',
       'apps/docs/.source/**',
       'apps/docs/next-env.d.ts',
+      // Web app build output and Playwright reports (ADR-021).
+      'apps/web/.next/**',
+      'apps/web/next-env.d.ts',
+      'apps/web/test-results/**',
+      'apps/web/playwright-report/**',
     ],
   },
   js.configs.recommended,
