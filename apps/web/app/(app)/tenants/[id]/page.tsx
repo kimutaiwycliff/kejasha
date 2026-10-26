@@ -3,7 +3,6 @@ import { LinkButton } from '@/components/link-button';
 import { Badge } from '@kejasha/ui/components/badge';
 import { Button } from '@kejasha/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kejasha/ui/components/card';
-import { Skeleton } from '@kejasha/ui/components/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { Pencil, Plus } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -13,6 +12,7 @@ import { ConfirmButton } from '@/components/dialogs';
 import { LeaseTable } from '@/components/leasing/lease-table';
 import { TenantDialog } from '@/components/leasing/tenant-dialog';
 import { PageHeader } from '@/components/page-header';
+import { QueryFallback } from '@/components/query-fallback';
 import { api, unwrap } from '@/lib/api';
 import { formatKes } from '@/lib/format';
 import { useCan, useWrite } from '@/lib/hooks';
@@ -24,16 +24,17 @@ export default function TenantPage() {
   const canArchive = useCan('manager');
   const canLease = useCan('manager');
   const [editing, setEditing] = useState(false);
-  const { data: t } = useQuery({
+  const tQuery = useQuery({
     queryKey: ['tenant', id],
     queryFn: async () => unwrap(await api.GET('/v1/tenants/{id}', { params: { path: { id } } })),
   });
+  const t = tQuery.data;
   const archive = useWrite(
     async (_: void, headers) =>
       unwrap(await api.POST('/v1/tenants/{id}/archive', { params: { path: { id } }, headers })),
     { invalidate: [['tenants'], ['tenant']], success: 'Tenant archived' },
   );
-  if (!t) return <Skeleton className="h-64" />;
+  if (!t) return <QueryFallback query={tQuery} className="h-64" />;
   const live = !t.archivedAt;
   return (
     <>

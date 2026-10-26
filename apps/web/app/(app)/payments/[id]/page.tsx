@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@kejasha/ui/components/card';
-import { Skeleton } from '@kejasha/ui/components/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { FileText } from 'lucide-react';
 import Link from 'next/link';
@@ -19,6 +18,7 @@ import { ComboField } from '@/components/combo-field';
 import { BackLink, Details } from '@/components/detail';
 import { ReasonDialog } from '@/components/dialogs';
 import { PageHeader } from '@/components/page-header';
+import { QueryFallback } from '@/components/query-fallback';
 import { paymentKeys } from '@/components/payments/dialogs';
 import { useActiveLeaseOptions } from '@/components/payments/lease-picker';
 import { api, unwrap } from '@/lib/api';
@@ -44,10 +44,11 @@ export default function PaymentPage() {
   const manager = useCan('manager');
   const [reason, setReason] = useState<'ignore' | 'unallocate' | null>(null);
   const pick = useForm<{ leaseId?: string }>();
-  const { data: p } = useQuery({
+  const pQuery = useQuery({
     queryKey: ['payment', id],
     queryFn: async () => unwrap(await api.GET('/v1/payments/{id}', { params: { path: { id } } })),
   });
+  const p = pQuery.data;
   const unmatched = p?.matchStatus === 'unmatched';
   const suggestions = useQuery({
     queryKey: ['payment', id, 'suggestions'],
@@ -88,7 +89,7 @@ export default function PaymentPage() {
       ),
     { invalidate: paymentKeys, success: 'Payment moved back to the queue' },
   );
-  if (!p) return <Skeleton className="h-96" />;
+  if (!p) return <QueryFallback query={pQuery} className="h-96" />;
   return (
     <>
       <BackLink href="/payments" label="Payments" />

@@ -2,7 +2,6 @@
 import { Badge } from '@kejasha/ui/components/badge';
 import { Button } from '@kejasha/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kejasha/ui/components/card';
-import { Skeleton } from '@kejasha/ui/components/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { ListPlus, Pencil, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -11,6 +10,7 @@ import { useState, type ReactNode } from 'react';
 import { BackLink, Details } from '@/components/detail';
 import { ConfirmButton } from '@/components/dialogs';
 import { PageHeader } from '@/components/page-header';
+import { QueryFallback } from '@/components/query-fallback';
 import { PropertyDialog } from '@/components/portfolio/property-dialog';
 import { StaffDialog } from '@/components/portfolio/staff-dialog';
 import { BulkUnitsDialog, UnitDialog } from '@/components/portfolio/unit-dialogs';
@@ -26,16 +26,17 @@ export default function PropertyPage() {
   const agency = useOrgKind() === 'agency';
   const [dialog, setDialog] = useState<'edit' | 'unit' | 'bulk' | 'staff' | null>(null);
   const close = (o: boolean) => !o && setDialog(null);
-  const { data: p } = useQuery({
+  const pQuery = useQuery({
     queryKey: ['property', id],
     queryFn: async () => unwrap(await api.GET('/v1/properties/{id}', { params: { path: { id } } })),
   });
+  const p = pQuery.data;
   const archive = useWrite(
     async (_: void, headers) =>
       unwrap(await api.POST('/v1/properties/{id}/archive', { params: { path: { id } }, headers })),
     { invalidate: [['properties'], ['property']], success: 'Property archived' },
   );
-  if (!p) return <Skeleton className="h-64" />;
+  if (!p) return <QueryFallback query={pQuery} className="h-64" />;
   const live = !p.archivedAt;
   return (
     <>

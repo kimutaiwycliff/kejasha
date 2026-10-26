@@ -59,7 +59,7 @@ Playwright journeys against the real API.
         calendar
 - [x] **W2 Payments:** channels + go-live, payments list, unmatched queue with suggestions and
       allocation, STK requests, statement import, SMS import, receipts, cash confirmations
-- [ ] **W3 Short-stay:** multi-unit calendar, rates and seasons, quotes, bookings, guests, blocks,
+- [x] **W3 Short-stay:** multi-unit calendar, rates and seasons, quotes, bookings, guests, blocks,
       iCal feeds, unit expenses, P&L and channel comparison
 - [ ] **W4 Operations & reports:** maintenance board, compliance (MRI, filings, eRITS export,
       PIN register, licences), owner dashboard, statements + PDF, rent roll, collections,
@@ -155,6 +155,27 @@ Playwright journeys against the real API.
   by hand, receipt PDF, cash confirmation, channel checklist).
 - Receipts open in a new tab from a fetched blob (the request needs the session cookie).
   Headless Chromium downloads PDFs instead of showing them; the journey asserts the download.
+
+### W3 (2026-10-26)
+- Screens:
+  - **Calendar:** a 21-day multi-unit timeline, coloured by channel. Tap a free day to book it;
+    block dates and re-open them.
+  - **Bookings:** list; new booking with a live quote (nightly breakdown, cleaning, availability,
+    minimum stay with an explicit override) and new or returning guests; booking page with
+    check-in, check-out, no-show, cancel, edit, and M-Pesa request / recorded payment for
+    direct stays.
+  - **Guests**, with repeat recognition.
+  - **Unit page (short-stay):** rates and rules, seasons, imported iCal feeds (sync now,
+    enable/disable, disconnect, conflicts), upcoming stays.
+  - **Expenses**, per unit or property-wide.
+  - **Profit report:** per unit, plus a channel comparison (what each platform really costs,
+    net per night).
+- The sidebar is grouped into sections: Long-term, Short stays, Money, Setup.
+- Detail pages show the API's message and a Retry button when loading fails (`QueryFallback`);
+  before, they showed a skeleton forever.
+- Playwright's assertion timeout is 10 s. Journeys hit a real API and database, and failed
+  intermittently at 5 s while this laptop's load average was 25–45 from unrelated apps. With
+  one worker, the full suite passed 20/20 locally.
 
 ## Definition of Done
 Every API journey has a Playwright twin that passes in CI; role-based navigation verified for

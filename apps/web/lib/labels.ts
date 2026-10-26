@@ -93,3 +93,35 @@ export const SUGGESTION_REASON_LABEL = {
   exact_balance: 'matches the balance',
   name: 'similar name',
 } as const;
+
+export const BOOKING_SOURCE_LABEL = {
+  direct: 'Direct',
+  walk_in: 'Walk-in',
+  whatsapp: 'WhatsApp',
+  airbnb: 'Airbnb',
+  booking: 'Booking.com',
+  other: 'Other',
+} as const;
+export const BOOKING_STATUS_LABEL = {
+  confirmed: 'Confirmed',
+  checked_in: 'Checked in',
+  checked_out: 'Checked out',
+  cancelled: 'Cancelled',
+  no_show: 'No-show',
+} as const;
+export const EXPENSE_CATEGORY_LABEL = {
+  tokens: 'Electricity tokens',
+  wifi: 'Wi-Fi',
+  cleaning: 'Cleaning',
+  supplies: 'Supplies',
+  repair: 'Repair',
+  licence: 'Licence',
+  laundry: 'Laundry',
+  other: 'Other',
+} as const;
+export const BLOCK_REASON_LABEL = {
+  owner_use: 'Owner use',
+  maintenance: 'Maintenance',
+  ical: 'Imported',
+  other: 'Other',
+} as const;

@@ -16,6 +16,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -99,34 +100,40 @@ function AppSidebar({ me }: { me: Me }) {
   const pathname = usePathname();
   const role = activeRole(me);
   const kind = me.activeOrg?.kind;
-  const items = NAV.filter(
-    (i) =>
-      (role === 'viewer' ? i.viewer : atLeast(role, i.minRole)) &&
-      (!i.kinds || (kind !== undefined && i.kinds.includes(kind))),
-  );
+  const sections = NAV.map((sec) => ({
+    ...sec,
+    items: sec.items.filter(
+      (i) =>
+        (role === 'viewer' ? i.viewer : atLeast(role, i.minRole)) &&
+        (!i.kinds || (kind !== undefined && i.kinds.includes(kind))),
+    ),
+  })).filter((sec) => sec.items.length > 0);
   return (
     <Sidebar>
       <SidebarHeader>
         <OrgSwitcher me={me} />
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((i) => (
-                <SidebarMenuItem key={i.href}>
-                  <SidebarMenuButton
-                    isActive={pathname.startsWith(i.href)}
-                    render={<Link href={i.href} />}
-                  >
-                    <i.icon />
-                    <span>{i.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {sections.map((sec) => (
+          <SidebarGroup key={sec.label ?? 'main'}>
+            {sec.label && <SidebarGroupLabel>{sec.label}</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {sec.items.map((i) => (
+                  <SidebarMenuItem key={i.href}>
+                    <SidebarMenuButton
+                      isActive={pathname.startsWith(i.href)}
+                      render={<Link href={i.href} />}
+                    >
+                      <i.icon />
+                      <span>{i.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       <SidebarFooter>
         <UserMenu me={me} />
