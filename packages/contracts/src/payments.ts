@@ -287,6 +287,10 @@ export const CreateCashCollectionBody = z
   .object({
     leaseId: IdInput.optional(),
     bookingId: IdInput.optional(),
+    unitId: IdInput.optional().meta({
+      description:
+        'A long-term unit instead of a lease: the lease covering receivedOn is used (caretakers cannot see leases)',
+    }),
     amountCents: Cents.min(1),
     receivedOn: BusinessDateInput,
     payerName: TextInput(120).optional(),
@@ -297,6 +301,7 @@ export const CreateCashCollectionBody = z
   })
   .meta({
     id: 'CreateCashCollectionBody',
-    description: 'Exactly one of leaseId or bookingId (422 target_required)',
+    description:
+      'Exactly one of leaseId, bookingId or unitId (422 target_required). A unitId with no lease on receivedOn answers 422 no_lease_on_unit.',
   });
 export const CashCollectionQuery = CursorQuery.extend({ status: CashCollectionStatus.optional() });
