@@ -98,7 +98,12 @@ export function AppShell({ children }: { children: ReactNode }) {
 function AppSidebar({ me }: { me: Me }) {
   const pathname = usePathname();
   const role = activeRole(me);
-  const items = NAV.filter((i) => (role === 'viewer' ? i.viewer : atLeast(role, i.minRole)));
+  const kind = me.activeOrg?.kind;
+  const items = NAV.filter(
+    (i) =>
+      (role === 'viewer' ? i.viewer : atLeast(role, i.minRole)) &&
+      (!i.kinds || (kind !== undefined && i.kinds.includes(kind))),
+  );
   return (
     <Sidebar>
       <SidebarHeader>

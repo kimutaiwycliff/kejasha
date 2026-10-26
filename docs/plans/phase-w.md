@@ -50,9 +50,13 @@ Playwright journeys against the real API.
 - [x] **W0 Foundation:** app + `packages/ui` (shadcn), API client + Query provider, auth (email,
       phone OTP, reset, verify email, invitations), org create/switch, role-aware shell, billing
       banner, error/toast handling, Playwright harness + sign-up journey, CI job
-- [ ] **W1 Portfolio & leasing:** client landlords, properties, units (bulk), tenants, leases
-      (create, terminate, renew, rent change), charges, invoices, credit notes, statements, arrears,
-      meters + readings, deposits, inspections
+- [~] **W1 Portfolio & leasing**, shipped as two PRs:
+  - [x] **W1a Portfolio:** client landlords (management fee), properties (staff assignment),
+        units (single and bulk, active/inactive, archive), meters + readings, caretaker meter
+        round
+  - [ ] **W1b Leasing:** tenants, leases (create, terminate, renew, rent change, cancel),
+        charges, invoices, credit notes, statements, arrears, deposits, inspections, lease
+        calendar
 - [ ] **W2 Payments:** channels + go-live, payments list, unmatched queue with suggestions and
       allocation, STK requests, statement import, SMS import, receipts, cash confirmations
 - [ ] **W3 Short-stay:** multi-unit calendar, rates and seasons, quotes, bookings, guests, blocks,
@@ -85,6 +89,24 @@ Playwright journeys against the real API.
 - **Dev vs production server.** Against `next dev`, parallel journeys can exceed the 5 s
   navigation expectation while routes compile. CI runs `next build && next start`, where the
   suite passed 24 of 24 times (`--repeat-each 4`).
+
+### W1a (2026-10-26)
+- Shared building blocks for every later slice:
+  - `DataTable` (TanStack Table v9: sorting over loaded rows, cursor "Load more", error and
+    empty states, `hideOnMobile` columns);
+  - `usePaged` / `fetchAll` (cursor lists; the API caps `limit` at 100);
+  - `useWrite` (one Idempotency-Key per intent, then invalidate and toast);
+  - fields: `SelectField` (passes `items` so Base UI shows labels), `MoneyField` (shillings
+    typed, cents held), `NumberField`, `DateField`, `TextareaField`; `FormDialog`,
+    `ConfirmButton`.
+- Create and edit share one field set typed by the Update schema; the Create schema is the
+  resolver when creating. A blank optional field sends `undefined` on create and `null` on edit.
+- Money displays as the `en-KE` locale writes it (`Ksh 18,000.00`); the money input's prefix
+  matches.
+- Journeys that need data sign in as the seeded demo users through a Playwright setup project
+  (one sign-in per user per run). The CI e2e job now runs `seed`.
+- The bulk reading endpoint answers per meter; the round shows each rejection beside its meter
+  (`reading_decreased`, `reading_exists`) and keeps the rejected values for correction.
 
 ## Definition of Done
 Every API journey has a Playwright twin that passes in CI; role-based navigation verified for

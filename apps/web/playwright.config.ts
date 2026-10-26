@@ -4,6 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Web journeys (ADR-012). The API must already be running at NEXT_PUBLIC_API_URL
  * (`make dev-api` locally; the CI job boots the built API with BILLING_REQUIRED=false).
  * Locally the web dev server is reused; in CI the production build is started.
+ * Journeys that start signed in use the seeded demo users (`pnpm --filter @kejasha/api seed`).
  */
 const ci = Boolean(process.env.CI);
 
@@ -19,8 +20,9 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    { name: 'setup', testMatch: /auth\.setup\.ts/ },
+    { name: 'desktop', use: { ...devices['Desktop Chrome'] }, dependencies: ['setup'] },
+    { name: 'mobile', use: { ...devices['Pixel 7'] }, dependencies: ['setup'] },
   ],
   webServer: {
     command: ci ? 'pnpm start' : 'pnpm dev',

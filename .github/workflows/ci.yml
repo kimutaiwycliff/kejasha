@@ -170,6 +170,8 @@ jobs:
           (cd apps/api && node dist/server.js > /tmp/api.log 2>&1 &)
           for i in $(seq 1 60); do curl -sf localhost:4000/v1/health && break; sleep 1; done
           curl -sf localhost:4000/v1/health > /dev/null || { echo "built API did not start"; cat /tmp/api.log; exit 1; }
+      - name: Seed demo data (journeys sign in as the demo users)
+        run: pnpm --filter @kejasha/api seed
       - name: Build web
         run: pnpm --filter @kejasha/web build
       - name: Install Chromium
