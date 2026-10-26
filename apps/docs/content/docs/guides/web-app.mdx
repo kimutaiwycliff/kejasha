@@ -1,0 +1,83 @@
+---
+title: Web app
+description: How the Next.js dashboard, tenant portal and operator console use the API — and how to run and test them.
+---
+
+The web app (`apps/web`) is a **pure client of the API** (ADR-018, ADR-021). It has no database,
+no secrets and no server-side data access: every screen calls the API through the generated
+client (`@kejasha/api-client`) with TanStack Query, exactly as the Android app does. Anything the
+web can do, the API allows and enforces on its own.
+
+## Who sees what
+
+The sidebar follows the member's role in the active organization; the API checks every request
+again.
+
+| Role | Sees |
+|---|---|
+| Owner, manager | Everything, including Team, Organization, M-Pesa setup, Billing, Reports and Compliance |
+| Agent | Portfolio, tenants, leases, invoices, arrears, bookings, guests, payments and cash |
+| Caretaker | Assigned properties and their units, maintenance, meter readings and their own cash |
+| Read-only owner (viewer) | Dashboard and Reports (in an agency, for one landlord) |
+
+Three areas sit outside an organization:
+
+- **Tenant portal (`/portal`)**: tenants sign in with their phone number and an SMS code. A
+  signed-in user with no organization but a tenancy is taken there automatically.
+- **Operator console (`/operator`)**: Kejasha staff only (`make operator-grant`). Every request
+  is logged; in production the operator API also sits behind Cloudflare Access.
+- **Onboarding (`/onboarding`)**: create an organization or join one you were invited to.
+
+## Conventions the screens follow
+
+- **Same schemas as the API.** Forms validate with the Zod schemas from `@kejasha/contracts`; a
+  `problem+json` error with `errors[].path` lands on the matching field, anything else is a
+  toast.
+- **Money.** Amounts are typed in shillings and sent as integer cents; they are shown as the
+  `en-KE` locale writes them (`Ksh 18,000.00`). Nothing converts through floating point.
+- **Dates.** Business dates are calendar days in Africa/Nairobi, sent as `YYYY-MM-DD`.
+- **Idempotency.** Every write sends an `Idempotency-Key`, one per user action, so a double
+  click never records a payment or booking twice.
+- **Billing.** An unpaid or suspended organization can read everything. A write answers `402`,
+  and the app says so once with a **Go to billing** button.
+- **Files.** Photos, receipts, statements and licence documents upload straight to object
+  storage with a ticket from `POST /v1/uploads`. The bucket must allow `PUT` from the web
+  origin (CORS).
+
+## Run it locally
+
+```bash
+make up            # postgres, redis, object storage; migrations
+make dev-api       # API on :4000
+make db-seed       # demo landlord, agency and host (password demo-password-123)
+pnpm --filter @kejasha/web dev   # web on :3000
+```
+
+`NEXT_PUBLIC_API_URL` points the web at the API (default `http://localhost:4000`). In
+production the web and API share the parent domain set by `APP_DOMAIN`, so the session cookie
+travels with every request.
+
+Without an SMS provider, phone sign-in codes are printed by the API in development.
+
+## Tests
+
+`make test-e2e` runs the Playwright journeys against the real API, on a desktop browser and a
+phone-sized one. CI runs them on the production build (`next build && next start`) with demo
+data seeded.
+
+- **Journeys** mirror the API journeys: sign-up and onboarding, portfolio, leasing, payments,
+  short stays, operations, team and settings, tenant portal, operator console, each role's
+  navigation, and an edit and a delete in every section.
+- **Quality:** key pages have no serious or critical WCAG 2.1 AA findings (axe), never scroll
+  sideways on a phone, and stay within budget: at most 550 KB of compressed JavaScript per page
+  (350 KB for sign-in) and a largest contentful paint under 2.5 s.
+- Journeys read sign-in codes and grant operator access through `psql` (`DATABASE_URL`), since
+  there is no SMS provider in tests.
+
+## Adding a screen
+
+1. Use the generated client and the contract schemas; never hand-write API types.
+2. Build from the shared pieces: `DataTable`, `FormDialog`, the fields (`MoneyField`,
+   `DateField`, `ComboField` …), `ConfirmButton` (give icon-only buttons an `aria-label`).
+3. Show the API's message when a request fails (`QueryFallback`, `errorMessage`).
+4. Add a journey that creates, edits and deletes through the browser, on both screen sizes.

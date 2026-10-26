@@ -1,6 +1,6 @@
 # Phase W — Web app (Next.js)
 
-> Status: **IN PROGRESS** · drafted 2026-10-26 · ADR-002, ADR-016, ADR-018, ADR-021
+> Status: **DONE** (pending CI on W6) · drafted 2026-10-26 · ADR-002, ADR-016, ADR-018, ADR-021
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 > Shipped as slices W0–W6, one PR each. The contract is frozen (`contract-v1.0`): the web app
 > adapts to the API, never the reverse (an API gap is an additive change with tests).
@@ -67,7 +67,7 @@ Playwright journeys against the real API.
 - [x] **W5 Account & platform:** members, roles, invitations, viewer scopes, org settings
       (brand colour), billing page + checkout return, operator console, tenant portal, viewer
       experience
-- [ ] **W6 Proof & polish:** Playwright journeys for every API journey, accessibility pass,
+- [x] **W6 Proof & polish:** Playwright journeys for every API journey, accessibility pass,
       mobile pass, performance budget, docs page for the web app
 
 ## Notes
@@ -215,6 +215,37 @@ Playwright journeys against the real API.
   section, not just creation.
 - E2E helpers read dev OTPs and grant operator access through `psql` (`DATABASE_URL`), because
   there is no SMS provider in dev or CI.
+
+### W6 (2026-10-26)
+- **Journey twins.** Every API journey with a screen now has a browser twin:
+  - onboarding, agency (an invited manager adds a landlord), leasing, payments, short stays and
+    operations (including the read-only owner);
+  - the caretaker (SMS invite → OTP sign-in → only the assigned property);
+  - isolation (another property answers "not found");
+  - the tenant portal half of the offline journey.
+
+  Not twinned: the sync half of the offline journey (Android, phase A); the paid half of
+  billing, which needs Paystack test keys (launch inputs); CI runs with
+  `BILLING_REQUIRED=false`. Billing states are covered by the banner, the billing page and the
+  402 handling.
+- **Roles.** The navigation of manager, agent, caretaker and viewer is checked: what each must
+  and must not see.
+- **Edits and deletes.** A journey edits, replaces and deletes in every section (the gap the
+  CORS bug exposed).
+- **Accessibility (axe, WCAG 2.1 AA, serious/critical).** Fixed:
+  - contrast of destructive badges, avatar initials, calendar weekend headers and booking bars;
+  - unnamed combobox and icon-only delete buttons.
+
+  20 app pages and 3 public pages are clean.
+- **Mobile.** No key page scrolls sideways. Page header actions now wrap; the ticket page used
+  to overflow.
+- **Performance budget (desktop, first visit).** Compressed JavaScript at most 550 KB per app
+  page (baseline 470–485 KB) and 350 KB for sign-in (baseline 310 KB); LCP under 2.5 s
+  (baseline 0.2–0.5 s locally).
+- **402.** Handled once in the query client: a toast with **Go to billing**. Form and button
+  error helpers skip it.
+- Unit tests for money parsing and formatting, Nairobi dates, periods and fee labels.
+- Docs: `guides/web-app` (roles, conventions, running, tests, adding a screen).
 
 ## Definition of Done
 Every API journey has a Playwright twin that passes in CI; role-based navigation verified for

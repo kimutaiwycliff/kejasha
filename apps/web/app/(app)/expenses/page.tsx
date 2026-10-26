@@ -179,6 +179,7 @@ export default function ExpensesPage() {
             size="sm"
             variant="ghost"
             label={<Trash2 />}
+            aria-label={`Remove expense ${c.row.original.description ?? EXPENSE_CATEGORY_LABEL[c.row.original.category]}`}
             title="Remove this expense?"
             description="It no longer counts against the unit's profit."
             confirmLabel="Remove"

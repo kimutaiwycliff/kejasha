@@ -35,14 +35,17 @@ const monthLabel = new Intl.DateTimeFormat('en-KE', {
 });
 const HATCH = 'bg-[repeating-linear-gradient(45deg,var(--muted)_0_4px,var(--border)_4px_8px)]';
 
+// 700 shades keep white text above 4.5:1 (WCAG AA).
 const SOURCE_STYLE: Record<string, string> = {
-  airbnb: 'bg-rose-500/90 text-white',
-  booking: 'bg-sky-600/90 text-white',
-  direct: 'bg-emerald-600/90 text-white',
-  walk_in: 'bg-emerald-600/90 text-white',
-  whatsapp: 'bg-emerald-600/90 text-white',
-  other: 'bg-slate-600/90 text-white',
+  airbnb: 'bg-rose-700 text-white',
+  booking: 'bg-sky-700 text-white',
+  direct: 'bg-emerald-700 text-white',
+  walk_in: 'bg-emerald-700 text-white',
+  whatsapp: 'bg-emerald-700 text-white',
+  other: 'bg-slate-700 text-white',
 };
+/** Past stays: neutral, still readable (no fading, which breaks contrast). */
+const PAST_STYLE = 'bg-muted text-foreground';
 
 type Entry = Schemas['CalendarEntry'];
 
@@ -133,7 +136,7 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={d}
-                    className={`flex flex-col items-center py-1 ${weekend ? 'bg-muted' : ''} ${d === today ? 'font-bold text-primary' : 'text-muted-foreground'}`}
+                    className={`flex flex-col items-center py-1 ${weekend ? 'bg-muted text-foreground' : 'text-muted-foreground'} ${d === today ? 'font-bold text-primary' : ''}`}
                   >
                     <span>{dayLabel.format(new Date(`${d}T12:00:00Z`))}</span>
                     <span className="text-sm">{Number(d.slice(8))}</span>
@@ -169,7 +172,7 @@ export default function CalendarPage() {
                       href={`/bookings/${e.id}`}
                       style={span(e)}
                       title={`${e.label} · ${e.start} → ${e.end}`}
-                      className={`z-10 mx-0.5 my-2 flex items-center truncate rounded-md px-2 font-medium ${SOURCE_STYLE[e.source ?? 'other']} ${e.status === 'checked_out' ? 'opacity-60' : ''}`}
+                      className={`z-10 mx-0.5 my-2 flex items-center truncate rounded-md px-2 font-medium ${e.status === 'checked_out' ? PAST_STYLE : SOURCE_STYLE[e.source ?? 'other']}`}
                     >
                       {e.label}
                     </Link>
@@ -199,13 +202,13 @@ export default function CalendarPage() {
       )}
       <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
-          <span className="size-3 rounded-sm bg-emerald-600" /> Direct
+          <span className="size-3 rounded-sm bg-emerald-700" /> Direct
         </span>
         <span className="flex items-center gap-1">
-          <span className="size-3 rounded-sm bg-rose-500" /> Airbnb
+          <span className="size-3 rounded-sm bg-rose-700" /> Airbnb
         </span>
         <span className="flex items-center gap-1">
-          <span className="size-3 rounded-sm bg-sky-600" /> Booking.com
+          <span className="size-3 rounded-sm bg-sky-700" /> Booking.com
         </span>
         <span className="flex items-center gap-1">
           <span className={`size-3 rounded-sm ${HATCH}`} /> Blocked

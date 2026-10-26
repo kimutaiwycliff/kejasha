@@ -12,6 +12,8 @@ import { ApiError } from '@/lib/api';
  * (`errors[].path` like `body.email`), otherwise a toast with the API's human message.
  */
 export function applyProblem<T extends FieldValues>(form: UseFormReturn<T>, err: unknown) {
+  // 402 (billing) is announced once by the query client, with a link to billing.
+  if (err instanceof ApiError && err.status === 402) return;
   if (err instanceof ApiError) {
     const fields = err.problem.errors ?? [];
     let placed = false;

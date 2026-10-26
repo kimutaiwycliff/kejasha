@@ -340,6 +340,7 @@ function FeedsCard({ unitId, manager }: { unitId: string; manager: boolean }) {
                   size="sm"
                   variant="ghost"
                   label={<Trash2 />}
+                  aria-label={`Disconnect ${FEED_SOURCE[f.source]} calendar`}
                   title="Disconnect this calendar?"
                   description="Stays imported from it are removed from your calendar."
                   confirmLabel="Disconnect"
@@ -442,6 +443,7 @@ export function UnitStaySection({ unitId, live }: { unitId: string; live: boolea
                   size="sm"
                   variant="ghost"
                   label={<Trash2 />}
+                  aria-label={`Remove season ${s.label}`}
                   title={`Remove ${s.label}?`}
                   description="Nights in these dates go back to the normal rate. Existing bookings keep their price."
                   confirmLabel="Remove"

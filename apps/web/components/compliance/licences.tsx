@@ -278,6 +278,7 @@ export function LicencesTab() {
                 size="sm"
                 variant="ghost"
                 label={<Trash2 />}
+                aria-label="Archive licence"
                 title="Archive this licence?"
                 description="Reminders stop. Use this when the unit no longer needs it."
                 confirmLabel="Archive"

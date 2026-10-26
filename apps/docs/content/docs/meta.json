@@ -15,6 +15,7 @@
     "guides/compliance",
     "guides/reporting",
     "guides/billing",
+    "guides/web-app",
     "---Operations---",
     "operations/deployment",
     "operations/backups",

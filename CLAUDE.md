@@ -294,7 +294,7 @@ task plans live in `docs/plans/phase-<id>.md`, written before each phase starts.
 | B5 Ops & compliance | Maintenance, cash collections, MRI calc, licences, owner statements, reports | Statements reconcile to ledger; MRI matches hand calc |
 | B6 Sync, billing, operator | Offline sync API, Paystack plans/dunning, operator API, tenant portal API | Push replay applied once; suspension gate works |
 | B7 Hardening | Load test, backups + restore drill, security review, deploy, contract freeze | Restore drill passes; P95 < 500 ms @ 50 users; `contract-v1.0` tagged |
-| W Web | Next.js 15 screens for every journey + operator console | Playwright journeys green |
+| W Web | Next.js 16 screens for every journey + operator console (ADR-021) | Playwright journeys green |
 | A Android | Kotlin app: owner/host, caretaker offline, tenant pay | Offline caretaker shift → sync verified on device |
 
 ---

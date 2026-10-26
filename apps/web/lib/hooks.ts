@@ -98,5 +98,6 @@ export function useWrite<A, R>(
 
 /** Toast an action's failure (for buttons; forms use `applyProblem`). */
 export function toastError(e: unknown) {
+  if (e instanceof ApiError && e.status === 402) return; // announced by the query client
   toast.error(errorMessage(e));
 }
