@@ -61,7 +61,7 @@ Playwright journeys against the real API.
       allocation, STK requests, statement import, SMS import, receipts, cash confirmations
 - [x] **W3 Short-stay:** multi-unit calendar, rates and seasons, quotes, bookings, guests, blocks,
       iCal feeds, unit expenses, P&L and channel comparison
-- [ ] **W4 Operations & reports:** maintenance board, compliance (MRI, filings, eRITS export,
+- [x] **W4 Operations & reports:** maintenance board, compliance (MRI, filings, eRITS export,
       PIN register, licences), owner dashboard, statements + PDF, rent roll, collections,
       occupancy, CSV exports
 - [ ] **W5 Account & platform:** members, roles, invitations, viewer scopes, org settings
@@ -176,6 +176,24 @@ Playwright journeys against the real API.
 - Playwright's assertion timeout is 10 s. Journeys hit a real API and database, and failed
   intermittently at 5 s while this laptop's load average was 25–45 from unrelated apps. With
   one worker, the full suite passed 20/20 locally.
+
+### W4 (2026-10-26)
+- Screens:
+  - **Maintenance:** active/all lists by priority and property; report a problem (unit or
+    common area, photos); ticket page with the status moves the API allows (open ↔ in progress
+    → resolved → closed, reopen, cancel; caretakers cannot close or cancel), a timeline with
+    photos, assignment (staff or outside fundi) and cost. A final cost becomes an expense.
+  - **Compliance:**
+    - Monthly Rental Income per landlord (defaults to last month; due date, year-to-date band,
+      missing PINs, filing status), with a detail page: per-tenant lines, eRITS CSV,
+      record/undo filing, and the difference when receipts change after filing.
+    - Tenant PIN register.
+    - Licences: add, renew, archive, document upload, expiring/expired flags.
+  - **Reports:** owner statements (detail and PDF), rent roll, collections (by method, channel,
+    property), occupancy; CSV exports. Read-only owners (viewers) see Reports.
+- The sidebar gains Maintenance and an Insights section (Reports, Compliance).
+- The ticket's close action is labelled "Close ticket": "Close" clashed with the toast's close
+  button for assistive tech (and the test).
 
 ## Definition of Done
 Every API journey has a Playwright twin that passes in CI; role-based navigation verified for

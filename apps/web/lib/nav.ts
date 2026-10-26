@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  BarChart3,
   Banknote,
   BedDouble,
   Building2,
@@ -12,11 +13,13 @@ import {
   HandCoins,
   LayoutDashboard,
   Receipt,
+  ShieldCheck,
   Smartphone,
   TrendingUp,
   UserRound,
   Users,
   Wallet,
+  Wrench,
   type LucideIcon,
 } from 'lucide-react';
 import type { Me, Role } from './session';
@@ -53,6 +56,7 @@ export const NAV: NavSection[] = [
       { href: '/landlords', label: 'Landlords', icon: Users, minRole: 'agent', kinds: ['agency'] },
       { href: '/properties', label: 'Properties', icon: Building2, minRole: 'caretaker' },
       { href: '/units', label: 'Units', icon: DoorOpen, minRole: 'caretaker' },
+      { href: '/maintenance', label: 'Maintenance', icon: Wrench, minRole: 'caretaker' },
     ],
   },
   {
@@ -80,6 +84,13 @@ export const NAV: NavSection[] = [
     items: [
       { href: '/payments', label: 'Payments', icon: Wallet, minRole: 'agent' },
       { href: '/cash', label: 'Cash', icon: Banknote, minRole: 'caretaker' },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { href: '/reports', label: 'Reports', icon: BarChart3, minRole: 'manager', viewer: true },
+      { href: '/compliance', label: 'Compliance', icon: ShieldCheck, minRole: 'manager' },
     ],
   },
   {
