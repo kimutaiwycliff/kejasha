@@ -3270,7 +3270,7 @@ export interface components {
     };
     /** @enum {string} */
     CashCollectionStatusInput: 'pending' | 'confirmed' | 'rejected';
-    /** @description Exactly one of leaseId or bookingId (422 target_required) */
+    /** @description Exactly one of leaseId, bookingId or unitId (422 target_required). A unitId with no lease on receivedOn answers 422 no_lease_on_unit. */
     CreateCashCollectionBodyInput: {
       /**
        * Format: uuid
@@ -3282,6 +3282,11 @@ export interface components {
        * @description UUID identifier
        */
       bookingId?: string;
+      /**
+       * Format: uuid
+       * @description A long-term unit instead of a lease: the lease covering receivedOn is used (caretakers cannot see leases)
+       */
+      unitId?: string;
       /**
        * Format: int64
        * @description Amount in minor units (cents). KES 1.00 = 100.
@@ -3749,6 +3754,11 @@ export interface components {
          * @description UUID identifier
          */
         bookingId?: string;
+        /**
+         * Format: uuid
+         * @description A long-term unit instead of a lease: the lease covering receivedOn is used (caretakers cannot see leases)
+         */
+        unitId?: string;
         /**
          * Format: int64
          * @description Amount in minor units (cents). KES 1.00 = 100.

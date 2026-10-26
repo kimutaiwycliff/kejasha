@@ -15,7 +15,7 @@ import { assertUploadKeys, fileLinks } from '../../lib/uploads';
 import * as accounts from '../accounts';
 import * as leasing from '../leasing';
 import * as shortstay from '../shortstay';
-import { allocate, recordPayment, targetOf, type PaymentRow } from './service';
+import { allocate, recordPayment, targetOf, type PaymentRow, type PaymentTarget } from './service';
 
 const { cashCollection: cc } = schema;
 type Row = typeof cc.$inferSelect;
@@ -69,6 +69,32 @@ export function createCashCollections(deps: AppDeps) {
     );
   }
 
+  /**
+   * The lease covering a unit on a date. Caretakers are checked against their properties first,
+   * so a 422 never reveals whether a unit elsewhere is let.
+   */
+  async function leaseOfUnit(
+    tx: Tx,
+    ctx: Ctx,
+    unitId: string,
+    date: string,
+  ): Promise<PaymentTarget> {
+    const unit = (await accounts.unitsById(tx, [unitId])).get(unitId);
+    if (
+      !unit ||
+      (ctx.role === 'caretaker' &&
+        !(await accounts.assignedPropertyIds(tx, ctx.userId!)).has(unit.propertyId))
+    )
+      throw AppError.notFound('Unit');
+    const leaseId = await leasing.leaseOnUnitAt(tx, unitId, date);
+    if (!leaseId)
+      throw AppError.unprocessable(
+        'no_lease_on_unit',
+        'No lease covers this unit on that date. For a short-stay guest, choose the booking.',
+      );
+    return { leaseId };
+  }
+
   async function load(tx: Tx, ctx: Ctx, id: string, lock = false) {
     const q = tx.select().from(cc).where(eq(cc.id, id));
     const [row] = lock ? await q.for('update') : await q;
@@ -80,16 +106,19 @@ export function createCashCollections(deps: AppDeps) {
   return {
     /** `id` lets offline clients (sync push) choose the record id. */
     async submit(ctx: Ctx, body: z.infer<typeof CreateCashCollectionBody>, id?: string) {
-      const target = targetOf(body);
-      if (!target)
+      const given = [body.leaseId, body.bookingId, body.unitId].filter(Boolean).length;
+      if (given !== 1)
         throw AppError.unprocessable(
           'target_required',
-          'Send exactly one of leaseId or bookingId.',
+          'Send exactly one of leaseId, bookingId or unitId.',
         );
       if (body.receivedOn > clock.today())
         throw AppError.unprocessable('future_date', 'Cash cannot be received in the future.');
       if (body.receiptKey) assertUploadKeys(ctx, RECEIPT, [body.receiptKey]);
       return inTenant(db, ctx, async (tx) => {
+        const target = body.unitId
+          ? await leaseOfUnit(tx, ctx, body.unitId, body.receivedOn)
+          : targetOf(body)!;
         const t = await targetUnit(tx, {
           leaseId: target.leaseId ?? null,
           bookingId: target.bookingId ?? null,

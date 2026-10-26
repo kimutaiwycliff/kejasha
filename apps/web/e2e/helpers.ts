@@ -54,4 +54,10 @@ export async function apiPost<T>(page: Page, path: string, body: unknown): Promi
   return (await res.json()) as T;
 }
 
+export async function apiGet<T>(page: Page, path: string): Promise<T> {
+  const res = await page.request.get(`${API}${path}`);
+  if (!res.ok()) throw new Error(`${path} → ${res.status()} ${await res.text()}`);
+  return (await res.json()) as T;
+}
+
 export const randomTag = () => String(Math.floor(100000 + Math.random() * 900000));

@@ -10,9 +10,13 @@ import {
   DialogTitle,
 } from '@kejasha/ui/components/dialog';
 import { FieldGroup } from '@kejasha/ui/components/field';
-import { useState, type FormEventHandler, type ReactNode } from 'react';
-import type { FieldValues, UseFormReturn } from 'react-hook-form';
-import { SubmitButton } from '@/components/form';
+import { ReasonBody } from '@kejasha/contracts';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useState, type FormEventHandler, type ReactNode } from 'react';
+import { useForm, type FieldValues, type UseFormReturn } from 'react-hook-form';
+import type { z } from 'zod';
+import { TextareaField } from '@/components/fields';
+import { applyProblem, SubmitButton } from '@/components/form';
 import { toastError } from '@/lib/hooks';
 
 /** A dialog holding one form; the caller owns `open` so it can close on success. */
@@ -114,5 +118,49 @@ export function ConfirmButton({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+/** Ask for a reason, then run the action with it (ignore, unallocate, reject…). */
+export function ReasonDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  submitLabel,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  title: string;
+  description?: string;
+  submitLabel: string;
+  onSubmit: (reason: string) => Promise<unknown>;
+}) {
+  const form = useForm<z.input<typeof ReasonBody>, unknown, z.output<typeof ReasonBody>>({
+    resolver: zodResolver(ReasonBody),
+  });
+  useEffect(() => {
+    if (open) form.reset({ reason: '' });
+  }, [open, form]);
+  return (
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={description}
+      form={form}
+      onSubmit={form.handleSubmit(async ({ reason }) => {
+        try {
+          await onSubmit(reason);
+          onOpenChange(false);
+        } catch (e) {
+          applyProblem(form, e);
+        }
+      })}
+      submitLabel={submitLabel}
+    >
+      <TextareaField form={form} name="reason" label="Reason" />
+    </FormDialog>
   );
 }

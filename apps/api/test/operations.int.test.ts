@@ -316,6 +316,62 @@ describe('cash collections', () => {
     expect(otherUnit.id).toBeTruthy();
   });
 
+  it('caretakers log cash by unit; the lease covering the date is used', async () => {
+    const { c, care, unit, ss, other, lease, tenant } = await setup();
+    const sub = await care.post('/v1/cash-collections', {
+      unitId: unit.id,
+      amountCents: 200_000,
+      receivedOn: '2026-10-20',
+    });
+    expect(sub.statusCode, sub.body).toBe(201);
+    expect(sub.json()).toMatchObject({
+      leaseId: lease.id,
+      unitCode: 'A1',
+      payerName: 'Jane Wanjiru',
+    });
+
+    const code = async (body: Record<string, unknown>) =>
+      (
+        await care.post('/v1/cash-collections', {
+          amountCents: 100,
+          receivedOn: '2026-10-20',
+          ...body,
+        })
+      ).json().code;
+    // Before the lease started, and a short-stay unit (bookings are chosen directly).
+    expect(await code({ unitId: unit.id, receivedOn: '2026-09-15' })).toBe('no_lease_on_unit');
+    expect(await code({ unitId: ss.id })).toBe('no_lease_on_unit');
+    // One target only.
+    expect(await code({ unitId: unit.id, leaseId: lease.id })).toBe('target_required');
+
+    // A unit on a property the caretaker is not assigned to is not found, let or not.
+    const otherUnit2 = (
+      await c.post(`/v1/properties/${other.id}/units`, {
+        code: 'H2',
+        mode: 'long_term',
+        rentCents: 900_000,
+      })
+    ).json();
+    expect(await code({ unitId: otherUnit2.id })).toBe('not_found');
+    await c.post('/v1/leases', {
+      unitId: otherUnit2.id,
+      tenantId: tenant.id,
+      startDate: '2026-10-01',
+      rentCents: 900_000,
+    });
+    expect(await code({ unitId: otherUnit2.id })).toBe('not_found');
+    // Managers may log by unit anywhere in the org.
+    expect(
+      (
+        await c.post('/v1/cash-collections', {
+          unitId: otherUnit2.id,
+          amountCents: 100,
+          receivedOn: '2026-10-20',
+        })
+      ).statusCode,
+    ).toBe(201);
+  });
+
   it('cash for a short-stay booking settles the booking', async () => {
     const { c, care, ss } = await setup();
     const b = (

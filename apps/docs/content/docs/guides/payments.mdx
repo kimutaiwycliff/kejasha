@@ -47,6 +47,11 @@ A caretaker logs cash with a receipt photo (`POST /v1/cash-collections`). It rea
 only when an owner or manager **confirms** it (`POST /v1/cash-collections/{id}/confirm`), which
 records a cash payment and issues a receipt. Rejecting books nothing.
 
+Caretakers cannot see leases, so they log cash against a **unit** (`unitId`): the API uses the
+lease that covers the unit on `receivedOn`, and answers `422 no_lease_on_unit` when there is none.
+Staff may send `leaseId` directly; short-stay cash goes against the `bookingId`. Send exactly one
+of the three. Caretakers can only log cash for units on properties they are assigned to.
+
 ## Receipts
 
 Every allocated payment gets a numbered receipt by SMS and a PDF at

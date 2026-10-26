@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Kejasha API",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Property management, rent collection and short-stay management for Kenya. Money is integer cents (int64). Business dates are Africa/Nairobi. Every write accepts an Idempotency-Key header. Errors are RFC 9457 problem+json."
   },
   "components": {
@@ -2323,6 +2323,12 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
             "description": "UUID identifier"
           },
+          "unitId": {
+            "description": "A long-term unit instead of a lease: the lease covering receivedOn is used (caretakers cannot see leases)",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          },
           "amountCents": {
             "type": "integer",
             "minimum": 1,
@@ -2358,7 +2364,7 @@
           "amountCents",
           "receivedOn"
         ],
-        "description": "Exactly one of leaseId or bookingId (422 target_required)"
+        "description": "Exactly one of leaseId, bookingId or unitId (422 target_required). A unitId with no lease on receivedOn answers 422 no_lease_on_unit."
       },
       "BookingSourceInput": {
         "type": "string",
@@ -3512,6 +3518,12 @@
                   "format": "uuid",
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
                   "description": "UUID identifier"
+                },
+                "unitId": {
+                  "description": "A long-term unit instead of a lease: the lease covering receivedOn is used (caretakers cannot see leases)",
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
                 },
                 "amountCents": {
                   "type": "integer",
