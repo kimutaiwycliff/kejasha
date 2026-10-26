@@ -1,0 +1,38 @@
+---
+title: Short-stay
+description: Rates, bookings, calendar, iCal import and true profit per unit.
+---
+
+Short-stay units (`mode: "short_stay"`) take bookings alongside long-term units in one portfolio.
+
+## Rates and quotes
+
+`PUT /v1/units/{unitId}/rate-plan` sets the base and weekend nightly rates, minimum stay, buffer
+days and cleaning fee. `POST /v1/units/{unitId}/seasons` adds seasonal rates; seasons on a unit
+can't overlap. `GET /v1/units/{unitId}/quote?checkIn=…&checkOut=…` prices a stay night by night
+and says whether it's free.
+
+## Bookings — double-booking is impossible
+
+`POST /v1/bookings` books a unit from any source (`direct`, `walk_in`, `whatsapp`, `airbnb`,
+`booking`, `other`). The database itself refuses overlapping stays and blocks: a clash answers
+`409 dates_unavailable`, even when two requests race. `checkOut` is the departure day; buffer
+days after it stay blocked for cleaning.
+
+Directly collected bookings (direct, walk-in, WhatsApp, other) create an amount owed, paid by
+Paybill, STK or cash like rent. Airbnb and Booking.com bookings are paid out by the platform; you
+record their gross and commission for profit reporting.
+
+## Airbnb / Booking.com calendars (read-only)
+
+Connect a unit's iCal export URL with `POST /v1/ical-feeds`. Kejasha imports reservations as
+bookings and "not available" dates as blocks, every 20 minutes or on demand
+(`POST /v1/ical-feeds/{id}/sync`). If an imported stay clashes with one you already have, it's
+listed under the feed's `conflicts` — nothing is overwritten. Feed URLs are secrets: only a
+masked hint is ever returned.
+
+## Profit
+
+`GET /v1/reports/short-stay?period=YYYY-MM` gives per unit: nights sold, occupancy, average
+daily rate, RevPAR, gross, commission, expenses and net — plus a channel comparison showing what
+each platform really costs.

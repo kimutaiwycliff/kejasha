@@ -1,0 +1,23 @@
+---
+title: Reporting and statements
+description: Owner statements, rent roll, collections, occupancy and CSV exports.
+---
+
+| Report | Endpoint |
+|---|---|
+| Owner dashboard (month + 6-month trend) | `GET /v1/reports/owner-dashboard?period=…` |
+| Owner statements (totals per landlord) | `GET /v1/owner-statements?period=…` |
+| One landlord's statement / PDF | `GET /v1/owner-statements/{clientLandlordId}[/pdf]?period=…` |
+| Rent roll | `GET /v1/reports/rent-roll` |
+| Collections by day, method, property | `GET /v1/reports/collections?from=…&to=…` |
+| Occupancy | `GET /v1/reports/occupancy?period=…` |
+| Arrears aging | `GET /v1/arrears` |
+
+**Statements reconcile to the books:** income is exactly the payments posted to that
+landlord's units in the month (reversals included). Net = income − expenses − management fee.
+The fee is computed on the statement; Kejasha never moves the money. Agencies' statements carry
+the agency's name and brand colour.
+
+Every main list exports as CSV: `GET /v1/exports/{dataset}` with `rent-roll`, `collections`,
+`payments`, `unit-expenses`, `bookings`, `tickets`, `tenants`, `arrears`. Read-only owners may
+export rent roll, collections and expenses for their own landlord.

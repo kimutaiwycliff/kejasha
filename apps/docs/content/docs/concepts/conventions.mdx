@@ -1,0 +1,54 @@
+---
+title: API conventions
+description: Money, dates, idempotency, errors and pagination — the rules every endpoint follows.
+---
+
+## Money is integer cents
+
+Every amount is an integer number of **KES cents** in fields ending in `Cents`
+(`rentCents: 2000000` is KES 20,000.00). There are no floats anywhere; format only when you
+display. In OpenAPI these are `integer` / `int64` (Kotlin `Long`).
+
+## Dates are Nairobi business dates
+
+Business dates (`startDate`, `paidOn`, `period`) are `YYYY-MM-DD` / `YYYY-MM` in
+**Africa/Nairobi**. Instants (`createdAt`) are RFC 3339 with an offset. Ranges are inclusive
+unless a field says *exclusive* (short-stay `checkOut` is the departure day).
+
+## Idempotency
+
+Every write accepts an `Idempotency-Key` header (8–255 characters; a UUID works). Send one with
+every create, payment or anything you might retry:
+
+- same key, same request → the stored response is replayed with `idempotent-replayed: true`;
+- same key, different request → `422`;
+- same key while the first request is still running → `409`;
+- server errors are not stored, so retry with the same key.
+
+## Errors are problem+json
+
+```json
+{
+  "type": "urn:kejasha:problem:dates_unavailable",
+  "title": "Conflict",
+  "status": 409,
+  "code": "dates_unavailable",
+  "detail": "The unit is booked or blocked for some of these dates.",
+  "requestId": "…"
+}
+```
+
+- `400` — the request does not match the schema (`errors[]` lists each field).
+- `401` / `403` — not signed in / not allowed.
+- `402` — the organization's subscription is unpaid or suspended (writes only).
+- `404` — not found *or not yours* (other organizations' records are invisible).
+- `409` — conflicts with existing state (overlaps, duplicates).
+- `422` — valid shape, not allowed now (business rule).
+- `429` — slow down; `detail` says for how long.
+
+Branch on `code`, not on `detail` (which is human text). Quote `requestId` to support.
+
+## Pagination
+
+Lists return `{ "items": [...], "nextCursor": "…" | null }`. Pass `cursor` and `limit` (≤ 100)
+to get the next page. Cursors are opaque.

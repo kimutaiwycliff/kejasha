@@ -111,8 +111,11 @@ build-image:
 	docker build -f apps/api/Dockerfile -t kejasha-api:local .
 	docker build -f apps/worker/Dockerfile -t kejasha-worker:local .
 
-deploy rollback:
-	@echo "$@: arrives with B7 (hardening & launch)"
+deploy: ## deploy CI-built images to the VM: make deploy [TAG=<sha>] (needs DEPLOY_HOST)
+	infra/deploy/deploy.sh
+
+rollback: ## back to the previous deployed tag (or TAG=<sha>)
+	infra/deploy/rollback.sh
 
 # Dev runs pg_dump/pg_restore inside the compose Postgres container (same major as the server).
 PG_TOOLS ?= docker compose -f '$(CURDIR)/infra/compose.yml' --env-file '$(CURDIR)/.env' exec -T postgres

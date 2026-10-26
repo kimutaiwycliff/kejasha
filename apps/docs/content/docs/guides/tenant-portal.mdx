@@ -1,0 +1,18 @@
+---
+title: Tenant portal
+description: Tenants see their rent, receipts and repairs, and pay by M-Pesa.
+---
+
+A tenant signs in with their phone and an SMS code. Kejasha finds their tenancies with **every**
+landlord on the platform that holds that verified phone number.
+
+| Endpoint | What |
+|---|---|
+| `GET /v1/portal/me` | Tenancies and leases with balances, per landlord |
+| `GET /v1/portal/leases/{leaseId}/statement` | Invoices and payments with a running balance |
+| `POST /v1/portal/leases/{leaseId}/pay` | An M-Pesa prompt to the tenant's phone (the landlord's own Paybill/Till) |
+| `GET /v1/portal/payments/{id}/receipt` | Receipt PDF |
+| `GET /v1/portal/tickets`, `POST /v1/portal/tickets` | Repairs the tenant reported |
+
+A lease is visible only to the person whose phone is on its tenant record; anything else answers
+`404`.

@@ -1,0 +1,31 @@
+---
+title: Backups and restore
+description: Nightly dumps to R2, retention, and the restore drill.
+---
+
+- **Nightly** at 02:30 Nairobi, the worker streams `pg_dump -Fc` to the backups bucket
+  (`postgres/kejasha-<timestamp>.dump`) and deletes dumps older than `BACKUP_RETENTION_DAYS`
+  (default 30). A failed backup retries and is reported to GlitchTip.
+- **On demand:** `make backup`.
+- **Recovery point:** up to 24 hours. Point-in-time recovery (WAL archiving) is a later
+  improvement.
+
+## Restore drill
+
+`make restore-drill` restores the newest dump into a scratch database and checks that:
+
+- every migration is present;
+- row-level security is still on for every tenant table;
+- the ledger's trial balance is zero and every journal entry balances.
+
+It prints row counts, drops the scratch database and exits non-zero on any failure. Run it
+monthly and after any infrastructure change.
+
+## Restoring production
+
+1. Stop writers: `docker compose -f compose.prod.yml stop api worker`.
+2. Download the dump from R2 and restore it into a fresh database
+   (`pg_restore --exit-on-error -d <url> <dump>`).
+3. Point `DATABASE_URL` at it (or rename databases), run `make restore-drill`-style checks, start
+   `api` and `worker`.
+4. Re-register Daraja callbacks if the domain changed (`make daraja-reregister`).

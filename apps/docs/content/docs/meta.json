@@ -1,0 +1,26 @@
+{
+  "title": "Kejasha",
+  "pages": [
+    "index",
+    "getting-started",
+    "---Concepts---",
+    "concepts/authentication",
+    "concepts/roles",
+    "concepts/conventions",
+    "---Guides---",
+    "guides/payments",
+    "guides/short-stay",
+    "guides/offline-sync",
+    "guides/tenant-portal",
+    "guides/compliance",
+    "guides/reporting",
+    "guides/billing",
+    "---Operations---",
+    "operations/deployment",
+    "operations/backups",
+    "operations/security",
+    "operations/domain-change",
+    "---API Reference---",
+    "...api"
+  ]
+}

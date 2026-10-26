@@ -5,3 +5,9 @@ infra/migrations/
 docs/
 CLAUDE.md
 coverage/
+
+# Docs app build output and generated API reference (ADR-020)
+apps/docs/.next/
+apps/docs/out/
+apps/docs/.source/
+apps/docs/content/docs/api/

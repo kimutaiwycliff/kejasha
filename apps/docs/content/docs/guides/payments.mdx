@@ -1,0 +1,53 @@
+---
+title: M-Pesa payments
+description: Paybill/Till reconciliation, STK Push, statements, SMS and cash — with no money held by Kejasha.
+---
+
+Tenants and guests pay straight into the landlord's or host's **own** Paybill, Till or phone.
+Kejasha never holds money; it records each payment once, matches it, posts it to the books and
+sends a receipt.
+
+## Connect a channel
+
+1. `POST /v1/payment-channels` — `kind` is `paybill`, `till` or `phone`.
+2. `PUT /v1/payment-channels/{id}/credentials` — the landlord's Daraja consumer key, secret and
+   passkey. They are encrypted and **never returned** (only `hasCredentials`).
+3. `POST /v1/payment-channels/{id}/register-c2b` — registers Kejasha's callback URLs with
+   Safaricom. `GET …/go-live` lists what the landlord still needs from Safaricom.
+
+## How a payment is matched
+
+1. **Account number = unit code.** A tenant paying Paybill `600981`, account `A1`, is matched to
+   the lease on unit A1 on that date. For short-stay units, the booking that covers the date and
+   still owes money.
+2. **Otherwise the payer's phone**, if it identifies exactly one tenant lease or owing booking.
+3. **Otherwise the unmatched queue**, with ranked suggestions:
+   `GET /v1/payments?status=unmatched`, `GET /v1/payments/{id}/suggestions`, then
+   `POST /v1/payments/{id}/allocate {"leaseId": …}` or `{"bookingId": …}`.
+
+Every M-Pesa transaction is recorded **once**, whether it arrives by callback, statement or SMS.
+Repeats are no-ops.
+
+## Ask for payment (STK Push)
+
+`POST /v1/stk-requests {"leaseId": …}` (or `bookingId`) sends an M-Pesa prompt to the tenant's
+phone for the outstanding balance, on the landlord's own shortcode. Money is booked only after
+Safaricom **confirms** the transaction, never on the callback alone. Prompts are throttled per
+lease and per phone number.
+
+## No Paybill? Statements and SMS
+
+- **Statement import:** upload an M-Pesa statement (business CSV, or personal PDF with its
+  password) via `POST /v1/uploads`, then `POST /v1/statement-imports`.
+- **SMS:** share an M-Pesa confirmation SMS into the app → `POST /v1/sms-payments`.
+
+## Cash collected by caretakers
+
+A caretaker logs cash with a receipt photo (`POST /v1/cash-collections`). It reaches the books
+only when an owner or manager **confirms** it (`POST /v1/cash-collections/{id}/confirm`), which
+records a cash payment and issues a receipt. Rejecting books nothing.
+
+## Receipts
+
+Every allocated payment gets a numbered receipt by SMS and a PDF at
+`GET /v1/payments/{id}/receipt`.

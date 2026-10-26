@@ -10,6 +10,11 @@ export default tseslint.config(
       '**/coverage/**',
       'packages/api-client/src/schema.d.ts',
       'apps/android/**',
+      // Docs app build output and generated files (ADR-020).
+      'apps/docs/.next/**',
+      'apps/docs/out/**',
+      'apps/docs/.source/**',
+      'apps/docs/next-env.d.ts',
     ],
   },
   js.configs.recommended,

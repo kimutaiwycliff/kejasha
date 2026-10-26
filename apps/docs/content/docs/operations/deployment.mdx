@@ -1,0 +1,62 @@
+---
+title: Deployment
+description: One VM, Docker Compose, Caddy and Cloudflare — first-time setup, deploy and rollback.
+---
+
+Production is a single Linux VM running `infra/compose.prod.yml` (ADR-013): Postgres, Redis,
+the API, the worker, the docs site and Caddy. Files and backups live in Cloudflare R2, off the
+VM (ADR-019). Images are built by CI on every merge to `main` and tagged with the git SHA.
+
+## First-time setup
+
+1. **VM:** Ubuntu LTS, 4 vCPU / 8 GB, Docker Engine and the compose plugin, a `deploy` user in
+   the `docker` group with your SSH key.
+2. **Firewall:** allow SSH from your IPs only, and 80/443 **only from Cloudflare's IP ranges**
+   (the API trusts the `CF-Connecting-IP` header Caddy forwards). Nothing else is published.
+3. **DNS (Cloudflare, proxied):** `api.`, `app.` and `docs.` records for your domain pointing at
+   the VM. SSL mode **Full (strict)**; Caddy obtains its own certificates.
+4. **Cloudflare Access:** protect `api.<domain>/v1/operator/*` with SSO + MFA (Kejasha staff only).
+5. **R2:** buckets `kejasha-files` and `kejasha-backups`, an API token limited to them, and a
+   lifecycle rule deleting unreferenced uploads under `org/` after 30 days.
+6. **Secrets:** create `/opt/kejasha/.env` from `.env.example` (decrypted from SOPS — never
+   commit it). Required in production:
+   - `APP_DOMAIN`, `ACME_EMAIL`, `IMAGE_OWNER`
+   - `POSTGRES_PASSWORD`, `APP_AUTHENTICATED_PASSWORD`, `REDIS_PASSWORD`, and matching
+     `DATABASE_URL`, `DATABASE_AUTHENTICATED_URL`, `REDIS_URL` (hosts `postgres`, `redis`)
+   - `BETTER_AUTH_SECRET` (32+ chars), `CREDENTIALS_MASTER_KEY` (32 bytes, base64)
+   - `S3_ENDPOINT` (R2), `S3_REGION=auto`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`
+   - `TRUST_PROXY=1`, `DARAJA_CALLBACK_IPS` (Safaricom's callback IPs)
+   - `RESEND_API_KEY`, `AFRICASTALKING_*`, `PAYSTACK_SECRET_KEY`, `GLITCHTIP_DSN`
+   The API refuses to start in production if a guard is unmet (e.g. non-https URL, missing auth
+   secret, billing disabled).
+7. **First operator:** after signing up, `make operator-grant EMAIL=…` (run on the VM via the API
+   image, or locally against the production DB through an SSH tunnel).
+
+## Deploy
+
+```bash
+DEPLOY_HOST=deploy@<vm> make deploy            # deploys the current commit (CI must have published it)
+DEPLOY_HOST=deploy@<vm> make deploy TAG=<sha>  # a specific build
+```
+
+The script syncs `compose.prod.yml`, the `Caddyfile` and migrations, pulls the images, runs
+migrations (dbmate), restarts the stack and waits for `/v1/health`. Deployed tags are recorded in
+`/opt/kejasha/.deployed-tags`.
+
+## Roll back
+
+```bash
+DEPLOY_HOST=deploy@<vm> make rollback            # previous tag
+DEPLOY_HOST=deploy@<vm> make rollback TAG=<sha>
+```
+
+Migrations are **forward-only**: rolling back the code does not undo a migration. Undo a schema
+change with a new forward migration.
+
+## Observability
+
+- Logs: `docker compose -f compose.prod.yml logs -f api worker` (JSON; secrets redacted).
+- Errors: GlitchTip (`GLITCHTIP_DSN`). Events carry request id, route and org — no request
+  bodies, users or SQL.
+- Traces: set `OTEL_EXPORTER_OTLP_ENDPOINT` to ship OpenTelemetry traces.
+- Health: `GET /v1/health` reports database, Redis and storage.

@@ -1,0 +1,17 @@
+---
+title: Changing the domain
+description: Move Kejasha to a new domain without code changes (ADR-016).
+---
+
+The domain is configuration: no file outside `.env` contains it, and every URL, cookie domain,
+CORS origin, email sender, Caddy site and Daraja callback is derived from `APP_DOMAIN`.
+
+1. Add DNS for `api.`, `app.` and `docs.` on the new domain (Cloudflare, proxied).
+2. In `/opt/kejasha/.env`: set `APP_DOMAIN` to the new domain and put the old one in
+   `LEGACY_DOMAINS` (its web origin stays trusted during the move).
+3. `make deploy` (same tag is fine): Caddy issues certificates for the new names.
+4. `make daraja-reregister`: re-registers every landlord's C2B callback URLs with Safaricom.
+5. Update the Paystack webhook URL in the Paystack dashboard.
+6. Tell Android users to update if the build pins `API_URL`; the app also reads
+   `GET /v1/meta/config` for the canonical API URL.
+7. After a few weeks, remove `LEGACY_DOMAINS` and the old DNS.
