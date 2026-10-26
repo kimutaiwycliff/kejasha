@@ -1,6 +1,6 @@
 'use client';
 import { Button } from '@kejasha/ui/components/button';
-import { Field, FieldError, FieldLabel } from '@kejasha/ui/components/field';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@kejasha/ui/components/field';
 import { Input } from '@kejasha/ui/components/input';
 import { useSyncExternalStore, type ComponentProps } from 'react';
 import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
@@ -32,6 +32,9 @@ type TextFieldProps<T extends FieldValues> = {
   form: UseFormReturn<T>;
   name: Path<T>;
   label: string;
+  /** For optional fields: what a blank input sends (`undefined` to omit, `null` to clear). */
+  empty?: null | undefined;
+  description?: string;
 } & Omit<ComponentProps<typeof Input>, 'name' | 'form'>;
 
 /** Label + input + error, wired to React Hook Form. */
@@ -39,16 +42,35 @@ export function TextField<T extends FieldValues>({
   form,
   name,
   label,
-  ...input
+  description,
+  ...rest
 }: TextFieldProps<T>) {
-  const error = form.formState.errors[name];
+  const error = fieldError(form, name);
+  const blank = 'empty' in rest;
+  const { empty, ...input } = rest;
   return (
     <Field data-invalid={Boolean(error)}>
       <FieldLabel htmlFor={name}>{label}</FieldLabel>
-      <Input id={name} aria-invalid={Boolean(error)} {...input} {...form.register(name)} />
-      <FieldError errors={[error as { message?: string } | undefined]} />
+      <Input
+        id={name}
+        aria-invalid={Boolean(error)}
+        {...input}
+        {...form.register(
+          name,
+          blank ? { setValueAs: (v: unknown) => (v === '' ? empty : v) } : {},
+        )}
+      />
+      {description && <FieldDescription>{description}</FieldDescription>}
+      <FieldError errors={[error]} />
     </Field>
   );
+}
+
+/** The error for a (possibly nested, e.g. `initialReading.reading`) field. */
+export function fieldError<T extends FieldValues>(form: UseFormReturn<T>, name: Path<T>) {
+  let node: unknown = form.formState.errors;
+  for (const part of name.split('.')) node = (node as Record<string, unknown> | undefined)?.[part];
+  return node as { message?: string } | undefined;
 }
 
 const noop = () => () => {};
