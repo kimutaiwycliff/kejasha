@@ -1,15 +1,17 @@
 'use client';
+import { LinkButton } from '@/components/link-button';
 import { Badge } from '@kejasha/ui/components/badge';
 import { Button } from '@kejasha/ui/components/button';
-import { Card, CardContent } from '@kejasha/ui/components/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@kejasha/ui/components/card';
 import { Skeleton } from '@kejasha/ui/components/skeleton';
 import { useQuery } from '@tanstack/react-query';
-import { Pencil } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { BackLink, Details } from '@/components/detail';
 import { ConfirmButton } from '@/components/dialogs';
+import { LeaseTable } from '@/components/leasing/lease-table';
 import { PageHeader } from '@/components/page-header';
 import { MetersCard } from '@/components/portfolio/meters';
 import { UnitDialog } from '@/components/portfolio/unit-dialogs';
@@ -22,6 +24,7 @@ export default function UnitPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const canEdit = useCan('manager');
+  const seesLeases = useCan('agent');
   const [editing, setEditing] = useState(false);
   const { data: u } = useQuery({
     queryKey: ['unit', id],
@@ -124,6 +127,21 @@ export default function UnitPage() {
         </Card>
         <MetersCard unitId={u.id} live={live} />
       </div>
+      {!shortStay && seesLeases && (
+        <Card className="mt-4">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Leases</CardTitle>
+            {canEdit && live && u.status === 'active' && (
+              <LinkButton size="sm" href={`/leases/new?unitId=${u.id}`}>
+                <Plus /> New lease
+              </LinkButton>
+            )}
+          </CardHeader>
+          <CardContent>
+            <LeaseTable filter={{ unitId: u.id }} hide={['unit']} />
+          </CardContent>
+        </Card>
+      )}
       <UnitDialog open={editing} onOpenChange={setEditing} unit={u} />
     </>
   );

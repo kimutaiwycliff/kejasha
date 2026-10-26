@@ -26,3 +26,39 @@ export function feeLabel(l: {
   if (l.mgmtFeeKind === 'flat') return `${formatKes(l.mgmtFeeFlatCents)} / month`;
   return 'None';
 }
+
+export const LEASE_STATUS_LABEL = {
+  active: 'Active',
+  terminated: 'Ended',
+  cancelled: 'Cancelled',
+} as const;
+export const CHARGE_KIND_LABEL = {
+  service_charge: 'Service charge',
+  garbage: 'Garbage',
+  water: 'Water',
+  electricity: 'Electricity',
+  security: 'Security',
+  other: 'Other',
+} as const;
+export const PAYMENT_STATUS_LABEL = {
+  unpaid: 'Unpaid',
+  partially_paid: 'Part paid',
+  paid: 'Paid',
+  void: 'Void',
+} as const;
+export const INVOICE_KIND_LABEL = {
+  periodic: 'Monthly',
+  deposit: 'Deposit',
+  late_fee: 'Late fee',
+  manual: 'One-off',
+} as const;
+export const CONDITION_LABEL = {
+  good: 'Good',
+  fair: 'Fair',
+  poor: 'Poor',
+  damaged: 'Damaged',
+} as const;
+
+/** "5%" from basis points. */
+export const bpsLabel = (bps: number | null | undefined) =>
+  bps == null ? '—' : `${(bps / 100).toFixed(2).replace(/\.?0+$/, '')}%`;

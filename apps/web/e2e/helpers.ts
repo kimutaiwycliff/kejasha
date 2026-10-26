@@ -21,8 +21,13 @@ export async function signUp(page: Page, acct: ReturnType<typeof newAccount>) {
 
 /** Opens the sidebar on small screens, where it is a sheet behind the toggle. */
 export async function openNav(page: Page) {
-  const toggle = page.getByRole('button', { name: 'Toggle navigation' });
-  if (await page.getByRole('button', { name: 'Account menu' }).isHidden()) await toggle.click();
+  const menu = page.getByRole('button', { name: 'Account menu' });
+  // A click before hydration does nothing, so retry until the sheet is open.
+  await expect(async () => {
+    if (await menu.isHidden())
+      await page.getByRole('button', { name: 'Toggle navigation' }).click();
+    await expect(menu).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 10_000 });
 }
 
 /**
@@ -33,3 +38,20 @@ export const DEMO = {
   landlord: { email: 'landlord@demo.test', file: 'e2e/.auth/landlord.json' },
   agency: { email: 'agency@demo.test', file: 'e2e/.auth/agency.json' },
 } as const;
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+/**
+ * Calls the API with the page's session (cookies are shared across localhost ports), for test
+ * setup that is not what the journey is about.
+ */
+export async function apiPost<T>(page: Page, path: string, body: unknown): Promise<T> {
+  const res = await page.request.post(`${API}${path}`, {
+    data: body,
+    headers: { 'Idempotency-Key': crypto.randomUUID(), Origin: 'http://localhost:3000' },
+  });
+  if (!res.ok()) throw new Error(`${path} → ${res.status()} ${await res.text()}`);
+  return (await res.json()) as T;
+}
+
+export const randomTag = () => String(Math.floor(100000 + Math.random() * 900000));

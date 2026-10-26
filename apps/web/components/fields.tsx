@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@kejasha/ui/components/select';
 import { Textarea } from '@kejasha/ui/components/textarea';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, type FieldValues, type Path, type UseFormReturn } from 'react-hook-form';
 import { fieldError } from '@/components/form';
 import { parseKes } from '@/lib/format';
@@ -121,6 +121,14 @@ function MoneyInput({
   error: { message?: string } | undefined;
 }) {
   const [text, setText] = useState(() => centsToText(value));
+  // Follow values set from outside (a reset, or a default copied from the chosen unit).
+  useEffect(() => {
+    const typed = parseKes(text);
+    if (typeof value === 'number' && Number.isFinite(value) && typed !== value)
+      setText(centsToText(value));
+    if ((value === undefined || value === null) && typed !== null) setText('');
+    // Deliberately keyed on the form value only, not on the typed text.
+  }, [value]);
   const invalid = text.trim() !== '' && parseKes(text) === null;
   return (
     <Field data-invalid={Boolean(error) || invalid}>
@@ -225,6 +233,97 @@ export function TextareaField<T extends FieldValues>({
       />
       {description && <FieldDescription>{description}</FieldDescription>}
       <FieldError errors={[error]} />
+    </Field>
+  );
+}
+
+const PERCENT = /^\d{1,3}(\.\d{1,2})?$/;
+const bpsToText = (b: unknown) =>
+  typeof b === 'number' && Number.isFinite(b) ? String(b / 100) : '';
+
+/** A percentage typed as "7.5", held in the form as basis points (750). */
+export function PercentField<T extends FieldValues>({
+  form,
+  name,
+  label,
+  description,
+  empty,
+}: Base<T>) {
+  return (
+    <Controller
+      control={form.control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <PercentInput
+          id={name}
+          label={label}
+          description={description}
+          value={field.value}
+          onBlur={field.onBlur}
+          onChange={(t) =>
+            field.onChange(
+              t === '' ? empty : PERCENT.test(t) ? Math.round(Number(t) * 100) : Number.NaN,
+            )
+          }
+          error={fieldState.error}
+        />
+      )}
+    />
+  );
+}
+
+function PercentInput({
+  id,
+  label,
+  description,
+  value,
+  onChange,
+  onBlur,
+  error,
+}: {
+  id: string;
+  label: string;
+  description?: string | undefined;
+  value: unknown;
+  onChange: (text: string) => void;
+  onBlur: () => void;
+  error: { message?: string } | undefined;
+}) {
+  const [text, setText] = useState(() => bpsToText(value));
+  useEffect(() => {
+    if (value === undefined || value === null) {
+      if (text !== '') setText('');
+    } else if (
+      typeof value === 'number' &&
+      Number.isFinite(value) &&
+      Math.round(Number(text) * 100) !== value
+    )
+      setText(bpsToText(value));
+    // Deliberately keyed on the form value only, not on the typed text.
+  }, [value]);
+  const invalid = text.trim() !== '' && !PERCENT.test(text.trim());
+  return (
+    <Field data-invalid={Boolean(error) || invalid}>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <div className="relative">
+        <Input
+          id={id}
+          inputMode="decimal"
+          className="pr-8 tabular-nums"
+          value={text}
+          aria-invalid={Boolean(error) || invalid}
+          onBlur={onBlur}
+          onChange={(e) => {
+            setText(e.target.value);
+            onChange(e.target.value.trim());
+          }}
+        />
+        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground">
+          %
+        </span>
+      </div>
+      {description && <FieldDescription>{description}</FieldDescription>}
+      <FieldError errors={[invalid ? { message: 'Enter a percent, e.g. 7.5' } : error]} />
     </Field>
   );
 }

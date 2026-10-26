@@ -9,6 +9,8 @@ for (const [who, u] of Object.entries(DEMO)) {
     await page.getByRole('textbox', { name: 'Password', exact: true }).fill('demo-password-123');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/dashboard/);
+    // The shell picks the active org after sign-in; it is stored in the server-side session.
+    await expect(page.getByRole('button', { name: 'Switch organization' })).toBeVisible();
     await page.context().storageState({ path: u.file });
   });
 }

@@ -50,11 +50,11 @@ Playwright journeys against the real API.
 - [x] **W0 Foundation:** app + `packages/ui` (shadcn), API client + Query provider, auth (email,
       phone OTP, reset, verify email, invitations), org create/switch, role-aware shell, billing
       banner, error/toast handling, Playwright harness + sign-up journey, CI job
-- [~] **W1 Portfolio & leasing**, shipped as two PRs:
+- [x] **W1 Portfolio & leasing**, shipped as two PRs:
   - [x] **W1a Portfolio:** client landlords (management fee), properties (staff assignment),
         units (single and bulk, active/inactive, archive), meters + readings, caretaker meter
         round
-  - [ ] **W1b Leasing:** tenants, leases (create, terminate, renew, rent change, cancel),
+  - [x] **W1b Leasing:** tenants, leases (create, terminate, renew, rent change, cancel),
         charges, invoices, credit notes, statements, arrears, deposits, inspections, lease
         calendar
 - [ ] **W2 Payments:** channels + go-live, payments list, unmatched queue with suggestions and
@@ -107,6 +107,30 @@ Playwright journeys against the real API.
   (one sign-in per user per run). The CI e2e job now runs `seed`.
 - The bulk reading endpoint answers per meter; the round shows each rejection beside its meter
   (`reading_decreased`, `reading_exists`) and keeps the rejected values for correction.
+
+### W1b (2026-10-26)
+- Screens:
+  - tenants;
+  - leases: create with unit and tenant pickers, edit terms, rent change, renew, end, cancel;
+  - charges (flat or metered on the unit's meter);
+  - invoices (one-off, void), credit notes, statement;
+  - deposit settlement (shows the refund due; Kejasha never pays it out);
+  - inspections with photos;
+  - arrears with "Run billing now"; lease calendar.
+- `ComboField` (shadcn Base UI combobox) searches on the server and keeps the chosen option's
+  label. Rent and deposit are copied from the chosen unit.
+- `PercentField` holds basis points. `MoneyField` and `PercentField` follow values set from
+  outside (reset, prefill).
+- Navigation that looks like a button is now a real link (`LinkButton`). Base UI's Button gave
+  links a button role, so assistive tech announced them as buttons.
+- Filter selects use an explicit "all" value: Base UI shows the placeholder for `''`.
+- Photo uploads PUT directly to object storage with the API's upload ticket (`lib/upload.ts`).
+  The bucket's CORS must allow PUT from the web origin. That is part of the launch checklist
+  (R2 bucket setup).
+- **Performance note.** Under the parallel e2e journeys (many lease creations at once), one
+  `GET /v1/arrears` took 8 s locally; alone it takes 10–135 ms. The k6 run covers arrears reads
+  only. When the load test is repeated on the VM before launch, add concurrent lease creation
+  to the mix.
 
 ## Definition of Done
 Every API journey has a Playwright twin that passes in CI; role-based navigation verified for

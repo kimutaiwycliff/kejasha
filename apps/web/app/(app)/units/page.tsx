@@ -1,13 +1,7 @@
 'use client';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@kejasha/ui/components/select';
 import { useState } from 'react';
 import { SearchBox } from '@/components/detail';
+import { FilterSelect } from '@/components/filter-select';
 import { PageHeader } from '@/components/page-header';
 import { PropertyPicker } from '@/components/portfolio/property-picker';
 import { UnitTable, type UnitFilter } from '@/components/portfolio/unit-table';
@@ -33,22 +27,7 @@ export default function UnitsPage() {
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
         <SearchBox value={q} onChange={setQ} placeholder="Search by code or name" />
         <PropertyPicker value={propertyId} onChange={setPropertyId} />
-        <Select
-          items={MODES}
-          value={mode ?? ''}
-          onValueChange={(v) => setMode((v || undefined) as UnitFilter['mode'])}
-        >
-          <SelectTrigger aria-label="Letting" className="w-full sm:w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {MODES.map((m) => (
-              <SelectItem key={m.value || 'all'} value={m.value}>
-                {m.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <FilterSelect label="Letting" options={MODES} value={mode} onChange={setMode} />
       </div>
       <UnitTable
         filter={{
