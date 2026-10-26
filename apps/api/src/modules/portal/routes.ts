@@ -61,7 +61,7 @@ export function portalRoutes(portal: PortalService): FastifyPluginAsyncZod<AppDe
           summary: 'Pay rent: an M-Pesa prompt is sent to your phone',
           params: PortalLeaseParams,
           body: PortalPayBody,
-          response: { 201: StkRequest, ...problemResponses(404, 422) },
+          response: { 201: StkRequest, ...problemResponses(404, 422, 429) },
         },
       },
       async (req, reply) =>
@@ -115,7 +115,7 @@ export function portalRoutes(portal: PortalService): FastifyPluginAsyncZod<AppDe
           tags,
           summary: 'Report a problem in your unit',
           body: PortalTicketBody,
-          response: { 201: TicketDetail, ...problemResponses(404, 422) },
+          response: { 201: TicketDetail, ...problemResponses(404, 422, 429) },
         },
       },
       async (req, reply) =>

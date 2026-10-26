@@ -112,7 +112,7 @@ export function subscriptionRoutes(billing: SubscriptionService): FastifyPluginA
             tags,
             summary: 'Paystack events (signed with HMAC-SHA512; re-verified with Paystack)',
             body: PaystackWebhookBody,
-            response: { 200: WebhookAck, ...problemResponses(401) },
+            response: { 200: WebhookAck, ...problemResponses(401, 429) },
           },
         },
         async (req) => {

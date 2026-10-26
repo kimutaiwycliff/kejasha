@@ -169,7 +169,7 @@ export function reportingRoutes({
             'clientLandlordId narrows rent-roll, collections and unit-expenses. Viewers may export only those three.',
           params: ExportParams,
           querystring: ExportQuery,
-          response: { 200: csvResponse('The dataset as CSV'), ...problemResponses(404, 422) },
+          response: { 200: csvResponse('The dataset as CSV'), ...problemResponses(404, 422, 429) },
         },
       },
       async (req, reply) => {

@@ -306,7 +306,7 @@ export function paymentsRoutes({
           tags,
           summary: "Send an M-Pesa payment prompt to the tenant's phone",
           body: StkRequestBody,
-          response: { 201: StkRequest, ...problemResponses(404, 422) },
+          response: { 201: StkRequest, ...problemResponses(404, 422, 429) },
         },
       },
       async (req, reply) => reply.status(201).send(await daraja.createStk(ctxOf(req), req.body)),
@@ -436,7 +436,7 @@ export function paymentsRoutes({
       summary,
       params: ChannelTokenParam,
       body: DarajaCallbackBody,
-      response: { 200: DarajaAck, ...problemResponses(403, 404) },
+      response: { 200: DarajaAck, ...problemResponses(403, 404, 429) },
     });
 
     app.post(
