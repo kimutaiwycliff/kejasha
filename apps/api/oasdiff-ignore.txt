@@ -1,21 +1,8 @@
-# Intended contract changes that oasdiff reports as breaking (CI: --err-ignore).
-# Allowed only before the v1.0 contract freeze (ADR-018: no client exists yet). Each block names
-# the PR that introduced it; once the base branch contains the change, the entries no longer match
-# anything and can be pruned. Any change NOT listed here still fails CI.
+# Breaking contract changes that CI must let through (oasdiff breaking --err-ignore).
+# The contract is frozen at contract-v1.0 (docs/contract.md). An entry here needs an ADR that
+# explains why the change is unavoidable and how clients migrate; cite it above the lines, e.g.:
 #
-# PR #6 (B5): read-only `viewer` role added to Role; expenses may be property-wide (unitId null).
-POST /v1/identity/active-org added the new `viewer` enum value to the `activeOrg/anyOf[#/components/schemas/Membership]/role` response property for the response status `200` (shared schema: `Membership`, also at `memberships/items/role`)
-GET /v1/identity/me added the new `viewer` enum value to the `activeOrg/anyOf[#/components/schemas/Membership]/role` response property for the response status `200` (shared schema: `Membership`, also at `memberships/items/role`)
-GET /v1/identity/me/invitations added the new `viewer` enum value to the `items/items/role` response property for the response status `200`
-GET /v1/invitations added the new `viewer` enum value to the `items/items/role` response property for the response status `200`
-POST /v1/invitations added the new `viewer` enum value to the `role` response property for the response status `201`
-POST /v1/invitations/{id}/accept added the new `viewer` enum value to the `activeOrg/anyOf[#/components/schemas/Membership]/role` response property for the response status `200` (shared schema: `Membership`, also at `memberships/items/role`)
-GET /v1/members added the new `viewer` enum value to the `items/items/role` response property for the response status `200`
-PATCH /v1/members/{id} added the new `viewer` enum value to the `items/items/role` response property for the response status `200`
-GET /v1/properties/{id} added the new `viewer` enum value to the `staff/items/role` response property for the response status `200`
-GET /v1/properties/{id}/staff added the new `viewer` enum value to the `items/items/role` response property for the response status `200`
-PUT /v1/properties/{id}/staff added the new `viewer` enum value to the `items/items/role` response property for the response status `200`
-GET /v1/unit-expenses response property `items/items/unitId` list-of-types was widened by adding types `null` to media type `application/json` of response `200`
-GET /v1/unit-expenses the `items/items/unitId` response's property pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$` was removed for the status `200`
-POST /v1/unit-expenses response property `unitId` list-of-types was widened by adding types `null` to media type `application/json` of response `201`
-POST /v1/unit-expenses the `unitId` response's property pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$` was removed for the status `201`
+#   # ADR-0NN: <reason>
+#   GET /v1/example the `x` response property …
+#
+# Lines are copied from `oasdiff breaking --format singleline` ("METHOD path description").

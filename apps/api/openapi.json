@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Kejasha API",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "Property management, rent collection and short-stay management for Kenya. Money is integer cents (int64). Business dates are Africa/Nairobi. Every write accepts an Idempotency-Key header. Errors are RFC 9457 problem+json."
   },
   "components": {

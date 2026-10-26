@@ -1,6 +1,6 @@
 # Phase B7 — Hardening & launch readiness (+ documentation site)
 
-> Status: **IN PROGRESS** · drafted 2026-10-25 · ADR-013, ADR-016, ADR-019, ADR-020
+> Status: **DONE** (pending CI; tag `contract-v1.0` after merge) · drafted 2026-10-25 · ADR-013, ADR-016, ADR-019, ADR-020
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 
 ## Goal
@@ -41,15 +41,39 @@ and its operation to client developers, support and operators.
   - `docs/contract.md` states the versioning policy.
 
 ## Tasks
-- [ ] Security review report + fixes with tests
-- [ ] Backups: nightly job, `make backup`, `make restore-drill` (passes locally)
-- [ ] Deploy: compose.prod, Caddyfile, Dockerfiles checked, `make deploy/rollback`, DEPLOYMENT.md
-- [ ] Load test script + local baseline recorded
-- [ ] Docs site: Fumadocs app, guides, operations, generated API reference, CI build
-- [ ] Contract freeze: policy doc, empty oasdiff ignore list, tag `contract-v1.0` after merge
-- [ ] Launch checklist (owner inputs): Daraja sandbox creds, Paystack test keys, real M-Pesa
+- [x] Security review report + fixes with tests
+- [x] Backups: nightly job, `make backup`, `make restore-drill` (passes locally)
+- [x] Deploy: compose.prod, Caddyfile, Dockerfiles checked, `make deploy/rollback`, DEPLOYMENT.md
+- [x] Load test script + local baseline recorded
+- [x] Docs site: Fumadocs app, guides, operations, generated API reference, CI build
+- [x] Contract freeze: policy doc, empty oasdiff ignore list, tag `contract-v1.0` after merge
+- [!] Launch checklist (owner inputs): Daraja sandbox creds, Paystack test keys, real M-Pesa
       samples (CSV, PDF incl. password, SMS), VM + DNS + R2 buckets/keys, TRUST_PROXY hops, first
       operator email
+
+## Notes (2026-10-26)
+- **Security review:** 1 high, 8 medium and 9 low findings; all high/medium fixed with tests,
+  lows fixed or accepted with reasons (`docs/security/review-2026-10.md`). `pnpm audit --prod`:
+  0 advisories. Email verification was added as part of the H1 fix.
+- **Backups:** the restore drill passed on a real local dump (12/12 migrations, 45 tenant tables
+  under RLS, trial balance 0). Point-in-time recovery is deferred; RPO is 24 h.
+- **Load test (local, production build, 2 min, 50 VUs, demo data):** 11,811 requests, 0 failed,
+  overall P95 **132 ms**, max 461 ms. Dashboard P95 212 ms (six months of statements, the
+  heaviest endpoint); everything else P95 ≤ 70 ms. Repeat on the production VM before launch.
+- **Docs:** `apps/docs` builds 582 static pages (guides + generated reference) and ships as a
+  Caddy image. CI builds it on every PR. Next.js 16 for docs only (ADR-020).
+- **Deploy:** the CI images job now publishes api/worker/docs to GHCR on `main` (SHA + `main`
+  tags). `make deploy` needs the VM; untested against a real host until one exists.
+- **Contract:** `info.version` 1.0.0, policy in `docs/contract.md`, oasdiff ignore list emptied.
+
+## Launch checklist (owner inputs) — blocked on
+- [ ] Daraja sandbox credentials → live C2B/STK smoke test
+- [ ] Paystack test keys → live checkout/webhook/renewal smoke test
+- [ ] Real M-Pesa samples: business CSV, personal PDF (incl. password-protected), SMS texts
+- [ ] Production VM, DNS on Cloudflare, Cloudflare Access for `/v1/operator/*`, R2 buckets and keys
+- [ ] Safaricom callback IP list (`DARAJA_CALLBACK_IPS`), `TRUST_PROXY` hop count
+- [ ] First Kejasha operator email (`make operator-grant`)
+- [ ] Load test re-run on the VM; restore drill on production backups
 
 ## Definition of Done
 Security findings fixed or accepted with reasons; restore drill passes; deploy/rollback scripted

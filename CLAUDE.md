@@ -344,6 +344,10 @@ make typecheck / lint
 make build / build-image
 make deploy / rollback
 make daraja-reregister  # re-register C2B URLs for every channel (after a domain change)
+make backup / restore-drill   # dump to the backups bucket / restore newest dump + invariant checks
+make load-test       # k6, 50 VUs, P95 < 500 ms (running API + make db-seed)
+make operator-grant EMAIL=…   # Kejasha staff console access
+make deploy / rollback        # DEPLOY_HOST=…; CI-built SHA images (docs: operations/deployment)
 ```
 
 ---
@@ -391,6 +395,13 @@ DARAJA_ENV=sandbox
 
 PAYSTACK_SECRET_KEY=
 PAYSTACK_PUBLIC_KEY=
+BILLING_REQUIRED=true                  # unpaid orgs cannot write; only tests turn it off (refused in prod)
+
+# Hardening (B7)
+TRUST_PROXY=1                          # Cloudflare → Caddy → API (refuses `true` in production)
+DARAJA_CALLBACK_IPS=                   # Safaricom callback IPs (required in prod, or DARAJA_ALLOW_ANY_CALLBACK_IP=true)
+SYNC_LAG_SECONDS=10
+BACKUP_RETENTION_DAYS=30
 
 CRON_SECRET=
 GLITCHTIP_DSN=
@@ -420,3 +431,6 @@ OTEL_EXPORTER_OTLP_ENDPOINT=
 4. Every money path: unit tests on `packages/core` + integration test through the ledger.
 5. Conventional commits (`feat(leasing): …`). Never commit red. Never weaken a test to pass.
 6. Update the phase plan checkboxes as tasks complete; record scope changes as dated notes.
+7. The contract is frozen at `contract-v1.0` (`docs/contract.md`): additive changes only; a
+   breaking change needs an ADR and an entry in `apps/api/oasdiff-ignore.txt`.
+8. When a flow or contract changes, update the guides in `apps/docs/content/docs` (ADR-020).
