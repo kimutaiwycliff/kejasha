@@ -11,3 +11,9 @@ apps/docs/.next/
 apps/docs/out/
 apps/docs/.source/
 apps/docs/content/docs/api/
+
+# Web app build output and Playwright reports (ADR-021)
+apps/web/.next/
+apps/web/next-env.d.ts
+apps/web/test-results/
+apps/web/playwright-report/

@@ -118,6 +118,66 @@ jobs:
       - if: failure()
         run: cat /tmp/api.log
 
+  web-e2e:
+    name: web e2e (playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: { POSTGRES_USER: app_owner, POSTGRES_PASSWORD: secret, POSTGRES_DB: kejasha }
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U app_owner" --health-interval 2s --health-retries 30
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: --health-cmd "redis-cli ping" --health-interval 2s --health-retries 30
+    env:
+      NODE_ENV: test
+      APP_DOMAIN: localhost
+      API_URL: http://localhost:4000
+      WEB_URL: http://localhost:3000
+      DATABASE_URL: postgresql://app_owner:secret@localhost:5432/kejasha?sslmode=disable
+      DATABASE_AUTHENTICATED_URL: postgresql://app_authenticated:secret@localhost:5432/kejasha?sslmode=disable
+      REDIS_URL: redis://localhost:6379
+      BETTER_AUTH_SECRET: ci-only-secret-ci-only-secret-0123456789
+      BILLING_REQUIRED: 'false'
+      S3_ENDPOINT: http://localhost:9000
+      S3_ACCESS_KEY: kejasha-dev
+      S3_SECRET_KEY: kejasha-dev-secret
+      S3_BUCKET_FILES: kejasha-files
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Provision tenant login role + migrate
+        run: |
+          PGPASSWORD=secret psql -h localhost -U app_owner -d kejasha -c "CREATE ROLE app_authenticated LOGIN NOBYPASSRLS PASSWORD 'secret'"
+          pnpm exec dbmate --no-dump-schema --migrations-dir infra/migrations up
+      - name: Boot API
+        run: |
+          pnpm --filter @kejasha/api build
+          (cd apps/api && node dist/server.js > /tmp/api.log 2>&1 &)
+          for i in $(seq 1 60); do curl -sf localhost:4000/v1/health && break; sleep 1; done
+          curl -sf localhost:4000/v1/health > /dev/null || { echo "built API did not start"; cat /tmp/api.log; exit 1; }
+      - name: Build web
+        run: pnpm --filter @kejasha/web build
+      - name: Install Chromium
+        run: pnpm --filter @kejasha/web exec playwright install --with-deps chromium
+      - name: Playwright journeys
+        run: pnpm --filter @kejasha/web test:e2e
+      - if: failure()
+        run: cat /tmp/api.log
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
+
   images:
     name: docker images (linux/amd64)
     runs-on: ubuntu-latest

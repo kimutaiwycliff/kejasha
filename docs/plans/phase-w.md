@@ -47,7 +47,7 @@ Playwright journeys against the real API.
   - Axe accessibility checks run on key pages.
 
 ## Slices
-- [ ] **W0 Foundation:** app + `packages/ui` (shadcn), API client + Query provider, auth (email,
+- [x] **W0 Foundation:** app + `packages/ui` (shadcn), API client + Query provider, auth (email,
       phone OTP, reset, verify email, invitations), org create/switch, role-aware shell, billing
       banner, error/toast handling, Playwright harness + sign-up journey, CI job
 - [ ] **W1 Portfolio & leasing:** client landlords, properties, units (bulk), tenants, leases
@@ -65,6 +65,26 @@ Playwright journeys against the real API.
       experience
 - [ ] **W6 Proof & polish:** Playwright journeys for every API journey, accessibility pass,
       mobile pass, performance budget, docs page for the web app
+
+## Notes
+### W0 (2026-10-26)
+- The billing page and the Paystack return page shipped in W0, because the billing banner links
+  to them. W5 keeps the rest of account & platform.
+- **Hydration guard.** Before React hydrates, a click on Submit makes the browser submit the
+  form natively as a GET, putting the email and password in the URL (and so in history and
+  logs). Playwright reproduced this after sign-out's full page load. Every form now uses
+  `SubmitButton`, which stays disabled until the page is hydrated.
+- **Active org.** A new session has no active org, so the shell selects one automatically: the
+  org last used in this browser (stored in `localStorage` as a convenience only), else the first
+  membership. Onboarding is only for users with no memberships.
+- **Locators.** Use role-based locators: on sign-in, "Email" names a tab panel as well as the
+  input.
+- **Rate limits.** The API allows 20 sign-ups per IP per hour. CI starts with a fresh Redis
+  each run. Locally, `make dev-reset-limits` clears the counters. Later journeys sign in as
+  seeded users instead of signing up.
+- **Dev vs production server.** Against `next dev`, parallel journeys can exceed the 5 s
+  navigation expectation while routes compile. CI runs `next build && next start`, where the
+  suite passed 24 of 24 times (`--repeat-each 4`).
 
 ## Definition of Done
 Every API journey has a Playwright twin that passes in CI; role-based navigation verified for

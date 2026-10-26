@@ -1,6 +1,6 @@
 # Phase B7 — Hardening & launch readiness (+ documentation site)
 
-> Status: **DONE** (pending CI; tag `contract-v1.0` after merge) · drafted 2026-10-25 · ADR-013, ADR-016, ADR-019, ADR-020
+> Status: **DONE** · merged (PR #9) and tagged `contract-v1.0` 2026-10-26 · drafted 2026-10-25 · ADR-013, ADR-016, ADR-019, ADR-020
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 
 ## Goal
@@ -46,7 +46,7 @@ and its operation to client developers, support and operators.
 - [x] Deploy: compose.prod, Caddyfile, Dockerfiles checked, `make deploy/rollback`, DEPLOYMENT.md
 - [x] Load test script + local baseline recorded
 - [x] Docs site: Fumadocs app, guides, operations, generated API reference, CI build
-- [x] Contract freeze: policy doc, empty oasdiff ignore list, tag `contract-v1.0` after merge
+- [x] Contract freeze: policy doc, empty oasdiff ignore list, `contract-v1.0` tagged on main
 - [!] Launch checklist (owner inputs): Daraja sandbox creds, Paystack test keys, real M-Pesa
       samples (CSV, PDF incl. password, SMS), VM + DNS + R2 buckets/keys, TRUST_PROXY hops, first
       operator email
