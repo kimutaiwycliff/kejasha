@@ -1,6 +1,6 @@
 # Phase W — Web app (Next.js)
 
-> Status: **DONE** (pending CI on W6) · drafted 2026-10-26 · ADR-002, ADR-016, ADR-018, ADR-021
+> Status: **DONE** · W0–W6 merged (PRs #10–#17, CI green) 2026-10-26 · drafted 2026-10-26 · ADR-002, ADR-016, ADR-018, ADR-021
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 > Shipped as slices W0–W6, one PR each. The contract is frozen (`contract-v1.0`): the web app
 > adapts to the API, never the reverse (an API gap is an additive change with tests).
