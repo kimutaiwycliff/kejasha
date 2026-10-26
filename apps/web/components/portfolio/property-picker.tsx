@@ -24,6 +24,9 @@ export function usePropertyOptions() {
   });
 }
 
+/** Base UI shows the placeholder for an empty-string value, so "all" needs a real value. */
+const ALL = '__all';
+
 /** A standalone select (not in a form) for filtering by property. */
 export function PropertyPicker({
   value,
@@ -36,15 +39,19 @@ export function PropertyPicker({
   allLabel?: string | null;
 }) {
   const props = usePropertyOptions();
-  const items = [...(allLabel ? [{ value: '', label: allLabel }] : []), ...(props.data ?? [])];
+  const items = [...(allLabel ? [{ value: ALL, label: allLabel }] : []), ...(props.data ?? [])];
   return (
-    <Select items={items} value={value ?? ''} onValueChange={(v) => onChange(v || undefined)}>
+    <Select
+      items={items}
+      value={value ?? (allLabel ? ALL : null)}
+      onValueChange={(v) => onChange(v && v !== ALL ? v : undefined)}
+    >
       <SelectTrigger aria-label="Property" className="w-full sm:w-56">
         <SelectValue placeholder={props.isPending ? 'Loading…' : 'Choose a property'} />
       </SelectTrigger>
       <SelectContent>
         {items.map((o) => (
-          <SelectItem key={o.value || 'all'} value={o.value}>
+          <SelectItem key={o.value} value={o.value}>
             {o.label}
           </SelectItem>
         ))}

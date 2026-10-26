@@ -6,10 +6,8 @@ import { useEffect } from 'react';
 import { useForm, type Resolver } from 'react-hook-form';
 import type { z } from 'zod';
 import { FormDialog } from '@/components/dialogs';
-import { MoneyField, SelectField, TextareaField } from '@/components/fields';
-import { applyProblem, fieldError, TextField } from '@/components/form';
-import { Field, FieldError, FieldLabel } from '@kejasha/ui/components/field';
-import { Input } from '@kejasha/ui/components/input';
+import { MoneyField, PercentField, SelectField, TextareaField } from '@/components/fields';
+import { applyProblem, TextField } from '@/components/form';
 import { api, unwrap } from '@/lib/api';
 import { useWrite } from '@/lib/hooks';
 
@@ -91,7 +89,6 @@ export function LandlordDialog({
     }
   });
   const empty = editing ? null : undefined;
-  const bpsError = fieldError(form, 'mgmtFeeBps');
   return (
     <FormDialog
       open={open}
@@ -122,33 +119,7 @@ export function LandlordDialog({
       />
       <SelectField form={form} name="mgmtFeeKind" label="Management fee" options={FEE_OPTIONS} />
       {kind === 'percent' && (
-        <Field data-invalid={Boolean(bpsError)}>
-          <FieldLabel htmlFor="mgmtFeePercent">Fee (% of rent collected)</FieldLabel>
-          <Input
-            id="mgmtFeePercent"
-            inputMode="decimal"
-            placeholder="10"
-            defaultValue={landlord?.mgmtFeeBps != null ? String(landlord.mgmtFeeBps / 100) : ''}
-            onChange={(e) => {
-              const t = e.target.value.trim();
-              form.setValue(
-                'mgmtFeeBps',
-                t === ''
-                  ? undefined
-                  : /^\d{1,3}(\.\d{1,2})?$/.test(t)
-                    ? Math.round(Number(t) * 100)
-                    : Number.NaN,
-              );
-            }}
-          />
-          <FieldError
-            errors={[
-              bpsError?.message
-                ? { message: 'Enter a percent between 0 and 100, e.g. 7.5' }
-                : undefined,
-            ]}
-          />
-        </Field>
+        <PercentField form={form} name="mgmtFeeBps" label="Fee (% of rent collected)" />
       )}
       {kind === 'flat' && <MoneyField form={form} name="mgmtFeeFlatCents" label="Fee per month" />}
       <TextareaField form={form} name="notes" label="Notes" empty={empty} />

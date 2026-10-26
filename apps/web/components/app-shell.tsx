@@ -1,7 +1,7 @@
 'use client';
+import { LinkButton } from '@/components/link-button';
 import { Alert, AlertDescription, AlertTitle } from '@kejasha/ui/components/alert';
 import { Avatar, AvatarFallback } from '@kejasha/ui/components/avatar';
-import { Button } from '@kejasha/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -235,9 +235,9 @@ function BillingBanner({ role }: { role: ReturnType<typeof activeRole> }) {
         <AlertTitle>{text.title}</AlertTitle>
         <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
           <span>{text.body}</span>
-          <Button size="sm" nativeButton={false} render={<Link href="/billing" />}>
+          <LinkButton size="sm" href="/billing">
             Go to billing
-          </Button>
+          </LinkButton>
         </AlertDescription>
       </Alert>
     </div>

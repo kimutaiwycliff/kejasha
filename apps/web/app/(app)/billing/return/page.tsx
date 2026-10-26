@@ -1,8 +1,7 @@
 'use client';
-import { Button } from '@kejasha/ui/components/button';
+import { LinkButton } from '@/components/link-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kejasha/ui/components/card';
 import { useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { api, unwrap, writeHeaders } from '@/lib/api';
@@ -41,13 +40,9 @@ function Return() {
         {!paid &&
           status !== 'checking' &&
           'If you completed the payment, it will show up within a minute.'}
-        <Button
-          nativeButton={false}
-          render={<Link href={paid ? '/dashboard' : '/billing'} />}
-          className="w-fit"
-        >
+        <LinkButton href={paid ? '/dashboard' : '/billing'} className="w-fit">
           {paid ? 'Go to dashboard' : 'Back to billing'}
-        </Button>
+        </LinkButton>
       </CardContent>
     </Card>
   );

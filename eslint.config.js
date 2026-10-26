@@ -20,6 +20,7 @@ export default tseslint.config(
       'apps/web/next-env.d.ts',
       'apps/web/test-results/**',
       'apps/web/playwright-report/**',
+      'apps/web/e2e/.auth/**',
     ],
   },
   js.configs.recommended,
