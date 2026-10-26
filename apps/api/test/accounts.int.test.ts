@@ -341,9 +341,14 @@ describe('text safety', () => {
     const search = await c.get('/v1/properties?q=a%00b');
     expect(search.statusCode).toBe(400);
     expect(search.json().code).toBe('validation_error');
-    expect(
-      (await c.post('/v1/properties', { name: 'Bad\u0000Name', county: 'Nairobi' })).statusCode,
-    ).toBe(400);
+    // Rejected by the contract (validation_error), not by Postgres (invalid_text): required text
+    // once let a single NUL through because `\S` matched it.
+    const nul = await c.post('/v1/properties', { name: 'Bad\u0000Name', county: 'Nairobi' });
+    expect(nul.statusCode).toBe(400);
+    expect(nul.json().code).toBe('validation_error');
+    const org = await c.post('/v1/orgs', { name: 'ab\u0000cd', kind: 'landlord' });
+    expect(org.statusCode).toBe(400);
+    expect(org.json().code).toBe('validation_error');
     expect((await c.get('/v1/unit-code-availability?code=A%00B')).statusCode).toBe(400);
   });
 });

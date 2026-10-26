@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Kejasha API",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Property management, rent collection and short-stay management for Kenya. Money is integer cents (int64). Business dates are Africa/Nairobi. Every write accepts an Idempotency-Key header. Errors are RFC 9457 problem+json."
   },
   "components": {
@@ -99,7 +99,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "email": {
             "type": "string",
@@ -247,7 +247,7 @@
             "type": "string",
             "minLength": 2,
             "maxLength": 120,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "kind": {
             "$ref": "#/components/schemas/OrgKindInput"
@@ -286,7 +286,7 @@
             "type": "string",
             "minLength": 2,
             "maxLength": 120,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "kraPin": {
             "anyOf": [
@@ -423,7 +423,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "phone": {
             "description": "Kenyan mobile number; any common format, normalised to E.164",
@@ -492,7 +492,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "phone": {
             "anyOf": [
@@ -599,7 +599,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "kind": {
             "default": "residential",
@@ -652,7 +652,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "kind": {
             "$ref": "#/components/schemas/PropertyKindInput"
@@ -1071,7 +1071,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "phone": {
             "description": "Kenyan mobile number; any common format, normalised to E.164",
@@ -1124,7 +1124,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "phone": {
             "anyOf": [
@@ -1570,7 +1570,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 500,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           }
         },
         "required": [
@@ -1586,7 +1586,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 500,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           }
         },
         "required": [
@@ -1761,7 +1761,7 @@
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 200,
-                  "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+                  "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
                 },
                 "amountCents": {
                   "type": "integer",
@@ -1791,7 +1791,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 500,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           }
         },
         "required": [
@@ -1812,7 +1812,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 500,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "invoiceId": {
             "type": "string",
@@ -1833,7 +1833,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "amountCents": {
             "type": "integer",
@@ -1871,7 +1871,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 80,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "condition": {
             "type": "string",
@@ -2008,7 +2008,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 80,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "clientLandlordId": {
             "type": "string",
@@ -2034,7 +2034,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 80,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "status": {
             "type": "string",
@@ -2129,7 +2129,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 500,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           }
         },
         "required": [
@@ -2465,7 +2465,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 80,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "startsOn": {
             "type": "string",
@@ -2509,7 +2509,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "phone": {
             "description": "Kenyan mobile number; any common format, normalised to E.164",
@@ -2551,7 +2551,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "phone": {
             "anyOf": [
@@ -2772,7 +2772,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 500,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           }
         },
         "required": [
@@ -2967,7 +2967,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 160,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "description": {
             "type": "string",
@@ -3019,7 +3019,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 160,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "description": {
             "anyOf": [
@@ -3354,7 +3354,7 @@
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 160,
-                  "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+                  "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
                 },
                 "description": {
                   "type": "string",
@@ -3598,7 +3598,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 160,
-            "pattern": "^[^\\u0000]*\\S[^\\u0000]*$"
+            "pattern": "^[^\\u0000]*[^\\s\\u0000][^\\u0000]*$"
           },
           "description": {
             "type": "string",
