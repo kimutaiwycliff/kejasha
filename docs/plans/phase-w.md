@@ -64,7 +64,7 @@ Playwright journeys against the real API.
 - [x] **W4 Operations & reports:** maintenance board, compliance (MRI, filings, eRITS export,
       PIN register, licences), owner dashboard, statements + PDF, rent roll, collections,
       occupancy, CSV exports
-- [ ] **W5 Account & platform:** members, roles, invitations, viewer scopes, org settings
+- [x] **W5 Account & platform:** members, roles, invitations, viewer scopes, org settings
       (brand colour), billing page + checkout return, operator console, tenant portal, viewer
       experience
 - [ ] **W6 Proof & polish:** Playwright journeys for every API journey, accessibility pass,
@@ -194,6 +194,27 @@ Playwright journeys against the real API.
 - The sidebar gains Maintenance and an Insights section (Reports, Compliance).
 - The ticket's close action is labelled "Close ticket": "Close" clashed with the toast's close
   button for assistive tech (and the test).
+
+### W5 (2026-10-26)
+- Screens:
+  - **Team:** members (role changes by owners, removal), invitations by email or phone (SMS)
+    with cancel, and the landlord a read-only owner sees in an agency.
+  - **Organization:** details and the brand colour used on statements (agency white label).
+  - **Tenant portal (`/portal`):** tenants sign in by phone OTP. The app shell sends a user
+    with no org but a tenancy there. They see leases across landlords with balances, pay by
+    M-Pesa prompt, view statements, and report and follow repairs.
+  - **Operator console (`/operator`):** orgs (search, status), org detail (owners, invoices,
+    subscription actions with a reason, audit log), plan prices. Non-operators see "Kejasha
+    staff only"; the API logs every operator request.
+  - Billing and checkout return shipped in W0; viewers see Dashboard and Reports.
+- **API bug fixed (CORS).** `@fastify/cors` allows only GET, HEAD and POST by default, so
+  browsers blocked every PATCH, PUT and DELETE from the web app: edit dialogs, removing members,
+  cancelling invitations, deleting expenses. Journeys had only created and read. `methods` is
+  now explicit, with an integration test that preflights PUT, PATCH and DELETE with the
+  Idempotency-Key header. Lesson for W6: a journey must exercise an edit and a delete in every
+  section, not just creation.
+- E2E helpers read dev OTPs and grant operator access through `psql` (`DATABASE_URL`), because
+  there is no SMS provider in dev or CI.
 
 ## Definition of Done
 Every API journey has a Playwright twin that passes in CI; role-based navigation verified for

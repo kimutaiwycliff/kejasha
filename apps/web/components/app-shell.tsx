@@ -67,7 +67,16 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (me === null) router.replace(`/sign-in?next=${encodeURIComponent(pathname)}`);
     else if (me && !me.activeOrg) {
       // A new session has no active org: resume the last one used here, else the first.
-      if (me.memberships.length === 0) return router.replace('/onboarding');
+      if (me.memberships.length === 0) {
+        // Tenants have no org: they belong in the portal. Everyone else sets one up.
+        void api
+          .GET('/v1/portal/me')
+          .then((r) =>
+            router.replace((r.data?.tenancies.length ?? 0) > 0 ? '/portal' : '/onboarding'),
+          )
+          .catch(() => router.replace('/onboarding'));
+        return;
+      }
       if (picking.current) return;
       picking.current = true;
       const last = lastOrg.get();

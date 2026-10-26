@@ -13,6 +13,9 @@ export const securityPlugin = fp(async (app: FastifyInstance, deps: AppDeps) => 
   await app.register(cors, {
     origin: deps.config.domain.trustedOrigins,
     credentials: true,
+    // @fastify/cors allows only GET, HEAD and POST by default; the web app edits with PATCH,
+    // replaces with PUT and removes with DELETE.
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'],
     exposedHeaders: ['x-request-id', 'idempotent-replayed'],
   });
   await app.register(helmet, {

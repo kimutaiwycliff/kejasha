@@ -159,3 +159,18 @@ export const MRI_BAND_LABEL = {
   eligible: 'MRI applies',
   above_threshold: 'Above KES 15M/yr',
 } as const;
+
+export const ROLE_LABEL = {
+  owner: 'Owner',
+  manager: 'Manager',
+  agent: 'Agent',
+  caretaker: 'Caretaker',
+  viewer: 'Read-only owner',
+} as const;
+export const ROLE_HELP = {
+  owner: 'Everything, including billing and roles',
+  manager: 'Runs the portfolio: leases, payments, settings',
+  agent: 'Tenants, leases, bookings and payments',
+  caretaker: 'Assigned properties: readings, repairs, cash',
+  viewer: 'Sees statements and reports only',
+} as const;

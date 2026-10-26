@@ -117,6 +117,25 @@ describe('meta, docs and errors', () => {
     });
     expect(evil.headers['access-control-allow-origin']).toBeUndefined();
   });
+
+  it('lets the web app preflight every method it uses, with the Idempotency-Key header', async () => {
+    for (const method of ['PUT', 'PATCH', 'DELETE']) {
+      const pre = await api.app.inject({
+        method: 'OPTIONS',
+        url: '/v1/org',
+        headers: {
+          origin: 'http://localhost:3000',
+          'access-control-request-method': method,
+          'access-control-request-headers': 'content-type,idempotency-key',
+        },
+      });
+      expect(pre.statusCode, method).toBe(204);
+      expect(pre.headers['access-control-allow-methods']).toContain(method);
+      expect(String(pre.headers['access-control-allow-headers']).toLowerCase()).toContain(
+        'idempotency-key',
+      );
+    }
+  });
 });
 
 describe('transport hardening', () => {
