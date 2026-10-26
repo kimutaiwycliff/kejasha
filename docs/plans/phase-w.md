@@ -57,7 +57,7 @@ Playwright journeys against the real API.
   - [x] **W1b Leasing:** tenants, leases (create, terminate, renew, rent change, cancel),
         charges, invoices, credit notes, statements, arrears, deposits, inspections, lease
         calendar
-- [ ] **W2 Payments:** channels + go-live, payments list, unmatched queue with suggestions and
+- [x] **W2 Payments:** channels + go-live, payments list, unmatched queue with suggestions and
       allocation, STK requests, statement import, SMS import, receipts, cash confirmations
 - [ ] **W3 Short-stay:** multi-unit calendar, rates and seasons, quotes, bookings, guests, blocks,
       iCal feeds, unit expenses, P&L and channel comparison
@@ -131,6 +131,30 @@ Playwright journeys against the real API.
   `GET /v1/arrears` took 8 s locally; alone it takes 10–135 ms. The k6 run covers arrears reads
   only. When the load test is repeated on the VM before launch, add concurrent lease creation
   to the mix.
+
+### W2 (2026-10-26)
+- Screens:
+  - payments queue (to match / all, by source) with ranked suggestions, one-tap apply, apply to
+    any lease, ignore and unmatch with reasons, receipt PDF;
+  - add payments by M-Pesa SMS paste, statement import (CSV, or PDF with password) or
+    recorded cash/bank;
+  - M-Pesa payment requests (STK) with live status (3 s polling);
+  - M-Pesa setup: channels, write-only Daraja keys, register URLs, go-live checklist with
+    callback URLs to copy;
+  - cash: log by unit with a receipt photo, confirm or reject; payments tab and actions on
+    the lease page.
+- **API gap closed (additive, contract 1.1.0).** Caretakers could log cash but cannot see
+  leases (not over HTTP, not in sync), so they had no way to say whose cash it was.
+  `CreateCashCollectionBody` gains an optional `unitId`: the lease covering `receivedOn` is used
+  (`422 no_lease_on_unit` otherwise). Caretakers are checked against their properties first, so
+  the answer never reveals whether a unit elsewhere is let. Sync push gets it too, since it
+  reuses the body. Integration test, spec, client and payments guide updated; oasdiff reports no
+  breaking change. Tag `contract-v1.1` after merge.
+- STK Push and C2B registration need real Daraja sandbox credentials (launch inputs). The
+  screens are built against the contract; the journey covers everything else (SMS by phone and
+  by hand, receipt PDF, cash confirmation, channel checklist).
+- Receipts open in a new tab from a fetched blob (the request needs the session cookie).
+  Headless Chromium downloads PDFs instead of showing them; the journey asserts the download.
 
 ## Definition of Done
 Every API journey has a Playwright twin that passes in CI; role-based navigation verified for

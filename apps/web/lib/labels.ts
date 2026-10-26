@@ -62,3 +62,34 @@ export const CONDITION_LABEL = {
 /** "5%" from basis points. */
 export const bpsLabel = (bps: number | null | undefined) =>
   bps == null ? '—' : `${(bps / 100).toFixed(2).replace(/\.?0+$/, '')}%`;
+
+export const PAYMENT_SOURCE_LABEL = {
+  c2b: 'Paybill/Till',
+  stk: 'M-Pesa request',
+  statement_import: 'Statement',
+  sms: 'SMS',
+  manual: 'Recorded',
+} as const;
+export const PAYMENT_METHOD_LABEL = {
+  mpesa: 'M-Pesa',
+  cash: 'Cash',
+  bank: 'Bank',
+  other: 'Other',
+} as const;
+export const MATCH_STATUS_LABEL = {
+  unmatched: 'Unmatched',
+  matched: 'Matched',
+  ignored: 'Ignored',
+} as const;
+export const CHANNEL_KIND_LABEL = {
+  paybill: 'Paybill',
+  till: 'Till (Buy Goods)',
+  phone: 'Personal M-Pesa number',
+} as const;
+export const SUGGESTION_REASON_LABEL = {
+  phone: 'same phone',
+  account_ref: 'account number',
+  exact_invoice_amount: 'matches an invoice',
+  exact_balance: 'matches the balance',
+  name: 'similar name',
+} as const;

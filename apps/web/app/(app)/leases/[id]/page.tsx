@@ -12,7 +12,7 @@ import {
 import { Skeleton } from '@kejasha/ui/components/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@kejasha/ui/components/tabs';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, Pencil, Plus } from 'lucide-react';
+import { ChevronDown, Pencil, Plus, Smartphone } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -34,12 +34,16 @@ import {
 } from '@/components/leasing/money-dialogs';
 import { Statement } from '@/components/leasing/statement';
 import { PageHeader } from '@/components/page-header';
+import { ManualPaymentDialog, StkDialog } from '@/components/payments/dialogs';
+import { PaymentTable } from '@/components/payments/payment-table';
 import { api, unwrap } from '@/lib/api';
 import { formatDate, formatKes } from '@/lib/format';
 import { useCan } from '@/lib/hooks';
 import { bpsLabel, CHARGE_KIND_LABEL, LEASE_STATUS_LABEL } from '@/lib/labels';
 
 type Dialog =
+  | 'stk'
+  | 'pay'
   | 'terms'
   | 'rent'
   | 'renew'
@@ -62,6 +66,7 @@ const period = (p: string) => {
 export default function LeasePage() {
   const { id } = useParams<{ id: string }>();
   const manager = useCan('manager');
+  const agent = useCan('agent');
   const [dialog, setDialog] = useState<Dialog>(null);
   const [editCharge, setEditCharge] = useState<string | null>(null);
   const close = (o: boolean) => !o && setDialog(null);
@@ -85,45 +90,56 @@ export default function LeasePage() {
         title={`${l.tenantName} · ${l.unitCode}`}
         description={`${formatDate(l.startDate)} – ${l.endDate ? formatDate(l.endDate) : 'open-ended'}`}
         actions={
-          manager && (
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="outline" />}>
-                Actions <ChevronDown />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-48">
-                {active && (
-                  <>
-                    <DropdownMenuItem onClick={() => setDialog('terms')}>
-                      Edit terms
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setDialog('rent')}>
-                      Change rent
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setDialog('renew')}>Renew</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem onClick={() => setDialog('invoice')}>
-                  One-off invoice
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setDialog('credit')}>Credit note</DropdownMenuItem>
-                {!active && l.depositHeldCents > 0 && (
-                  <DropdownMenuItem onClick={() => setDialog('deposit')}>
-                    Settle deposit
+          <>
+            {agent && active && (
+              <Button variant="outline" onClick={() => setDialog('stk')}>
+                <Smartphone /> Request payment
+              </Button>
+            )}
+            {manager && (
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="outline" />}>
+                  Actions <ChevronDown />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-48">
+                  {active && (
+                    <>
+                      <DropdownMenuItem onClick={() => setDialog('terms')}>
+                        Edit terms
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setDialog('rent')}>
+                        Change rent
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setDialog('renew')}>Renew</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem onClick={() => setDialog('invoice')}>
+                    One-off invoice
                   </DropdownMenuItem>
-                )}
-                {active && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setDialog('end')}>End lease</DropdownMenuItem>
-                    <DropdownMenuItem variant="destructive" onClick={() => setDialog('cancel')}>
-                      Cancel lease
+                  <DropdownMenuItem onClick={() => setDialog('credit')}>
+                    Credit note
+                  </DropdownMenuItem>
+                  {!active && l.depositHeldCents > 0 && (
+                    <DropdownMenuItem onClick={() => setDialog('deposit')}>
+                      Settle deposit
                     </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )
+                  )}
+                  {active && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setDialog('end')}>
+                        End lease
+                      </DropdownMenuItem>
+                      <DropdownMenuItem variant="destructive" onClick={() => setDialog('cancel')}>
+                        Cancel lease
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </>
         }
       />
       <div className="mb-4 flex flex-wrap gap-2">
@@ -140,6 +156,7 @@ export default function LeasePage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="charges">Charges</TabsTrigger>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="statement">Statement</TabsTrigger>
           <TabsTrigger value="inspections">Inspections</TabsTrigger>
         </TabsList>
@@ -279,6 +296,9 @@ export default function LeasePage() {
         <TabsContent value="invoices">
           <InvoiceTable filter={{ leaseId: l.id, includeVoid: 'true' }} hideTenant />
         </TabsContent>
+        <TabsContent value="payments">
+          <PaymentTable filter={{ leaseId: l.id }} />
+        </TabsContent>
         <TabsContent value="statement">
           <Statement leaseId={l.id} />
         </TabsContent>
@@ -286,6 +306,8 @@ export default function LeasePage() {
           <InspectionsCard leaseId={l.id} canAdd={l.status !== 'cancelled'} />
         </TabsContent>
       </Tabs>
+      <StkDialog open={dialog === 'stk'} onOpenChange={close} leaseId={l.id} />
+      <ManualPaymentDialog open={dialog === 'pay'} onOpenChange={close} leaseId={l.id} />
       <EditTermsDialog lease={l} open={dialog === 'terms'} onOpenChange={close} />
       <RentChangeDialog lease={l} open={dialog === 'rent'} onOpenChange={close} />
       <RenewDialog lease={l} open={dialog === 'renew'} onOpenChange={close} />

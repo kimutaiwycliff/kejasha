@@ -1,9 +1,12 @@
 import {
   AlertTriangle,
+  Banknote,
   Building2,
   Contact,
   FileText,
   Receipt,
+  Smartphone,
+  Wallet,
   CreditCard,
   DoorOpen,
   Gauge,
@@ -42,6 +45,9 @@ export const NAV: NavItem[] = [
   { href: '/leases', label: 'Leases', icon: FileText, minRole: 'agent' },
   { href: '/invoices', label: 'Invoices', icon: Receipt, minRole: 'agent' },
   { href: '/arrears', label: 'Arrears', icon: AlertTriangle, minRole: 'agent' },
+  { href: '/payments', label: 'Payments', icon: Wallet, minRole: 'agent' },
+  { href: '/cash', label: 'Cash', icon: Banknote, minRole: 'caretaker' },
   { href: '/meter-readings', label: 'Meter readings', icon: Gauge, minRole: 'caretaker' },
+  { href: '/payment-channels', label: 'M-Pesa setup', icon: Smartphone, minRole: 'manager' },
   { href: '/billing', label: 'Billing', icon: CreditCard, minRole: 'manager' },
 ];
