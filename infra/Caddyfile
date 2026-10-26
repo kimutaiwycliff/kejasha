@@ -1,0 +1,42 @@
+# Production reverse proxy (ADR-013/016). Every site name derives from APP_DOMAIN — no literal
+# domain here. Cloudflare sits in front (proxied DNS, SSL "Full (strict)"); the VM firewall only
+# admits Cloudflare's ranges on 80/443 (DEPLOYMENT.md), so CF-Connecting-IP can be trusted.
+{
+	email {$ACME_EMAIL}
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+(common) {
+	encode zstd gzip
+	header -Server
+	log {
+		output stdout
+		format filter {
+			# Daraja callback URLs carry a secret channel token (security review M7).
+			request>uri regexp "^/v1/payments/daraja/[^/]+" "/v1/payments/daraja/<token>"
+			request>headers>Authorization delete
+			request>headers>Cookie delete
+		}
+	}
+}
+
+api.{$APP_DOMAIN} {
+	import common
+	reverse_proxy api:4000 {
+		# The API trusts one proxy hop (TRUST_PROXY=1): give it the visitor's real address.
+		header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+	}
+}
+
+docs.{$APP_DOMAIN} {
+	import common
+	reverse_proxy docs:80
+}
+
+# The web app arrives with phase W; until then the name answers honestly.
+app.{$APP_DOMAIN} {
+	import common
+	respond "Kejasha web app is coming soon." 503
+}

@@ -1,0 +1,28 @@
+---
+title: KRA compliance
+description: Monthly Rental Income tax, tenant PINs and licences.
+---
+
+## Monthly Rental Income (MRI)
+
+`GET /v1/compliance/mri?period=YYYY-MM` computes, per landlord, **7.5% of residential rent
+received** in the month:
+
+- Each payment is applied to the tenant's invoices oldest-first; only the **rent** share counts
+  (deposits, service charges, utilities and late fees don't). Money received ahead of an invoice
+  counts as rent in the month it arrives.
+- Commercial properties are excluded; mixed-use ones are included and flagged for review.
+- The year-to-date figure shows whether the landlord is inside the KES 288,000–15,000,000 band.
+- Due on the 20th of the following month; a reminder goes out on the 15th.
+
+Per-tenant detail: `GET /v1/compliance/mri/{clientLandlordId}?period=…`. An eRITS-ready CSV:
+`GET /v1/compliance/mri/{clientLandlordId}/erits.csv?period=…`. After filing on iTax, record it
+with `POST /v1/compliance/mri/{clientLandlordId}/filings`; if receipts change later, the month
+shows the difference.
+
+`GET /v1/compliance/tenant-pins` lists tenants missing a KRA PIN.
+
+## Licences
+
+Track TRA short-stay licences and county permits with `POST /v1/licences`. Owners and managers
+get reminders 30, 7 and 1 days before expiry and on the day.

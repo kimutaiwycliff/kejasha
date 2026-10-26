@@ -7,7 +7,21 @@ import type { AppDeps } from '../deps';
 export const observabilityPlugin = fp(async (app: FastifyInstance, deps: AppDeps) => {
   const dsn = deps.config.observability.glitchtipDsn;
   if (!dsn) return;
-  Sentry.init({ dsn, environment: deps.config.env, release: deps.version, tracesSampleRate: 0 });
+  Sentry.init({
+    dsn,
+    environment: deps.config.env,
+    release: deps.version,
+    tracesSampleRate: 0,
+    // Only tags (request id, route, org) leave the box: no request data, headers or SQL (M8).
+    beforeSend(event) {
+      delete event.request;
+      delete event.user;
+      for (const ex of event.exception?.values ?? [])
+        if (ex.value?.startsWith('Failed query'))
+          ex.value = 'Failed query (SQL and parameters redacted)';
+      return event;
+    },
+  });
   app.decorate('captureException', (err: unknown, req?: FastifyRequest) => {
     Sentry.withScope((scope) => {
       if (req) {

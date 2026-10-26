@@ -1,0 +1,40 @@
+---
+title: Authentication
+description: Sessions, bearer tokens, phone OTP, email verification and invitations.
+---
+
+## Ways to sign in
+
+| Flow | Endpoint | Who uses it |
+|---|---|---|
+| Email + password | `POST /v1/identity/sign-up/email`, `POST /v1/identity/sign-in/email` | Owners, managers, agents |
+| Phone + SMS code | `POST /v1/identity/otp/request`, `POST /v1/identity/otp/verify` | Caretakers, tenants, anyone without email |
+| Password reset | `POST /v1/identity/password/forgot`, `POST /v1/identity/password/reset` | Email users |
+
+Every sign-in answers with a `token`. Browsers also receive a session cookie; mobile apps send
+`Authorization: Bearer <token>`. `POST /v1/identity/sign-out` ends the session.
+
+<Callout title="Cross-site protection">
+Cookie-authenticated writes must come from a trusted origin (the web app's own domain);
+requests from other origins are refused with `403 origin_not_allowed`. Bearer clients are not
+affected.
+</Callout>
+
+## Email verification
+
+New email accounts get a verification link. Confirm with
+`POST /v1/identity/email/verify {"token": "…"}`; resend with
+`POST /v1/identity/email/verification`.
+
+## Invitations
+
+Owners and managers invite people by email or phone (`POST /v1/invitations`). The invitee sees
+it under `GET /v1/identity/me/invitations` and accepts with
+`POST /v1/invitations/{id}/accept`. An invitation is only visible to — and can only be accepted
+by — someone who has **verified** the invited address: the invited phone number (by signing in
+with its SMS code) or the invited email (by confirming it).
+
+## Rate limits
+
+Sign-in, sign-up, codes, resets and verification are rate-limited per address and per IP. A
+`429` response says how long to wait.

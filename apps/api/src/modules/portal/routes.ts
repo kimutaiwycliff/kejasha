@@ -15,10 +15,11 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { AppDeps } from '../../deps';
 import type { PortalService } from './service';
+import { hitLimit } from '../../lib/rate-limit';
 
 /** Tenant portal: any signed-in user; access is by verified phone, checked per lease. */
 export function portalRoutes(portal: PortalService): FastifyPluginAsyncZod<AppDeps> {
-  return async (app) => {
+  return async (app, deps) => {
     const tags = ['portal'];
     const user = { auth: 'user' as const };
 
@@ -60,7 +61,7 @@ export function portalRoutes(portal: PortalService): FastifyPluginAsyncZod<AppDe
           summary: 'Pay rent: an M-Pesa prompt is sent to your phone',
           params: PortalLeaseParams,
           body: PortalPayBody,
-          response: { 201: StkRequest, ...problemResponses(404, 422) },
+          response: { 201: StkRequest, ...problemResponses(404, 422, 429) },
         },
       },
       async (req, reply) =>
@@ -114,11 +115,17 @@ export function portalRoutes(portal: PortalService): FastifyPluginAsyncZod<AppDe
           tags,
           summary: 'Report a problem in your unit',
           body: PortalTicketBody,
-          response: { 201: TicketDetail, ...problemResponses(404, 422) },
+          response: { 201: TicketDetail, ...problemResponses(404, 422, 429) },
         },
       },
       async (req, reply) =>
-        reply.status(201).send(await portal.reportTicket(req.actor!.userId, req.body)),
+        reply
+          .status(201)
+          .send(
+            await hitLimit(deps.redis, `portal-ticket:${req.actor!.userId}`, 10, 3600).then(() =>
+              portal.reportTicket(req.actor!.userId, req.body),
+            ),
+          ),
     );
   };
 }

@@ -7,3 +7,10 @@
 !.env.example
 infra/backups
 coverage
+
+# Docs app: generated at build time inside the image (ADR-020)
+apps/docs/.source
+apps/docs/.next
+apps/docs/out
+apps/docs/content/docs/api
+**/tsconfig.tsbuildinfo

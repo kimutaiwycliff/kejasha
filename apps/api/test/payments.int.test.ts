@@ -331,6 +331,10 @@ describe('STK Push', () => {
 
     // Confirmed → payment recorded and allocated to the requested lease.
     api.daraja.queryResults.set(checkout, { resultCode: '0', resultDesc: 'ok' });
+    // A forged callback with another amount is refused even once confirmed (review M7).
+    await stkCb(success(1, 'STKFORGED1'));
+    expect((await c.get(`/v1/stk-requests/${req.json().id}`)).json().status).toBe('pending');
+    expect((await c.get('/v1/payments')).json().items).toHaveLength(0);
     await stkCb(success(30_000, 'STKREC0001'));
     expect((await c.get(`/v1/stk-requests/${req.json().id}`)).json()).toMatchObject({
       status: 'succeeded',

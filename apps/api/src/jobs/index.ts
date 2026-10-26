@@ -7,6 +7,7 @@ import { createCompliance } from '../modules/compliance';
 import { createIdentityService } from '../modules/identity';
 import { createPayments } from '../modules/payments';
 import { createSubscriptionService } from '../modules/subscriptions';
+import { runBackup } from '../ops/backup';
 import { createShortStay } from '../modules/shortstay';
 
 export interface JobLogger {
@@ -45,6 +46,13 @@ export const SCHEDULES = [
     tz: 'Africa/Nairobi',
   },
   {
+    id: 'backup-nightly',
+    queue: 'ops',
+    topic: 'ops.backup',
+    pattern: '30 2 * * *',
+    tz: 'Africa/Nairobi',
+  },
+  {
     id: 'ical-sync',
     queue: 'ical',
     topic: 'ical.sync_all',
@@ -67,6 +75,7 @@ export function createJobHandlers(
   ical: TopicHandlers;
   compliance: TopicHandlers;
   billing: TopicHandlers;
+  ops: TopicHandlers;
 } {
   const leasing = createLeasing(deps);
   const payments = createPayments(deps);
@@ -75,6 +84,13 @@ export function createJobHandlers(
   const compliance = createCompliance(deps, { staffContacts: identity.staffContacts });
   const subscriptions = createSubscriptionService(deps, { staffContacts: identity.staffContacts });
   return {
+    ops: {
+      // Nightly database backup to the backups bucket (R2, off the VM); failures retry and alert.
+      'ops.backup': async () => {
+        const r = await runBackup(deps);
+        log.info(r, 'database backup');
+      },
+    },
     billing: {
       // Renewals (saved card), reminders on days 0/1/3/7, suspension after the grace period.
       'billing.daily_run': async () => {

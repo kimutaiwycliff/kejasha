@@ -10,7 +10,7 @@ import { createStorage } from '@kejasha/integrations-storage';
 import { enqueueInTx } from '@kejasha/jobs';
 import { Redis } from 'ioredis';
 import type { AppDeps, Clock } from './deps';
-import { passwordResetEmail } from './modules/identity/messages';
+import { passwordResetEmail, verifyEmailMessage } from './modules/identity/messages';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
   version: string;
@@ -50,6 +50,15 @@ export function createDeps(
           orgId: null,
           topic: 'notifications.email',
           payload: passwordResetEmail(config, { email, name, token }),
+        }),
+      );
+    },
+    onVerifyEmail: async ({ email, name, token }) => {
+      await withAdmin(db, (tx) =>
+        enqueueInTx(tx, {
+          orgId: null,
+          topic: 'notifications.email',
+          payload: verifyEmailMessage(config, { email, name, token }),
         }),
       );
     },

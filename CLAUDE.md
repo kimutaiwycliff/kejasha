@@ -106,6 +106,7 @@ kejasha/
 │  ├─ api/                    # Fastify API — the product. /v1/*, /docs, /openapi.json
 │  ├─ worker/                 # BullMQ workers + cron (invoices, reminders, iCal, reconciliation)
 │  ├─ web/                    # Next.js — landlord/agency/host dashboard + tenant portal
+│  ├─ docs/                   # Fumadocs (Next.js 16, static) — guides + generated API reference (ADR-020)
 │  └─ android/                # Kotlin Android (Gradle) — owner/host, caretaker (offline), tenant
 ├─ packages/
 │  ├─ config/                 # Zod env parsing; all URLs derived from APP_DOMAIN (ADR-016)
@@ -321,6 +322,7 @@ task plans live in `docs/plans/phase-<id>.md`, written before each phase starts.
 | 017 | Android: native Kotlin (Compose, Room, WorkManager); generated Kotlin client; sync protocol |
 | 018 | Backend-first sequencing; journey tests; contract freeze before clients |
 | 019 | Object storage: Cloudflare R2 in production, SeaweedFS for dev/CI |
+| 020 | Documentation site: Fumadocs on Next.js 16 (`apps/docs`), generated API reference |
 
 ---
 
@@ -342,6 +344,10 @@ make typecheck / lint
 make build / build-image
 make deploy / rollback
 make daraja-reregister  # re-register C2B URLs for every channel (after a domain change)
+make backup / restore-drill   # dump to the backups bucket / restore newest dump + invariant checks
+make load-test       # k6, 50 VUs, P95 < 500 ms (running API + make db-seed)
+make operator-grant EMAIL=…   # Kejasha staff console access
+make deploy / rollback        # DEPLOY_HOST=…; CI-built SHA images (docs: operations/deployment)
 ```
 
 ---
@@ -389,6 +395,13 @@ DARAJA_ENV=sandbox
 
 PAYSTACK_SECRET_KEY=
 PAYSTACK_PUBLIC_KEY=
+BILLING_REQUIRED=true                  # unpaid orgs cannot write; only tests turn it off (refused in prod)
+
+# Hardening (B7)
+TRUST_PROXY=1                          # Cloudflare → Caddy → API (refuses `true` in production)
+DARAJA_CALLBACK_IPS=                   # Safaricom callback IPs (required in prod, or DARAJA_ALLOW_ANY_CALLBACK_IP=true)
+SYNC_LAG_SECONDS=10
+BACKUP_RETENTION_DAYS=30
 
 CRON_SECRET=
 GLITCHTIP_DSN=
@@ -418,3 +431,6 @@ OTEL_EXPORTER_OTLP_ENDPOINT=
 4. Every money path: unit tests on `packages/core` + integration test through the ledger.
 5. Conventional commits (`feat(leasing): …`). Never commit red. Never weaken a test to pass.
 6. Update the phase plan checkboxes as tasks complete; record scope changes as dated notes.
+7. The contract is frozen at `contract-v1.0` (`docs/contract.md`): additive changes only; a
+   breaking change needs an ADR and an entry in `apps/api/oasdiff-ignore.txt`.
+8. When a flow or contract changes, update the guides in `apps/docs/content/docs` (ADR-020).

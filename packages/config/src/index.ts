@@ -60,11 +60,20 @@ const EnvSchema = z.object({
   DARAJA_ENV: z.enum(['sandbox', 'production']).default('sandbox'),
   // Optional allowlist of Safaricom callback source IPs (comma-separated). Empty = accept any.
   DARAJA_CALLBACK_IPS: csv,
+  // Production must name Safaricom's callback IPs, or explicitly accept any source (review M7).
+  DARAJA_ALLOW_ANY_CALLBACK_IP: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
   // Off only in tests that are not about billing: unpaid orgs may then write. Refused in production.
   BILLING_REQUIRED: z
     .enum(['true', 'false'])
     .default('true')
     .transform((v) => v === 'true'),
+  // Database backups (B7): days kept in the backups bucket, and an optional command prefix for the
+  // Postgres tools (dev: run pg_dump inside the compose container, e.g. "docker compose … exec -T postgres").
+  BACKUP_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(30),
+  PG_TOOLS_PREFIX: optionalString,
   // Sync pull stays this far behind now() so rows of still-open transactions are not skipped.
   SYNC_LAG_SECONDS: z.coerce.number().int().min(0).max(300).default(10),
   // Tests only: let iCal feeds point at local servers. Refused in production (SSRF guard).
@@ -121,6 +130,7 @@ export interface Config {
   ical: { allowPrivateHosts: boolean };
   sync: { lagSeconds: number };
   billing: { required: boolean };
+  backups: { retentionDays: number; pgToolsPrefix: string | undefined };
   paystack: { secretKey: string | undefined; publicKey: string | undefined };
   cronSecret: string | undefined;
   observability: { glitchtipDsn: string | undefined; otlpEndpoint: string | undefined };
@@ -161,6 +171,10 @@ export function loadConfig(source: Record<string, string | undefined> = process.
     if (e.ICAL_ALLOW_PRIVATE_HOSTS)
       missing.push('ICAL_ALLOW_PRIVATE_HOSTS: must be false in production');
     if (!e.BILLING_REQUIRED) missing.push('BILLING_REQUIRED: must be true in production');
+    if (!e.DARAJA_CALLBACK_IPS.length && !e.DARAJA_ALLOW_ANY_CALLBACK_IP)
+      missing.push(
+        'DARAJA_CALLBACK_IPS: list Safaricom callback IPs (or set DARAJA_ALLOW_ANY_CALLBACK_IP=true)',
+      );
     if (e.TRUST_PROXY === 'true')
       missing.push('TRUST_PROXY: must be a hop count or CIDRs in production, not true');
     if (!e.BETTER_AUTH_SECRET || e.BETTER_AUTH_SECRET.length < 32) {
@@ -206,6 +220,7 @@ export function loadConfig(source: Record<string, string | undefined> = process.
     ical: { allowPrivateHosts: e.ICAL_ALLOW_PRIVATE_HOSTS },
     sync: { lagSeconds: e.SYNC_LAG_SECONDS },
     billing: { required: e.BILLING_REQUIRED },
+    backups: { retentionDays: e.BACKUP_RETENTION_DAYS, pgToolsPrefix: e.PG_TOOLS_PREFIX },
     paystack: { secretKey: e.PAYSTACK_SECRET_KEY, publicKey: e.PAYSTACK_PUBLIC_KEY },
     cronSecret: e.CRON_SECRET,
     observability: { glitchtipDsn: e.GLITCHTIP_DSN, otlpEndpoint: e.OTEL_EXPORTER_OTLP_ENDPOINT },

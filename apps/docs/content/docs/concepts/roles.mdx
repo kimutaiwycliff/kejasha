@@ -1,0 +1,28 @@
+---
+title: Organizations and roles
+description: Owner, manager, agent, caretaker, viewer — and what each can do.
+---
+
+An **organization** is a landlord, an agency or a host; it owns everything below it. Agencies
+manage **client landlords**, each with their own properties and management fee.
+
+| Role | Can |
+|---|---|
+| `owner` | Everything, including roles and billing |
+| `manager` | Day-to-day operations, money, reports, members (not owners) |
+| `agent` | Tenants, leases, bookings, payments follow-up |
+| `caretaker` | Only **assigned properties**: meter readings, maintenance, cash collected (offline in the app) |
+| `viewer` | Read-only: dashboard, owner statements, reports and some exports — for owners abroad |
+
+Endpoints state their minimum role; a request below it answers `403 insufficient_role`.
+
+### Viewers
+
+Viewers are refused everywhere except the routes meant for them (`403 viewer_read_only`). In an
+agency, a viewer must be linked to one client landlord
+(`PUT /v1/members/{id}/scope`) and then sees only that landlord's figures.
+
+### Caretakers
+
+Caretakers see only the properties assigned to them (`PUT /v1/properties/{id}/staff`) and only
+their own cash entries. They never see tenants' leases or money totals.

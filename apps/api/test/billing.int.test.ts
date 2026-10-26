@@ -233,11 +233,12 @@ describe('operator console', () => {
       [staff.userId],
     );
     expect(rows.map((r) => `${r.method} ${r.route}`)).toEqual([
+      'DENIED GET /v1/operator/orgs', // before access was granted (review L2)
       'GET /v1/operator/orgs',
       'POST /v1/operator/orgs/:orgId/subscription',
       'GET /v1/operator/orgs/:orgId/audit',
     ]);
-    expect(rows[1].target_org).toBe(o.org.id);
+    expect(rows[2].target_org).toBe(o.org.id);
 
     // Plan prices are data.
     const plans = (await op.get('/v1/operator/plans')).json().items;

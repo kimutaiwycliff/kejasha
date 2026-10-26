@@ -1,0 +1,19 @@
+---
+title: Security
+description: How tenants, money and secrets are protected, and how to report a problem.
+---
+
+- **Isolation:** every organization's rows are protected by Postgres row-level security; the
+  application connects with a role that cannot bypass it. A test suite proves cross-tenant access
+  fails for every table.
+- **Money:** Kejasha never holds funds. M-Pesa is booked once per transaction and only after
+  Safaricom confirms STK payments; Paystack webhooks are signature-checked and re-verified.
+- **Secrets:** Daraja credentials and saved card authorizations are envelope-encrypted
+  (AES-256-GCM) and never returned by any API. Logs and error reports never contain them.
+- **Access:** roles from owner to read-only viewer; caretakers are limited to their properties;
+  operators are logged on every request and sit behind SSO.
+- **Abuse:** sign-in, codes, payments prompts, webhooks, uploads and exports are rate-limited;
+  uploads are size-limited; iCal fetching cannot reach private networks.
+
+The latest review and how each finding was handled: `docs/security/review-2026-10.md` in the
+repository.

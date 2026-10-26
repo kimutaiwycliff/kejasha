@@ -12,6 +12,8 @@ RUN pnpm --filter @kejasha/worker build \
 
 FROM node:22-alpine AS runtime
 ENV NODE_ENV=production
+# pg_dump for the nightly backup (must match the server's major version: Postgres 17).
+RUN apk add --no-cache postgresql17-client
 WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 USER node

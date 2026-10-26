@@ -1,0 +1,37 @@
+---
+title: Kejasha subscription
+description: Plans, payment by Paystack, renewals and what happens when a payment fails.
+---
+
+Kejasha is paid monthly, in advance, by card or M-Pesa through Paystack. There is no free plan.
+
+| Plan | Price |
+|---|---|
+| Landlord | KES 100 per occupied unit a month (minimum KES 500) |
+| Host | KES 500 per short-stay listing a month |
+| Agency | KES 3,000 a month + KES 70 per occupied unit, white-label statements included |
+
+Mixed portfolios pay per unit plus per listing.
+
+## States
+
+| Status | Reads | Writes |
+|---|---|---|
+| `incomplete` — never paid | ✓ | Setup only (profile, people, landlords, properties, units) |
+| `trialing` — granted by Kejasha | ✓ | ✓ |
+| `active` | ✓ | ✓ |
+| `past_due` — renewal unpaid, 7-day grace | ✓ | ✓ |
+| `suspended` — grace ended | ✓ | Billing and team management only |
+
+Blocked writes answer `402` with `subscription_required` or `subscription_suspended`. Reads
+always work.
+
+## Paying
+
+1. `GET /v1/billing` — plan, usage, next amount, open invoice.
+2. `POST /v1/billing/checkout` — returns a Paystack `authorizationUrl`; open it to pay.
+3. After the redirect, `POST /v1/billing/verify {"reference": …}` (the webhook usually gets there
+   first).
+
+The card is saved for renewals. If a renewal fails, Kejasha retries and reminds on days 0, 1, 3
+and 7, then makes the account read-only until it's paid. Paying restores it immediately.

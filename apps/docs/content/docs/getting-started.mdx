@@ -1,0 +1,58 @@
+---
+title: Getting started
+description: From sign-in to your first property, unit and lease.
+---
+
+All endpoints live under `https://api.<your domain>/v1`. Requests and responses are JSON; errors
+are `application/problem+json`. A live, interactive copy of the contract is also served by the
+API at `/docs` (Scalar), and the raw spec at `/openapi.json`.
+
+## 1. Sign in
+
+Web apps use the session cookie; the Android app and integrations send the session token as a
+**bearer token**.
+
+```bash
+curl -X POST https://api.<your domain>/v1/identity/sign-in/email \
+  -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","password":"…"}'
+# → { "token": "…", "user": {…}, "memberships": [ … ], "activeOrg": … }
+```
+
+Phone users (caretakers, tenants) sign in with a one-time SMS code:
+`POST /v1/identity/otp/request` then `POST /v1/identity/otp/verify`.
+
+## 2. Choose an organization
+
+A user can belong to several organizations (a landlord, an agency, a host). Most endpoints act on
+the **active organization**:
+
+```bash
+curl -X POST https://api.<your domain>/v1/identity/active-org \
+  -H "authorization: Bearer $TOKEN" -H 'content-type: application/json' \
+  -d '{"orgId":"…"}'
+```
+
+New organizations are created with `POST /v1/orgs`. A new organization can set up its profile,
+people, properties and units straight away; everything else needs the first month's
+subscription to be paid (see [Billing](/docs/guides/billing)).
+
+## 3. Set up a portfolio
+
+```bash
+# a property, then units (the unit code is the Paybill account number tenants pay to)
+POST /v1/properties                       {"name":"Riverside","county":"Nairobi"}
+POST /v1/properties/{propertyId}/units    {"code":"A1","mode":"long_term","rentCents":2000000}
+POST /v1/tenants                          {"fullName":"Jane Wanjiru","phone":"0712000111"}
+POST /v1/leases                           {"unitId":"…","tenantId":"…","startDate":"2026-10-01","rentCents":2000000}
+```
+
+Creating a lease invoices the deposit and every period already due; afterwards a daily job
+issues invoices, applies late fees and sends reminders.
+
+## Typed clients
+
+Clients are generated from the contract — never written by hand:
+
+- **TypeScript:** `@kejasha/api-client` (openapi-typescript + openapi-fetch).
+- **Kotlin (Android):** openapi-generator (`kotlin`, `jvm-retrofit2`, `kotlinx_serialization`).

@@ -1,6 +1,6 @@
 # Phase B6 — Sync API, tenant portal, SaaS billing, operator
 
-> Status: **DONE** (pending CI) · drafted 2026-10-25 · ADR-004, ADR-008, ADR-014, ADR-017
+> Status: **DONE** · DoD green locally and in CI (PRs #7, #8, 2026-10-25) · drafted 2026-10-25 · ADR-004, ADR-008, ADR-014, ADR-017
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 > Shipped as two PRs: **B6a** (sync + tenant portal) and **B6b** (billing + operator).
 

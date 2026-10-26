@@ -1,0 +1,101 @@
+# Production stack on the single VM (ADR-013). Lives at $DEPLOY_PATH next to a SOPS-decrypted
+# `.env` (never committed). Images are built by CI and tagged with the git SHA; `make deploy`
+# sets TAG. Only Caddy publishes ports; everything else is on the internal network.
+name: kejasha
+
+x-app: &app
+  env_file: .env
+  restart: unless-stopped
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+  logging:
+    driver: json-file
+    options: { max-size: '20m', max-file: '5' }
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app_owner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: kejasha
+      APP_AUTHENTICATED_PASSWORD: ${APP_AUTHENTICATED_PASSWORD:?set in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U app_owner -d kejasha']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--maxmemory-policy',
+        'noeviction',
+        '--requirepass',
+        '${REDIS_PASSWORD:?set in .env}',
+      ]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  # One-off: `docker compose -f compose.prod.yml run --rm migrate` (make deploy does it).
+  migrate:
+    image: ghcr.io/amacneil/dbmate:2
+    profiles: [tools]
+    environment:
+      DATABASE_URL: postgresql://app_owner:${POSTGRES_PASSWORD}@postgres:5432/kejasha?sslmode=disable
+    command: ['--no-dump-schema', '--migrations-dir', '/migrations', 'up']
+    volumes: ['./migrations:/migrations:ro']
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    <<: *app
+    image: ghcr.io/${IMAGE_OWNER:?set in .env}/kejasha-api:${TAG:?set by make deploy}
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:4000/v1/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  worker:
+    <<: *app
+    image: ghcr.io/${IMAGE_OWNER}/kejasha-worker:${TAG}
+
+  docs:
+    image: ghcr.io/${IMAGE_OWNER}/kejasha-docs:${TAG}
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ['80:80', '443:443']
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set in .env}
+      ACME_EMAIL: ${ACME_EMAIL:?set in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    depends_on: [api, docs]
+
+volumes:
+  pgdata:
+  redisdata:
+  caddydata:
+  caddyconfig:

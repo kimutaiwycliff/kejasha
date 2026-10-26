@@ -6,6 +6,7 @@ import type { FastifyRequest } from 'fastify';
 import type { z } from 'zod';
 import type { AppDeps } from '../../deps';
 import { AppError } from '../../errors';
+import { hitLimit } from '../../lib/rate-limit';
 import { record } from '../../lib/audit';
 import { inTenant, systemCtx, type Ctx } from '../../lib/ctx';
 import * as accounts from '../accounts';
@@ -41,8 +42,15 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
       .from(ch)
       .where(eq(ch.channelToken, token));
     if (!row) throw AppError.notFound('Channel');
+    // A leaked token must not let anyone flood the tables: cap per token and per source IP.
+    await hitLimit(deps.redis, `daraja:token:${row.id}`, 600, 60);
+    await hitLimit(deps.redis, `daraja:ip:${req.ip}`, 1200, 60);
     return row;
   }
+
+  /** Stored outcomes keep a coarse code only — error messages may carry query details (M8). */
+  const errorCode = (err: unknown) =>
+    `error:${err instanceof AppError ? err.code : err instanceof Error ? err.name : 'unknown'}`;
 
   async function store(
     ctx: Ctx,
@@ -133,6 +141,11 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
       const channel = await resolveChannel(req, token);
       const ctx = systemCtx(channel.orgId);
       const id = await store(ctx, channel.id, 'c2b_confirmation', body, req.ip);
+      // A disabled channel's callbacks are kept (raw) but book nothing (review M7).
+      if (channel.status !== 'active') {
+        await settle(ctx, id, 'channel_inactive');
+        return ACK;
+      }
       try {
         const c2b = parseC2B(body);
         const { payment, created } = await withTenant(db, ctx, (tx) =>
@@ -156,7 +169,7 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
         );
       } catch (err) {
         req.log.error({ err, callbackId: id }, 'C2B confirmation could not be processed');
-        await settle(ctx, id, `error: ${(err as Error).message}`);
+        await settle(ctx, id, errorCode(err));
       }
       return ACK;
     },
@@ -165,6 +178,11 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
       const channel = await resolveChannel(req, token);
       const ctx = systemCtx(channel.orgId);
       const id = await store(ctx, channel.id, 'stk_result', body, req.ip);
+      // A disabled channel's callbacks are kept (raw) but book nothing (review M7).
+      if (channel.status !== 'active') {
+        await settle(ctx, id, 'channel_inactive');
+        return ACK;
+      }
       try {
         const result = parseStkCallback(body);
         const outcome = await withTenant(db, ctx, async (tx) => {
@@ -195,6 +213,8 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
           if (confirm.resultCode !== '0')
             return `unconfirmed:${confirm.resultCode ?? 'processing'}`;
           if (!result.receipt || result.amountCents === null) return 'missing_receipt';
+          // The prompt was for a fixed amount; a different one means a forged callback (M7).
+          if (result.amountCents !== request.amountCents) return 'amount_mismatch';
           const payment = await recordStkPayment(
             tx,
             ctx,
@@ -209,7 +229,7 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
         await settle(ctx, id, outcome);
       } catch (err) {
         req.log.error({ err, callbackId: id }, 'STK result could not be processed');
-        await settle(ctx, id, `error: ${(err as Error).message}`);
+        await settle(ctx, id, errorCode(err));
       }
       return ACK;
     },
@@ -259,6 +279,9 @@ export function createDarajaFlows(deps: AppDeps, channels: ChannelService) {
         const phone = body.phone ?? payFor.phone;
         if (!phone || !phoneLib.normalizeKenyanPhone(phone))
           throw AppError.unprocessable('no_phone', 'There is no phone number on file; send one.');
+        // Prompts land on someone's phone: throttle per lease/booking and per number (review M2).
+        await hitLimit(deps.redis, `stk:target:${target.leaseId ?? target.bookingId}`, 3, 600);
+        await hitLimit(deps.redis, `stk:phone:${phoneLib.normalizeKenyanPhone(phone)}`, 5, 3600);
         const candidates = body.channelId
           ? await tx.select().from(ch).where(eq(ch.id, body.channelId))
           : await tx

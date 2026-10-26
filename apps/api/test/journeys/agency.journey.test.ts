@@ -33,6 +33,13 @@ it('agency: invite manager → two client landlords with portfolios', async () =
     body: { name: 'Brian', email: managerEmail, password: 'a-strong-password' },
   });
   const manager = j.as(managerSignUp.data!.token);
+  // The manager confirms their email from the link (invitations need a verified address).
+  const mail = await j.api.deps.db.pools.owner.query(
+    `SELECT payload FROM outbox WHERE payload->>'to' = $1 AND payload->>'subject' LIKE 'Confirm your email%'`,
+    [managerEmail],
+  );
+  const token = decodeURIComponent(/token=([^\s]+)/.exec(mail.rows[0].payload.text)![1]!);
+  await j.client.POST('/v1/identity/email/verify', { body: { token } });
   const mine = await manager.GET('/v1/identity/me/invitations');
   expect(mine.data!.items).toHaveLength(1);
   const joined = await manager.POST('/v1/invitations/{id}/accept', {

@@ -1,0 +1,25 @@
+---
+title: Kejasha documentation
+description: Property management, rent collection and short-stay management for Kenya, through one API.
+---
+
+Kejasha runs long-term rentals, rent collection and short-stay units from one account. Its
+**API is the product**: the web dashboard, the Android app and any integration you build use the
+same contract-first HTTP API, documented here in full.
+
+<Cards>
+  <Card title="Getting started" href="/docs/getting-started" description="Sign in, pick an organization and make your first calls." />
+  <Card title="Conventions" href="/docs/concepts/conventions" description="Money in cents, Nairobi dates, idempotency, errors and pagination." />
+  <Card title="M-Pesa payments" href="/docs/guides/payments" description="Paybill/Till reconciliation, STK Push, statement and SMS import." />
+  <Card title="API reference" href="/docs/api" description="Every endpoint, generated from the OpenAPI contract." />
+</Cards>
+
+## What the platform guarantees
+
+- **Money never leaves the landlord's own channel.** Rent and booking payments go straight to the
+  landlord's or host's Paybill/Till. Kejasha reconciles; it never holds funds.
+- **Every organization's data is isolated** by the database itself (row-level security).
+- **Money is exact.** Amounts are integer cents everywhere and the books are double-entry:
+  balances are derived, never stored.
+- **Writes are safe to retry** with an `Idempotency-Key`.
+- **The contract is versioned** (`contract-v1.0`): breaking changes fail CI.

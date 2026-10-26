@@ -16,6 +16,7 @@ import { z } from 'zod';
 import type { AppDeps } from '../../deps';
 import { AppError } from '../../errors';
 import { ctxOf } from '../../lib/ctx';
+import { hitLimit } from '../../lib/rate-limit';
 import type { SubscriptionService } from './service';
 
 declare module 'fastify' {
@@ -111,10 +112,11 @@ export function subscriptionRoutes(billing: SubscriptionService): FastifyPluginA
             tags,
             summary: 'Paystack events (signed with HMAC-SHA512; re-verified with Paystack)',
             body: PaystackWebhookBody,
-            response: { 200: WebhookAck, ...problemResponses(401) },
+            response: { 200: WebhookAck, ...problemResponses(401, 429) },
           },
         },
         async (req) => {
+          await hitLimit(deps.redis, `paystack:ip:${req.ip}`, 120, 60);
           const secret = deps.config.paystack.secretKey;
           const signed = Boolean(
             secret &&
@@ -131,15 +133,20 @@ export function subscriptionRoutes(billing: SubscriptionService): FastifyPluginA
               ? clean(req.body.data.reference).slice(0, 200)
               : null;
           const id = uuidv7();
+          // Verify before storing (review M6): unsigned attempts keep no body, only a trace.
           await deps.db.owner.insert(schema.paystackEvent).values({
             id,
             event: clean(req.body.event).slice(0, 100),
             reference,
-            body: JSON.parse(JSON.stringify(req.body).replace(/\\u0000/g, '')) as object,
+            body: signed
+              ? (JSON.parse(JSON.stringify(req.body).replace(/\\u0000/g, '')) as object)
+              : {},
             signatureOk: signed,
           });
-          if (!signed)
+          if (!signed) {
+            req.log.warn({ reference }, 'unsigned Paystack webhook refused');
             throw new AppError(401, 'invalid_signature', 'Unauthorized', 'Signature check failed.');
+          }
           let outcome = 'ignored';
           if (req.body.event === 'charge.success' && reference) {
             // Trust Paystack's own record of the transaction, not only the webhook body.

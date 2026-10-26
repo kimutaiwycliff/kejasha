@@ -24,6 +24,23 @@ import { openapiPlugin } from './plugins/openapi';
 import { requestContextPlugin } from './plugins/request-context';
 import { securityPlugin } from './plugins/security';
 
+/** Error fields worth logging; SQL text and bound parameters are left out on purpose. */
+function safeError(e: unknown, depth = 0): Record<string, unknown> {
+  if (!(e instanceof Error)) return { message: String(e) };
+  const x = e as Error & { code?: unknown; statusCode?: unknown; cause?: unknown };
+  return {
+    type: x.constructor?.name ?? 'Error',
+    // Drizzle puts the SQL and its parameters in the message itself.
+    message: x.message.startsWith('Failed query')
+      ? 'Failed query (SQL and parameters redacted)'
+      : x.message,
+    stack: x.stack?.startsWith('Error: Failed query') ? undefined : x.stack,
+    ...(x.code !== undefined ? { code: x.code } : {}),
+    ...(x.statusCode !== undefined ? { statusCode: x.statusCode } : {}),
+    ...(x.cause && depth < 2 ? { cause: safeError(x.cause, depth + 1) } : {}),
+  };
+}
+
 const REQUEST_ID_RE = /^[A-Za-z0-9_\-.:]{1,128}$/;
 
 /** Builds the API without listening. Used by the server, tests, journeys and spec generation. */
@@ -31,7 +48,29 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
     logger: {
       level: deps.config.logLevel,
-      redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
+      redact: [
+        'req.headers.authorization',
+        'req.headers.cookie',
+        'res.headers["set-cookie"]',
+        '*.password',
+        '*.newPassword',
+        '*.token',
+        '*.passkey',
+        '*.consumerSecret',
+      ],
+      // Database errors carry the SQL and its bound parameters (hashes, tokens, phones): never log
+      // those, and never forward them to GlitchTip (review M8).
+      serializers: {
+        err: (e: Error) => {
+          const out = safeError(e);
+          return {
+            ...out,
+            type: String(out.type),
+            message: String(out.message),
+            stack: String(out.stack ?? ''),
+          };
+        },
+      },
     },
     // One structured access line per request comes from request-context instead.
     logController: new LogController({ disableRequestLogging: true }),

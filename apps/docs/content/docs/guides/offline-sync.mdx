@@ -1,0 +1,33 @@
+---
+title: Offline sync
+description: How the Android app pulls changes and pushes work done without signal.
+---
+
+The caretaker and owner apps work offline and sync with two endpoints.
+
+## Pull
+
+`GET /v1/sync/pull?cursor=…` returns changed records per table (`properties`, `units`, `meters`,
+`meterReadings`, `tickets`, `ticketUpdates`, `cashCollections`, plus `tenants` and `leases` for
+staff above caretaker) and a new `cursor`.
+
+- Store everything by `id` and **upsert**; records may arrive more than once.
+- `deleted` lists ids to remove (archived, or closed tickets).
+- `hasMore: true` → pull again straight away with the new cursor.
+- `reset: true` → this is a full snapshot (first pull, or the user's access changed). Keep only
+  what it, and its `hasMore` follow-ups, contain.
+- Changes appear about 10 seconds after they are written.
+
+## Push
+
+`POST /v1/sync/push` with an `Idempotency-Key` and up to 200 records created offline, each with
+an id **the device generated** (UUIDv7): `tickets`, `ticketUpdates`, `meterReadings`,
+`cashCollections`. Each record answers:
+
+| Status | Meaning | Device should |
+|---|---|---|
+| `applied` | Saved | Mark synced |
+| `duplicate` | Already saved earlier | Mark synced (safe replay) |
+| `rejected` | Refused, with a `code` (e.g. `ticket_finished`, `reading_decreased`) | Show to the user; keep in a "needs attention" list |
+
+Pushing the same batch twice is safe: everything already saved comes back `duplicate`.
