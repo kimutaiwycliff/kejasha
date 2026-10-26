@@ -72,8 +72,11 @@ export function ConfirmButton({
   onConfirm,
   variant = 'outline',
   size,
+  'aria-label': ariaLabel,
 }: {
   label: ReactNode;
+  /** Required when `label` is only an icon. */
+  'aria-label'?: string;
   title: string;
   description: ReactNode;
   confirmLabel?: ReactNode;
@@ -86,7 +89,7 @@ export function ConfirmButton({
   const [busy, setBusy] = useState(false);
   return (
     <>
-      <Button variant={variant} size={size} onClick={() => setOpen(true)}>
+      <Button variant={variant} size={size} aria-label={ariaLabel} onClick={() => setOpen(true)}>
         {label}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>

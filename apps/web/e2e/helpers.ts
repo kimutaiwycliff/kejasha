@@ -79,3 +79,29 @@ export function latestOtp(e164: string): string {
   );
   return v.split(':')[0]!;
 }
+
+export async function apiPut<T>(page: Page, path: string, body: unknown): Promise<T> {
+  const res = await page.request.put(`${API}${path}`, {
+    data: body,
+    headers: { 'Idempotency-Key': crypto.randomUUID(), Origin: 'http://localhost:3000' },
+  });
+  if (!res.ok()) throw new Error(`${path} → ${res.status()} ${await res.text()}`);
+  return (await res.json()) as T;
+}
+
+/** Signs in with a phone number and the SMS code the API stored (no SMS provider in dev/CI). */
+export async function signInByPhone(page: Page, local: string, e164: string) {
+  await page.goto('/sign-in');
+  await page.getByRole('tab', { name: 'Phone' }).click();
+  await page.getByLabel('Phone number').fill(local);
+  await page.getByRole('button', { name: /Send code/ }).click();
+  await expect(page.getByRole('textbox', { name: 'One-time code' })).toBeVisible();
+  await page.getByRole('textbox', { name: 'One-time code' }).fill(latestOtp(e164));
+}
+
+/** The sidebar's entries (opening the sheet on phones). */
+export async function navLabels(page: Page): Promise<string[]> {
+  await openNav(page);
+  const labels = await page.locator('[data-slot="sidebar-menu-button"]').allInnerTexts();
+  return labels.map((l) => l.trim()).filter(Boolean);
+}
