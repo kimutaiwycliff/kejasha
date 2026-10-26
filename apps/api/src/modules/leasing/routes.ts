@@ -600,7 +600,7 @@ export function leasingRoutes({
           tags: ['platform'],
           summary: 'Get a presigned URL to upload a photo',
           body: UploadRequest,
-          response: { 201: UploadTicket, ...problemResponses(503) },
+          response: { 201: UploadTicket, ...problemResponses(503, 429) },
         },
       },
       async (req, reply) => {
