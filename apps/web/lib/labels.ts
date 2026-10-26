@@ -125,3 +125,37 @@ export const BLOCK_REASON_LABEL = {
   ical: 'Imported',
   other: 'Other',
 } as const;
+
+export const TICKET_CATEGORY_LABEL = {
+  plumbing: 'Plumbing',
+  electrical: 'Electrical',
+  structural: 'Structural',
+  appliance: 'Appliance',
+  pest: 'Pests',
+  cleaning: 'Cleaning',
+  security: 'Security',
+  other: 'Other',
+} as const;
+export const TICKET_PRIORITY_LABEL = {
+  low: 'Low',
+  normal: 'Normal',
+  high: 'High',
+  urgent: 'Urgent',
+} as const;
+export const TICKET_STATUS_LABEL = {
+  open: 'Open',
+  in_progress: 'In progress',
+  resolved: 'Resolved',
+  closed: 'Closed',
+  cancelled: 'Cancelled',
+} as const;
+export const LICENCE_KIND_LABEL = {
+  tra_short_stay: 'TRA short-stay licence',
+  county_business_permit: 'County business permit',
+  other: 'Other',
+} as const;
+export const MRI_BAND_LABEL = {
+  below_threshold: 'Below KES 288k/yr',
+  eligible: 'MRI applies',
+  above_threshold: 'Above KES 15M/yr',
+} as const;
