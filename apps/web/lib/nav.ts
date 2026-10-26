@@ -4,6 +4,7 @@ import {
   Banknote,
   BedDouble,
   Building2,
+  Building,
   CalendarDays,
   Contact,
   CreditCard,
@@ -17,6 +18,7 @@ import {
   Smartphone,
   TrendingUp,
   UserRound,
+  UsersRound,
   Users,
   Wallet,
   Wrench,
@@ -96,6 +98,8 @@ export const NAV: NavSection[] = [
   {
     label: 'Setup',
     items: [
+      { href: '/settings/team', label: 'Team', icon: UsersRound, minRole: 'manager' },
+      { href: '/settings/organization', label: 'Organization', icon: Building, minRole: 'manager' },
       { href: '/payment-channels', label: 'M-Pesa setup', icon: Smartphone, minRole: 'manager' },
       { href: '/billing', label: 'Billing', icon: CreditCard, minRole: 'manager' },
     ],

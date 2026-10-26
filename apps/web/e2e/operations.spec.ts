@@ -111,7 +111,12 @@ test('maintenance ticket to close, MRI filing, licence, owner statement and expo
   // Reports: the owner statement for last month, its PDF, and the rent roll CSV.
   await page.goto('/reports');
   await page.getByLabel('Month').fill(lm.period);
-  await page.getByRole('row').nth(1).click();
+  // A loaded statement row (loading placeholders have no amounts).
+  await page
+    .getByRole('row')
+    .filter({ has: page.getByRole('cell', { name: /Ksh/ }) })
+    .first()
+    .click();
   await expect(page.getByRole('cell', { name: new RegExp(code) })).toBeVisible();
   const pdf = page.waitForEvent('download');
   await page.getByRole('button', { name: 'PDF' }).click();
