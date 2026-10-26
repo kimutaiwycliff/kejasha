@@ -10,7 +10,7 @@ DBMATE  := pnpm exec dbmate --no-dump-schema --migrations-dir infra/migrations
         dev-reset-limits dev-api dev-worker api-spec spec-check spec-lint client-gen \
         test test-unit test-int test-rls test-journeys test-contract test-e2e \
         typecheck lint build build-image deploy rollback daraja-reregister operator-grant \
-        backup restore-drill
+        backup restore-drill load-test
 
 up: ## start postgres, redis, seaweedfs (S3), create buckets, apply migrations
 	$(COMPOSE) up -d --wait postgres redis seaweedfs
@@ -119,6 +119,9 @@ rollback: ## back to the previous deployed tag (or TAG=<sha>)
 
 # Dev runs pg_dump/pg_restore inside the compose Postgres container (same major as the server).
 PG_TOOLS ?= docker compose -f '$(CURDIR)/infra/compose.yml' --env-file '$(CURDIR)/.env' exec -T postgres
+
+load-test: ## k6, 50 VUs, P95 < 500 ms (needs a running API + make db-seed)
+	docker run --rm -i --add-host=host.docker.internal:host-gateway -e API_BASE=$(or $(API_BASE),http://host.docker.internal:4000) -e DURATION=$(or $(DURATION),2m) grafana/k6:0.57.0 run - < infra/load/k6.js
 
 backup: ## dump the database to the backups bucket now (nightly job does the same)
 	PG_TOOLS_PREFIX="$(PG_TOOLS)" pnpm --filter @kejasha/api exec tsx --env-file-if-exists=../../.env scripts/backup.ts
