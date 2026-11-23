@@ -32,9 +32,18 @@ class OwnerViewModelsTest {
         "receivedOn":"2026-11-20","note":null,"receipt":null,"status":"pending","submittedBy":"${UUID.randomUUID()}",
         "decidedBy":null,"decidedAt":null,"rejectReason":null,"paymentId":null,"createdAt":"2026-11-20T08:00:00Z"}"""
 
+    /** The two queues load in parallel: answer by path, not by order. */
+    private fun answerQueues(cashItems: String) {
+        api.server.dispatcher = object : mockwebserver3.Dispatcher() {
+            override fun dispatch(request: mockwebserver3.RecordedRequest) = mockwebserver3.MockResponse.Builder()
+                .code(200).addHeader("Content-Type", "application/json")
+                .body(if (request.target.startsWith("/v1/cash-collections?")) """{"items":[$cashItems],"nextCursor":null}""" else """{"items":[],"nextCursor":null}""")
+                .build()
+        }
+    }
+
     @Test fun `money loads the unmatched and pending queues`() = runTest(main.dispatcher) {
-        api.reply("""{"items":[],"nextCursor":null}""")
-        api.reply("""{"items":[$cash],"nextCursor":null}""")
+        answerQueues(cash)
         val vm = MoneyViewModel(api.create())
         settle { vm.state.value is Loadable.Ready }
         val q = (vm.state.value as Loadable.Ready<MoneyQueues>).data

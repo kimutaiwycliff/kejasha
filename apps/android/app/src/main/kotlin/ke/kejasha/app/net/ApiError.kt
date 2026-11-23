@@ -1,6 +1,7 @@
 package ke.kejasha.app.net
 
 import ke.kejasha.api.models.ProblemDetails
+import kotlinx.serialization.SerializationException
 import retrofit2.Response
 import java.io.IOException
 
@@ -16,6 +17,9 @@ sealed class ApiError(message: String, cause: Throwable? = null) : Exception(mes
         val fieldErrors: Map<String, String> = emptyMap(),
     ) : ApiError(detail ?: title)
 
+    /** The API answered with something this app version cannot read. */
+    class Unreadable(cause: Throwable) : ApiError("Kejasha sent an answer this app cannot read. Update the app and try again.", cause)
+
     /** No response: offline, timed out or the connection dropped. */
     class Network(cause: IOException) : ApiError("No connection. Check your internet and try again.", cause)
 
@@ -27,7 +31,7 @@ sealed class ApiError(message: String, cause: Throwable? = null) : Exception(mes
                     "This account's subscription needs attention. Open Billing on the web app."
                 else -> detail ?: title
             }
-            is Network -> message.orEmpty()
+            is Network, is Unreadable -> message.orEmpty()
         }
 
     val isUnauthorized: Boolean get() = this is Http && status == 401
@@ -54,6 +58,8 @@ suspend fun <T> api(call: suspend () -> Response<T>): T {
         call()
     } catch (e: IOException) {
         throw ApiError.Network(e)
+    } catch (e: SerializationException) {
+        throw ApiError.Unreadable(e)
     }
     if (!response.isSuccessful) throw ApiError.from(response)
     @Suppress("UNCHECKED_CAST")
