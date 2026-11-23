@@ -35,9 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -46,6 +43,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.selection.selectable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.key
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import ke.kejasha.app.ui.common.LocalSnackbar
+import ke.kejasha.app.ui.owner.MoneyScreen
+import ke.kejasha.app.ui.owner.MonthsScreen
+import ke.kejasha.app.ui.owner.PaymentMatchScreen
+import ke.kejasha.app.ui.owner.RequestPaymentScreen
+import ke.kejasha.app.ui.owner.StaysScreen
+import ke.kejasha.app.ui.owner.TodayScreen
+import ke.kejasha.app.ui.repairs.RepairsScreen
+import ke.kejasha.app.ui.repairs.TicketScreen
 import ke.kejasha.api.models.Role as MemberRole
 import ke.kejasha.app.session.Account
 import ke.kejasha.app.session.Shell
@@ -53,7 +72,7 @@ import ke.kejasha.app.ui.Centered
 import ke.kejasha.app.ui.SessionViewModel
 import ke.kejasha.app.util.formatKes
 
-private class Tab(val label: String, val icon: ImageVector, val content: @Composable () -> Unit)
+private class Tab(val name: String, val label: String, val icon: ImageVector)
 
 private val ROLE_LABEL = mapOf(
     MemberRole.OWNER to "Owner",
@@ -63,84 +82,150 @@ private val ROLE_LABEL = mapOf(
     MemberRole.VIEWER to "Viewer",
 )
 
+private val TODAY = Tab("today", "Today", Icons.Outlined.Today)
+private val MONEY = Tab("money", "Money", Icons.Outlined.Payments)
+private val STAYS = Tab("stays", "Stays", Icons.Outlined.CalendarMonth)
+private val REPAIRS = Tab("repairs", "Repairs", Icons.Outlined.Build)
+private val MORE = Tab("more", "More", Icons.Outlined.Menu)
+private val ROUND = Tab("round", "Round", Icons.Outlined.Speed)
+private val CASH = Tab("cash", "Cash", Icons.Outlined.Payments)
+private val SYNC = Tab("sync", "Sync", Icons.Outlined.Sync)
+private val MONTHS = Tab("months", "Months", Icons.AutoMirrored.Outlined.ReceiptLong)
+private val HOME = Tab("home", "Home", Icons.Outlined.Home)
+private val STATEMENT = Tab("statement", "Statement", Icons.AutoMirrored.Outlined.ReceiptLong)
+
 /** Owner/manager/agent, caretaker and viewer shells: the tabs follow the role in the active org. */
 @Composable
 fun StaffShell(account: Account.Staff, offline: Boolean, vm: SessionViewModel) {
-    val more = Tab("More", Icons.Outlined.Menu) { AccountPane(account, vm) }
     val tabs = when (account.shell) {
-        Shell.OWNER -> listOf(
-            Tab("Today", Icons.Outlined.Today) { Upcoming("Today") },
-            Tab("Money", Icons.Outlined.Payments) { Upcoming("Money") },
-            Tab("Stays", Icons.Outlined.CalendarMonth) { Upcoming("Stays") },
-            Tab("Repairs", Icons.Outlined.Build) { Upcoming("Repairs") },
-            more,
-        )
-        Shell.CARETAKER -> listOf(
-            Tab("Round", Icons.Outlined.Speed) { Upcoming("Meter round") },
-            Tab("Repairs", Icons.Outlined.Build) { Upcoming("Repairs") },
-            Tab("Cash", Icons.Outlined.Payments) { Upcoming("Cash") },
-            Tab("Sync", Icons.Outlined.Sync) { Upcoming("Sync") },
-            more,
-        )
-        Shell.VIEWER -> listOf(
-            Tab("Today", Icons.Outlined.Today) { Upcoming("Today") },
-            Tab("Statements", Icons.AutoMirrored.Outlined.ReceiptLong) { Upcoming("Statements") },
-            more,
-        )
+        Shell.OWNER -> listOf(TODAY, MONEY, STAYS, REPAIRS, MORE)
+        Shell.CARETAKER -> listOf(ROUND, REPAIRS, CASH, SYNC, MORE)
+        Shell.VIEWER -> listOf(TODAY, MONTHS, MORE)
     }
-    // Reset to the first tab when the org (and so the shell) changes.
-    ShellScaffold(title = account.active.orgName, offline = offline, tabs = tabs, key = account.active.orgId.toString(), vm = vm)
+    // A new org (and so maybe a new shell) starts a fresh navigation graph.
+    key(account.active.orgId) {
+        ShellScaffold(account.active.orgName, offline, tabs, vm) { name, nav ->
+            when (name) {
+                "today" -> TodayScreen(
+                    onMoney = { nav.tab("money") },
+                    onStays = { nav.tab("stays") },
+                    onRepairs = { nav.tab("repairs") },
+                )
+                "money" -> MoneyScreen(
+                    onPayment = { nav.open(PaymentRoute(it.toString())) },
+                    onRequestPayment = { nav.open(RequestPaymentRoute()) },
+                )
+                "stays" -> StaysScreen(onRequestPayment = { nav.open(RequestPaymentRoute(bookingId = it.toString())) })
+                "repairs" -> RepairsScreen(onTicket = { nav.open(TicketRoute(it.toString())) })
+                "months" -> MonthsScreen()
+                "more" -> AccountPane(account, vm)
+                else -> Upcoming(tabs.first { it.name == name }.label)
+            }
+        }
+    }
 }
 
 /** Tenant portal: balances and pay (A3) across every landlord that holds this phone. */
 @Composable
 fun TenantShell(account: Account.Tenant, offline: Boolean, vm: SessionViewModel) {
-    val tabs = listOf(
-        Tab("Home", Icons.Outlined.Home) { TenantHome(account) },
-        Tab("Statement", Icons.AutoMirrored.Outlined.ReceiptLong) { Upcoming("Statement") },
-        Tab("Repairs", Icons.Outlined.Build) { Upcoming("Repairs") },
-        Tab("More", Icons.Outlined.Menu) { AccountPane(account, vm) },
-    )
-    ShellScaffold(title = "My home", offline = offline, tabs = tabs, key = "tenant", vm = vm)
+    ShellScaffold("My home", offline, listOf(HOME, STATEMENT, REPAIRS, MORE), vm) { name, _ ->
+        when (name) {
+            "home" -> TenantHome(account)
+            "more" -> AccountPane(account, vm)
+            else -> Upcoming(if (name == "repairs") "Repairs" else "Statement")
+        }
+    }
+}
+
+/** Moves between tabs and opens detail screens. */
+class ShellNav(private val controller: NavHostController) {
+    fun tab(name: String) = controller.navigate(TabRoute(name)) {
+        popUpTo(controller.graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+
+    fun open(route: Any) = controller.navigate(route)
+
+    fun back() = controller.popBackStack()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ShellScaffold(title: String, offline: Boolean, tabs: List<Tab>, key: String, vm: SessionViewModel) {
-    var selected by rememberSaveable(key) { mutableIntStateOf(0) }
+private fun ShellScaffold(
+    title: String,
+    offline: Boolean,
+    tabs: List<Tab>,
+    vm: SessionViewModel,
+    tabContent: @Composable (name: String, nav: ShellNav) -> Unit,
+) {
+    val controller = rememberNavController()
+    val nav = remember(controller) { ShellNav(controller) }
+    val entry by controller.currentBackStackEntryAsState()
+    val destination = entry?.destination
+    val onTab = destination?.hasRoute(TabRoute::class) != false
+    val current = entry?.takeIf { onTab }?.toRoute<TabRoute>()?.name ?: tabs.first().name
     val snackbar = remember { SnackbarHostState() }
     val message by vm.message.collectAsStateWithLifecycle()
     LaunchedEffect(message) {
         message?.let { snackbar.showSnackbar(it); vm.messageShown() }
     }
-    Scaffold(
-        topBar = { TopAppBar(title = { Text(title) }) },
-        snackbarHost = { SnackbarHost(snackbar) },
-        bottomBar = {
-            NavigationBar {
-                tabs.forEachIndexed { i, tab ->
-                    NavigationBarItem(
-                        selected = i == selected,
-                        onClick = { selected = i },
-                        icon = { Icon(tab.icon, contentDescription = null) },
-                        label = { Text(tab.label) },
-                        modifier = Modifier.testTag("tab-${tab.label.lowercase()}"),
+    CompositionLocalProvider(LocalSnackbar provides snackbar) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(if (onTab) title else detailTitle(destination)) },
+                    navigationIcon = {
+                        if (!onTab) {
+                            IconButton(onClick = { nav.back() }) {
+                                Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
+                            }
+                        }
+                    },
+                )
+            },
+            snackbarHost = { SnackbarHost(snackbar) },
+            bottomBar = {
+                if (onTab) {
+                    NavigationBar {
+                        tabs.forEach { tab ->
+                            NavigationBarItem(
+                                selected = tab.name == current,
+                                onClick = { nav.tab(tab.name) },
+                                icon = { Icon(tab.icon, contentDescription = null) },
+                                label = { Text(tab.label) },
+                                modifier = Modifier.testTag("tab-${tab.name}"),
+                            )
+                        }
+                    }
+                }
+            },
+        ) { padding ->
+            Column(Modifier.padding(padding).fillMaxSize()) {
+                if (offline) {
+                    Text(
+                        "Offline — showing what was saved on this phone.",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     )
                 }
+                NavHost(controller, startDestination = TabRoute(tabs.first().name), modifier = Modifier.fillMaxSize()) {
+                    composable<TabRoute> { tabContent(it.toRoute<TabRoute>().name, nav) }
+                    composable<PaymentRoute> { PaymentMatchScreen(onDone = { nav.back() }) }
+                    composable<RequestPaymentRoute> { RequestPaymentScreen(onDone = { nav.back() }) }
+                    composable<TicketRoute> { TicketScreen() }
+                }
             }
-        },
-    ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            if (offline) {
-                Text(
-                    "Offline — showing what was saved on this phone.",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                )
-            }
-            tabs[selected.coerceIn(tabs.indices)].content()
         }
     }
+}
+
+private fun detailTitle(destination: NavDestination?): String = when {
+    destination == null -> ""
+    destination.hasRoute(PaymentRoute::class) -> "Match payment"
+    destination.hasRoute(RequestPaymentRoute::class) -> "Request payment"
+    destination.hasRoute(TicketRoute::class) -> "Repair"
+    else -> ""
 }
 
 /** A tab whose screens arrive in a later slice of phase A. */

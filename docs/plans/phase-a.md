@@ -84,9 +84,13 @@ the phone app covers the daily loop and works without signal for caretakers.
   - [x] a CI job (generate → lint → unit tests → assemble dev debug and prod release);
   - [~] Maestro harness and a sign-in flow: written (`apps/android/maestro`), not yet run on an
     emulator (see notes).
-- [ ] **A1 Owner / host:** Today (collected, arrears, payments to match, cash to confirm, today's
+- [~] **A1 Owner / host:** Today (collected, arrears, payments to match, cash to confirm, today's
   check-ins/outs, open repairs), match a payment (suggestions, apply), confirm/reject cash, request
   M-Pesa payment, bookings (upcoming, check-in/out), repairs (status, notes, photos).
+  - [x] screens, view models and unit tests (MockWebServer); viewers get Today and a monthly
+    summary (PDF statements stay on the web);
+  - [~] Maestro `owner-money.yaml` (confirm cash, match a payment) with `setup.mjs` test data:
+    written, not yet run on a device.
 - [ ] **A2 Caretaker offline:** Room schema and sync engine (pull, outbox push, dead letters,
   reset), WorkManager scheduling, meter round, report and update repairs with CameraX photos, log
   cash with a receipt photo, sync status screen.
@@ -118,5 +122,8 @@ the phone app covers the daily loop and works without signal for caretakers.
   OkHttp interceptor adds one per write. An identical request repeated before a final answer
   (network failure, 5xx, 409 in progress) reuses the key; a final answer retires it. Requests that
   set the header themselves (sync batches) keep theirs.
+- 2026-11-23 — **Uploads from the emulator:** signed upload URLs point at the host's object store
+  (`localhost:9000` in dev); `maestro/run.sh` runs `adb reverse tcp:9000 tcp:9000` so the
+  signature (which covers the host) stays valid.
 - 2026-11-23 — **Blocked locally:** the emulator would not boot because the development machine had
   under 2 GB of free disk. Maestro flows run once space is freed.

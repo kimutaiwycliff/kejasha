@@ -54,6 +54,7 @@ serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-jso
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 junit = { module = "junit:junit", version = "4.13.2" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version = "1.10.2" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

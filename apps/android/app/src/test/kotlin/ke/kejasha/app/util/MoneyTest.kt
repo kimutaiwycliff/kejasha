@@ -22,3 +22,22 @@ class MoneyTest {
         assertEquals(LocalDate.of(2026, 2, 1), todayNairobi(clock))
     }
 }
+
+class ParseKesTest {
+    @Test fun `shilling text becomes exact cents`() {
+        assertEquals(250_000L, parseKes("2,500"))
+        assertEquals(250_050L, parseKes("2500.5"))
+        assertEquals(1L, parseKes("0.01"))
+        assertEquals(123_456L, parseKes(" Ksh 1,234.56 "))
+    }
+
+    @Test fun `anything else is rejected`() {
+        listOf("", "0", "abc", "1.234", "-5", "1e3", "12..3").forEach { assertEquals(it, null, parseKes(it)) }
+    }
+
+    @Test fun `cents become an editable amount`() {
+        assertEquals("2500", centsToInput(250_000))
+        assertEquals("2500.5", centsToInput(250_050))
+        assertEquals("0.01", centsToInput(1))
+    }
+}
