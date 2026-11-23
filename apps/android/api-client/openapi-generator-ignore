@@ -1,0 +1,2 @@
+# Generated models replaced by support types (see build.gradle.kts schemaMappings).
+src/main/kotlin/ke/kejasha/api/models/Accepted.kt

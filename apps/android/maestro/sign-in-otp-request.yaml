@@ -1,0 +1,12 @@
+# Part 1 of sign-in by phone OTP: request a code. Run through maestro/run.sh, which reads the
+# code the API stored (no SMS provider in dev) and passes it to part 2.
+appId: ke.kejasha.app.dev
+---
+- launchApp:
+    clearState: true
+- assertVisible: 'Sign in to your account'
+- tapOn:
+    id: 'phone'
+- inputText: ${PHONE}
+- tapOn: 'Send code'
+- assertVisible: 'Verify'

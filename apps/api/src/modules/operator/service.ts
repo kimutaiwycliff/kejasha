@@ -214,7 +214,8 @@ export function createOperatorService(deps: AppDeps) {
         action: r.action,
         entityType: r.entityType,
         entityId: r.entityId,
-        diff: r.diff ?? null,
+        // Audit diffs are always written as objects (see record above).
+        diff: (r.diff as Record<string, unknown> | null) ?? null,
         occurredAt: r.occurredAt.toISOString(),
       }));
     },

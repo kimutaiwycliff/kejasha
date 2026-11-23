@@ -150,7 +150,9 @@ export const AuditEntry = z
     action: z.string(),
     entityType: z.string(),
     entityId: z.string().nullable(),
-    diff: z.unknown().nullable(),
+    // An object of changed fields (lib/audit records Record<string, unknown>). Typed as an object,
+    // not "anything", so every generated client (Kotlin included) can model it.
+    diff: z.record(z.string(), z.unknown()).nullable(),
     occurredAt: Timestamp,
   })
   .meta({ id: 'AuditEntry' });
