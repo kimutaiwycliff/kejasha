@@ -25,7 +25,7 @@ the phone app covers the daily loop and works without signal for caretakers.
   - Hilt 2.60.1 (KSP 2.3.12); Room 2.8.5; WorkManager 2.12.0; DataStore 1.3.0; CameraX 1.6.2.
   - Retrofit 3.0.0; OkHttp 5.5.1; kotlinx-serialization 1.12.0; Coil 3.6.3.
   - openapi-generator 7.14.0.
-  - minSdk 26, targetSdk/compileSdk 36.
+  - minSdk 26, targetSdk 36, compileSdk 37 (see notes).
 - **Generated client:** openapi-generator (`kotlin`, `jvm-retrofit2`, `kotlinx_serialization`)
   from `apps/api/openapi.json` at build time into `api-client`. `*Cents` fields are `Long`. CI
   fails if the spec cannot be generated.
@@ -75,14 +75,15 @@ the phone app covers the daily loop and works without signal for caretakers.
     contrast.
 
 ## Slices
-- [ ] **A0 Foundation:**
-  - the Gradle project and version catalog;
-  - the generated client and networking (bearer, Idempotency-Key, `ApiError`), flavours and
+- [~] **A0 Foundation:**
+  - [x] the Gradle project and version catalog;
+  - [x] the generated client and networking (bearer, Idempotency-Key, `ApiError`), flavours and
     `meta/config`;
-  - the theme, phone OTP and email sign-in, the encrypted token store, the session, org switch
-    and role routing;
-  - a CI job (generate → lint → unit tests → assemble);
-  - Maestro harness and a sign-in flow.
+  - [x] the theme, phone OTP and email sign-in, the encrypted token store, the session (cached
+    for offline launch), org switch and role routing;
+  - [x] a CI job (generate → lint → unit tests → assemble dev debug and prod release);
+  - [~] Maestro harness and a sign-in flow: written (`apps/android/maestro`), not yet run on an
+    emulator (see notes).
 - [ ] **A1 Owner / host:** Today (collected, arrears, payments to match, cash to confirm, today's
   check-ins/outs, open repairs), match a payment (suggestions, apply), confirm/reject cash, request
   M-Pesa payment, bookings (upcoming, check-in/out), repairs (status, notes, photos).
@@ -105,3 +106,17 @@ the phone app covers the daily loop and works without signal for caretakers.
   - an owner confirming the cash and matching a payment;
   - a tenant paying from the app.
 - No hand-written API types and no domain literal.
+
+## Notes
+- 2026-11-23 — **compileSdk 37.** Compose UI 1.12, Lifecycle 2.11 and OkHttp 5.5 require
+  compiling against API 37. targetSdk stays 36; minSdk 26.
+- 2026-11-23 — **Contract 1.1.1 → additive:** `AuditEntry.diff` is an object record instead of
+  `unknown`, so openapi-generator can type it (oasdiff: no breaking change). `Accepted`
+  (`ok: true`) stays a const; the Kotlin client maps it to a hand-written
+  `ke.kejasha.api.support.Accepted` because the generator cannot compile a one-value boolean enum.
+- 2026-11-23 — **Idempotency keys:** the generated client has no `Idempotency-Key` parameter, so an
+  OkHttp interceptor adds one per write. An identical request repeated before a final answer
+  (network failure, 5xx, 409 in progress) reuses the key; a final answer retires it. Requests that
+  set the header themselves (sync batches) keep theirs.
+- 2026-11-23 — **Blocked locally:** the emulator would not boot because the development machine had
+  under 2 GB of free disk. Maestro flows run once space is freed.

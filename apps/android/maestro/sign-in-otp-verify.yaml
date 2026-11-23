@@ -1,0 +1,12 @@
+# Part 2: enter the code and land in the app. A new number has no organization or tenancy yet.
+appId: ke.kejasha.app.dev
+---
+- tapOn:
+    id: 'code'
+- inputText: ${OTP}
+- tapOn: 'Verify'
+- extendedWaitUntil:
+    visible: 'Welcome.*'
+    timeout: 15000
+- tapOn: 'Sign out'
+- assertVisible: 'Sign in to your account'
