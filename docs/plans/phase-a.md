@@ -91,9 +91,17 @@ the phone app covers the daily loop and works without signal for caretakers.
     summary (PDF statements stay on the web);
   - [~] Maestro `owner-money.yaml` (confirm cash, match a payment) with `setup.mjs` test data:
     written, not yet run on a device.
-- [ ] **A2 Caretaker offline:** Room schema and sync engine (pull, outbox push, dead letters,
-  reset), WorkManager scheduling, meter round, report and update repairs with CameraX photos, log
+- [~] **A2 Caretaker offline:** Room schema and sync engine (pull, outbox push, dead letters,
+  reset), WorkManager scheduling, meter round, report and update repairs with photos, log
   cash with a receipt photo, sync status screen.
+  - [x] Room (schema exported to `app/schemas`), sync engine, outbox with UUIDv7 ids, photo
+    uploads before push, dead letters with discard, per-organization snapshot;
+  - [x] WorkManager (on connectivity after a write, every 15 minutes), caretaker screens,
+    joining by SMS invitation, a warning before signing out with unsent changes;
+  - [x] Robolectric tests: offline shift pushed once, retry with the same key, refusal → dead
+    letter → discard, reset keeps unsent records, another organization starts fresh;
+  - [~] Maestro `caretaker-join.yaml` + `caretaker-shift.yaml` (airplane mode) with API checks
+    that the shift arrived once: written, not yet run on a device.
 - [ ] **A3 Tenant:** home with balances across landlords, pay by M-Pesa prompt, statement,
   report a problem and follow repairs.
 - [ ] **A4 Share-to-app M-Pesa SMS:** receive shared text, preview, add the payment (owner/agent),
@@ -125,5 +133,10 @@ the phone app covers the daily loop and works without signal for caretakers.
 - 2026-11-23 — **Uploads from the emulator:** signed upload URLs point at the host's object store
   (`localhost:9000` in dev); `maestro/run.sh` runs `adb reverse tcp:9000 tcp:9000` so the
   signature (which covers the host) stays valid.
+- 2026-11-23 — **Photos without CameraX:** the system camera (`TakePicture`) and photo picker
+  cover the caretaker's needs offline (files are compressed into app storage at once), with no
+  camera code to maintain. CameraX is not used; the version pin stays for a later in-app camera.
+- 2026-11-23 — **Joining:** caretakers are invited by phone; a signed-in person without an
+  organization sees pending invitations and joins in the app.
 - 2026-11-23 — **Blocked locally:** the emulator would not boot because the development machine had
   under 2 GB of free disk. Maestro flows run once space is freed.

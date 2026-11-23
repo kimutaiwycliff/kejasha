@@ -4,6 +4,7 @@ import ke.kejasha.api.endpoints.IdentityApi
 import ke.kejasha.api.endpoints.PlatformApi
 import ke.kejasha.api.endpoints.PortalApi
 import ke.kejasha.api.models.AuthSession
+import ke.kejasha.api.models.Invitation
 import ke.kejasha.api.models.Me
 import ke.kejasha.api.models.OtpRequestBodyInput
 import ke.kejasha.api.models.OtpVerifyBodyInput
@@ -44,11 +45,16 @@ class SessionRepository @Inject constructor(
     private val portal: PortalApi,
     private val platform: PlatformApi,
     private val tokens: TokenStore,
+    private val local: LocalData,
     auth: AuthInterceptor,
 ) {
     private val scope = CoroutineScope(SupervisorJob())
     private val _state = MutableStateFlow<SessionState>(SessionState.Loading)
     val state: StateFlow<SessionState> = _state.asStateFlow()
+
+    /** The organization a staff member is working in (offline data is kept per organization). */
+    val activeOrgId: String?
+        get() = ((state.value as? SessionState.Ready)?.account as? Account.Staff)?.active?.orgId?.toString()
 
     /** The web app's URL from `/v1/meta/config` (never a literal: ADR-016). */
     var webUrl: String? = null
@@ -90,6 +96,14 @@ class SessionRepository @Inject constructor(
         publish(account(api { identity.setActiveOrg(SetActiveOrgBodyInput(orgId)) }))
     }
 
+    /** Invitations sent to this person's phone or email (how caretakers and managers join). */
+    suspend fun invitations(): List<Invitation> =
+        api { identity.listMyInvitations() }.items.filter { it.status == Invitation.Status.PENDING }
+
+    suspend fun acceptInvitation(id: UUID) {
+        publish(account(api { identity.acceptInvitation(id) }))
+    }
+
     /** Reload the account (pull to refresh, retry after a failure). */
     suspend fun retry() {
         val stored = tokens.load() ?: return run { _state.value = SessionState.SignedOut }
@@ -113,6 +127,7 @@ class SessionRepository @Inject constructor(
             if (e.isUnauthorized) return endLocally()
             val offline = cached?.let { runCatching { ApiJson.decodeFromString(Account.serializer(), it) }.getOrNull() }
             _state.value = if (offline != null) SessionState.Ready(offline, offline = true) else SessionState.Failed(e.userMessage)
+            offline?.let(local::onAccount)
         }
     }
 
@@ -131,9 +146,14 @@ class SessionRepository @Inject constructor(
         val token = tokens.current ?: return endLocally()
         tokens.save(TokenStore.Stored(token, ApiJson.encodeToString(Account.serializer(), account)))
         _state.value = SessionState.Ready(account)
+        local.onAccount(account)
     }
 
+    /** Offline writes not yet sent: signing out would lose them. */
+    suspend fun unsynced(): Int = local.unsynced()
+
     private suspend fun endLocally() {
+        local.clear()
         tokens.clear()
         _state.value = SessionState.SignedOut
     }

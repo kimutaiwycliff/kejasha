@@ -54,7 +54,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    testOptions { unitTests.isReturnDefaultValues = true }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+        // Robolectric: Room and the sync engine run against a real (in-memory) SQLite.
+        unitTests.isIncludeAndroidResources = true
+    }
 
     lint {
         warningsAsErrors = true
@@ -65,6 +69,9 @@ android {
 }
 
 kotlin { jvmToolchain(17) }
+
+// Room schemas are committed so later versions can be migrated and tested.
+ksp { arg("room.schemaLocation", "$projectDir/schemas") }
 
 // A prod build without an API URL would ship broken: fail early instead.
 tasks.matching { it.name.startsWith("assembleProd") || it.name.startsWith("bundleProd") }.configureEach {
@@ -93,6 +100,10 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
 
     implementation(libs.datastore.preferences)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+    implementation(libs.work.runtime)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
     implementation(libs.serialization.json)
@@ -105,6 +116,9 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.work.testing)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)
 }

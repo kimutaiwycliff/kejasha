@@ -23,7 +23,7 @@ const ksh = (cents) =>
   `Ksh ${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Nairobi' }).format(new Date());
 
-async function owner() {
+async function landlord() {
   const { token } = await call('POST', '/v1/identity/sign-in/email', {
     email: 'landlord@demo.test',
     password: 'demo-password-123',
@@ -31,6 +31,11 @@ async function owner() {
   // A new bearer session has no active organization yet (the app does the same on sign-in).
   const me = await call('GET', '/v1/identity/me', undefined, token);
   await call('POST', '/v1/identity/active-org', { orgId: me.memberships[0].orgId }, token);
+  return token;
+}
+
+async function owner() {
+  const token = await landlord();
   const property = await call(
     'POST',
     '/v1/properties',
@@ -74,6 +79,74 @@ async function owner() {
   };
 }
 
-const scenarios = { owner };
-const out = await scenarios[process.argv[2]]();
+/** A property with a water meter, and an SMS invitation for a new caretaker's phone. */
+async function caretakerInvite() {
+  const token = await landlord();
+  const property = await call(
+    'POST',
+    '/v1/properties',
+    { name: `Caretaker Court ${tag}`, county: 'Kiambu' },
+    token,
+  );
+  const unit = await call(
+    'POST',
+    `/v1/properties/${property.id}/units`,
+    { code: `CT${tag}`, mode: 'long_term', rentCents: 1_500_000 },
+    token,
+  );
+  const yesterday = new Date(Date.parse(`${today}T12:00:00Z`) - 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  // Answers with the unit's meters.
+  const { items: meters } = await call(
+    'POST',
+    `/v1/units/${unit.id}/meters`,
+    { kind: 'water', unitLabel: 'm³', initialReading: { readOn: yesterday, reading: '100' } },
+    token,
+  );
+  const meter = meters.find((m) => m.kind === 'water');
+  const local = `07${String(Math.floor(Math.random() * 1e8)).padStart(8, '0')}`;
+  await call('POST', '/v1/invitations', { phone: local, role: 'caretaker' }, token);
+  return {
+    PHONE: local,
+    E164: `+254${local.slice(1)}`,
+    PROPERTY_ID: property.id,
+    PROPERTY: property.name,
+    UNIT: unit.code,
+    METER_ID: meter.id,
+  };
+}
+
+/** After the caretaker joined in the app: give them the property. */
+async function caretakerAssign(e164, propertyId) {
+  const token = await landlord();
+  const { items } = await call('GET', '/v1/members', undefined, token);
+  const member = items.find((m) => m.phone === e164);
+  if (!member) throw new Error(`No member with phone ${e164}`);
+  await call('PUT', `/v1/properties/${propertyId}/staff`, { userIds: [member.userId] }, token);
+  return { CARETAKER_USER_ID: member.userId };
+}
+
+/** The offline shift arrived exactly once: one reading today, one repair, one cash entry. */
+async function caretakerVerify(propertyId, meterId, amountCents) {
+  const token = await landlord();
+  const readings = (
+    await call('GET', `/v1/meters/${meterId}/readings`, undefined, token)
+  ).items.filter((r) => r.readOn === today);
+  const tickets = (
+    await call('GET', `/v1/tickets?propertyId=${propertyId}&limit=100`, undefined, token)
+  ).items;
+  const cash = (
+    await call('GET', '/v1/cash-collections?status=pending&limit=100', undefined, token)
+  ).items.filter((c) => c.amountCents === Number(amountCents));
+  const ok = readings.length === 1 && tickets.length === 1 && cash.length === 1;
+  if (!ok)
+    throw new Error(
+      `Expected 1/1/1, got readings ${readings.length}, tickets ${tickets.length}, cash ${cash.length}`,
+    );
+  return { VERIFIED: 'readings=1 tickets=1 cash=1' };
+}
+
+const scenarios = { owner, caretakerInvite, caretakerAssign, caretakerVerify };
+const out = await scenarios[process.argv[2]](...process.argv.slice(3));
 for (const [k, v] of Object.entries(out)) console.log(`${k}=${v}`);

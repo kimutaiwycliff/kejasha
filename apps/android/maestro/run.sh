@@ -23,5 +23,17 @@ owner() {
   maestro test "${args[@]}" owner-money.yaml
 }
 
-flows=("${@:-sign_in owner}")
+# A2: invite a new caretaker, join in the app, assign the property, work offline, verify once.
+caretaker() {
+  local out; out="$(node setup.mjs caretakerInvite)"
+  val() { printf '%s\n' "$out" | sed -n "s/^$1=//p"; }
+  maestro test -e PHONE="$(val PHONE)" sign-in-otp-request.yaml
+  maestro test -e OTP="$(latest_otp "$(val E164)")" caretaker-join.yaml
+  node setup.mjs caretakerAssign "$(val E164)" "$(val PROPERTY_ID)" >/dev/null
+  local cents=$(( 300000 + RANDOM ))
+  maestro test -e UNIT="$(val UNIT)" -e CASH_AMOUNT="$(printf '%d.%02d' $((cents / 100)) $((cents % 100)))" caretaker-shift.yaml
+  node setup.mjs caretakerVerify "$(val PROPERTY_ID)" "$(val METER_ID)" "$cents"
+}
+
+flows=("${@:-sign_in owner caretaker}")
 for f in ${flows[@]}; do "$f"; done

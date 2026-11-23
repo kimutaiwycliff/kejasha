@@ -11,3 +11,10 @@ import kotlinx.serialization.Serializable
 @Serializable data class RequestPaymentRoute(val leaseId: String? = null, val bookingId: String? = null)
 
 @Serializable data class TicketRoute(val id: String)
+
+/** A repair from the caretaker's offline copy (it may not have reached the API yet). */
+@Serializable data class LocalTicketRoute(val id: String)
+
+@Serializable data object ReportTicketRoute
+
+@Serializable data object LogCashRoute
