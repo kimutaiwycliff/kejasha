@@ -6274,7 +6274,9 @@ export interface components {
       action: string;
       entityType: string;
       entityId: string | null;
-      diff: unknown | null;
+      diff: {
+        [key: string]: unknown;
+      } | null;
       /**
        * Format: date-time
        * @description RFC 3339 instant
