@@ -37,10 +37,11 @@ test('agency adds a landlord, a property, units, a meter and a meter round', asy
   await bulk.getByLabel('Monthly rent').fill('18,000');
   await bulk.getByRole('button', { name: 'Add 3 units' }).click();
   await expect(page.getByText('3 units added')).toBeVisible();
-  await expect(page.getByRole('cell', { name: `${prefix}03` })).toBeVisible();
+  // The unit board shows the new units (vacant, with their asking rent).
+  await expect(page.getByRole('link', { name: new RegExp(`^${prefix}03.*Vacant`) })).toBeVisible();
 
   // A water meter with an opening reading on the first unit.
-  await page.getByRole('cell', { name: `${prefix}01` }).click();
+  await page.getByRole('link', { name: new RegExp(`^${prefix}01`) }).click();
   await expect(page.getByRole('heading', { name: `Unit ${prefix}01` })).toBeVisible();
   await expect(page.getByText('Ksh 18,000.00')).toBeVisible();
   await page.getByRole('button', { name: 'Add meter' }).click();
