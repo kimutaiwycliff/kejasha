@@ -4,6 +4,7 @@ appId: ke.kejasha.app.dev
 - tapOn:
     id: 'code'
 - inputText: ${OTP}
+- hideKeyboard
 - tapOn: 'Verify'
 - extendedWaitUntil:
     visible:

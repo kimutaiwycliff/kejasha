@@ -48,7 +48,8 @@ private val Light = lightColorScheme(
     surfaceContainerLow = Color(0xFFFFFFFF),
     surfaceContainer = Color(0xFFF5F2EC),
     surfaceContainerHigh = Color(0xFFF0EDE6),
-    surfaceContainerHighest = Color(0xFFEAE6DE),
+    // Cards (filled) use this: white on the warm paper background.
+    surfaceContainerHighest = Color(0xFFFFFFFF),
     outline = Color(0xFFCFC8BC),
     outlineVariant = Color(0xFFE7E2D9),
 )

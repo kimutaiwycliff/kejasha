@@ -81,3 +81,15 @@ data seeded.
    `DateField`, `ComboField` …), `ConfirmButton` (give icon-only buttons an `aria-label`).
 3. Show the API's message when a request fails (`QueryFallback`, `errorMessage`).
 4. Add a journey that creates, edits and deletes through the browser, on both screen sizes.
+
+## Maps and the unit board
+
+- **Properties → Map** shows every property with a pin coloured by how many long-term units are
+  let (green 90 %+, amber 60–89 %, terracotta under 60 %, blue short stays only). Tap a pin to
+  open the property.
+- On a property, **Set location** opens a map: tap the building or use your location. The pin is
+  saved as the property's latitude and longitude (no address lookup service in v1).
+- The **Board** shows every unit by floor: let, owing (with the balance), vacant (with the asking
+  rent), and for short stays the guest in house, booked or free tonight.
+- The map style is configuration (ADR-022): `NEXT_PUBLIC_MAP_STYLE_URL`, OpenFreeMap by default.
+  MapLibre's worker is copied to `public/maplibre/` before `dev` and `build`.

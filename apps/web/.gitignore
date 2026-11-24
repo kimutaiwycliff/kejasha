@@ -6,3 +6,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /e2e/.auth/
+
+# Copied from maplibre-gl at dev/build time (scripts/copy-map-worker.mjs)
+/public/maplibre/

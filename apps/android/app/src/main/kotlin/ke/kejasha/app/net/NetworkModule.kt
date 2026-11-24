@@ -4,6 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import ke.kejasha.api.endpoints.AccountsApi
 import ke.kejasha.api.endpoints.IdentityApi
 import ke.kejasha.api.endpoints.LeasingApi
 import ke.kejasha.api.endpoints.MaintenanceApi
@@ -85,4 +86,5 @@ object NetworkModule {
     @Provides @Singleton fun shortStayApi(r: Retrofit): ShortStayApi = r.create(ShortStayApi::class.java)
     @Provides @Singleton fun leasingApi(r: Retrofit): LeasingApi = r.create(LeasingApi::class.java)
     @Provides @Singleton fun syncApi(r: Retrofit): SyncApi = r.create(SyncApi::class.java)
+    @Provides @Singleton fun accountsApi(r: Retrofit): AccountsApi = r.create(AccountsApi::class.java)
 }

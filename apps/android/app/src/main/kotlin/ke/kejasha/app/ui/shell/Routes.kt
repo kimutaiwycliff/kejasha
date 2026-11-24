@@ -24,3 +24,12 @@ fun tabRoute(name: String) = "tab/$name"
 
 /** An M-Pesa SMS shared into the app (see SharedText). */
 @Serializable data object SmsPaymentRoute
+
+/** A property: its map and unit board. */
+@Serializable data class PropertyRoute(val id: String)
+
+/** Set where a property is (pan the map under a fixed pin). */
+@Serializable data class LocationRoute(val id: String)
+
+/** Who is signed in, the organization switch and sign out (owners reach it from the top bar). */
+@Serializable data object AccountRoute
