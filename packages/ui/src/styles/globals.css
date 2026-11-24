@@ -194,6 +194,21 @@
 @utility animate-pop {
   animation: kj-pop 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+@keyframes kj-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: none;
+  }
+}
+/* Chart bars grow from their baseline. */
+@utility animate-grow {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: kj-grow 500ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(min(var(--i, 0), 12) * 50ms);
+}
 @utility shadow-card {
   box-shadow: var(--shadow-card);
 }

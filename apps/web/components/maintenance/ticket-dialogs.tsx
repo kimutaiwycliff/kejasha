@@ -21,13 +21,13 @@ type Ticket = Schemas['TicketDetail'];
 export const PRIORITY_TONE = {
   low: 'outline',
   normal: 'secondary',
-  high: 'default',
+  high: 'warning',
   urgent: 'destructive',
 } as const;
 export const STATUS_TONE = {
-  open: 'destructive',
-  in_progress: 'default',
-  resolved: 'secondary',
+  open: 'murram',
+  in_progress: 'info',
+  resolved: 'success',
   closed: 'outline',
   cancelled: 'outline',
 } as const;

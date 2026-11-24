@@ -166,8 +166,8 @@ function InspectionDialog({
 }
 
 const TONE = {
-  good: 'default',
-  fair: 'secondary',
+  good: 'success',
+  fair: 'warning',
   poor: 'destructive',
   damaged: 'destructive',
 } as const;

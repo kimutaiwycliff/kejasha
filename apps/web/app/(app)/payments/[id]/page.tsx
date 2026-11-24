@@ -37,7 +37,7 @@ const when = new Intl.DateTimeFormat('en-KE', {
   timeStyle: 'short',
   timeZone: 'Africa/Nairobi',
 });
-const TONE = { unmatched: 'destructive', matched: 'default', ignored: 'outline' } as const;
+const TONE = { unmatched: 'warning', matched: 'success', ignored: 'outline' } as const;
 
 export default function PaymentPage() {
   const { id } = useParams<{ id: string }>();

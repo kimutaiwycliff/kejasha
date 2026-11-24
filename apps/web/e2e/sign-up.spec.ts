@@ -10,7 +10,7 @@ test('sign up, create an organization, sign out and back in', async ({ page }) =
   await page.getByRole('button', { name: 'Create organization' }).click();
 
   await expect(page).toHaveURL(/\/dashboard/);
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Habari, Amina' })).toBeVisible();
   await expect(page.getByText('Collected this month')).toBeVisible();
 
   await openNav(page);

@@ -10,8 +10,8 @@ import { INVOICE_KIND_LABEL, PAYMENT_STATUS_LABEL } from '@/lib/labels';
 type Invoice = Schemas['Invoice'];
 const TONE = {
   unpaid: 'destructive',
-  partially_paid: 'secondary',
-  paid: 'default',
+  partially_paid: 'warning',
+  paid: 'success',
   void: 'outline',
 } as const;
 const col = columnsFor<Invoice>();

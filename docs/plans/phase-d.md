@@ -34,7 +34,7 @@ a visual board of every unit.
 - [x] **D1 Brand & theme:** ADR-022; logo assets (SVG mark, wordmark, favicon, Android adaptive
   icon, splash); web tokens (light/dark), font, sidebar with logo, auth pages with a brand panel;
   Android colour scheme, typography, shapes, launcher icon and splash; status colours shared.
-- [ ] **D2 Web polish & motion:** dashboard with coloured KPI cards, count-up figures, a
+- [x] **D2 Web polish & motion:** dashboard with coloured KPI cards, count-up figures, a
   six-month chart and occupancy rings; page-enter and list stagger animations; semantic badges;
   empty states; org switcher search; reduced-motion respected.
 - [ ] **D3 Maps & unit board:** properties list ↔ map (clustered pins coloured by occupancy);
