@@ -57,7 +57,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import ke.kejasha.app.ui.caretaker.CaretakerRepairsScreen
 import ke.kejasha.app.ui.caretaker.CashScreen
 import ke.kejasha.app.ui.caretaker.LocalTicketScreen
@@ -73,7 +72,9 @@ import ke.kejasha.app.ui.tenant.TenantHomeScreen
 import ke.kejasha.app.ui.tenant.TenantPayScreen
 import ke.kejasha.app.ui.tenant.TenantRepairsScreen
 import ke.kejasha.app.ui.tenant.TenantStatementScreen
-import ke.kejasha.app.ui.common.LocalSnackbar
+import androidx.compose.runtime.rememberCoroutineScope
+import ke.kejasha.app.ui.common.LocalNotifier
+import ke.kejasha.app.ui.common.Notifier
 import ke.kejasha.app.ui.owner.MoneyScreen
 import ke.kejasha.app.ui.owner.MonthsScreen
 import ke.kejasha.app.ui.owner.PaymentMatchScreen
@@ -179,7 +180,7 @@ fun TenantShell(account: Account.Tenant, offline: Boolean, vm: SessionViewModel)
 
 /** Moves between tabs and opens detail screens. */
 class ShellNav(private val controller: NavHostController) {
-    fun tab(name: String) = controller.navigate(TabRoute(name)) {
+    fun tab(name: String) = controller.navigate(tabRoute(name)) {
         popUpTo(controller.graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true
         restoreState = true
@@ -206,14 +207,16 @@ private fun ShellScaffold(
     LaunchedEffect(incoming) { incoming?.let(nav::open) }
     val entry by controller.currentBackStackEntryAsState()
     val destination = entry?.destination
-    val onTab = destination?.hasRoute(TabRoute::class) != false
-    val current = entry?.takeIf { onTab }?.toRoute<TabRoute>()?.name ?: tabs.first().name
+    val onTab = destination?.route?.startsWith(tabRoute("")) != false
+    val current = destination?.route?.takeIf { onTab }?.removePrefix(tabRoute("")) ?: tabs.first().name
     val snackbar = remember { SnackbarHostState() }
     val message by vm.message.collectAsStateWithLifecycle()
     LaunchedEffect(message) {
         message?.let { snackbar.showSnackbar(it); vm.messageShown() }
     }
-    CompositionLocalProvider(LocalSnackbar provides snackbar) {
+    val scope = rememberCoroutineScope()
+    val notifier = remember(snackbar, scope) { Notifier(snackbar, scope) }
+    CompositionLocalProvider(LocalNotifier provides notifier) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -252,8 +255,8 @@ private fun ShellScaffold(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     )
                 }
-                NavHost(controller, startDestination = TabRoute(tabs.first().name), modifier = Modifier.fillMaxSize()) {
-                    composable<TabRoute> { tabContent(it.toRoute<TabRoute>().name, nav) }
+                NavHost(controller, startDestination = tabRoute(tabs.first().name), modifier = Modifier.fillMaxSize()) {
+                    tabs.forEach { tab -> composable(tabRoute(tab.name)) { tabContent(tab.name, nav) } }
                     composable<PaymentRoute> { PaymentMatchScreen(onDone = { nav.back() }) }
                     composable<RequestPaymentRoute> { RequestPaymentScreen(onDone = { nav.back() }) }
                     composable<TicketRoute> { TicketScreen() }

@@ -24,7 +24,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,10 +37,21 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import ke.kejasha.app.ui.Centered
 
-/** The shell's snackbar, so screens can report action outcomes. */
-val LocalSnackbar = compositionLocalOf { SnackbarHostState() }
+/**
+ * One-line notices in the shell's snackbar. They run in the shell's scope, so a message sent just
+ * before a screen closes (applied, saved) is still shown.
+ */
+class Notifier(private val host: SnackbarHostState, private val scope: CoroutineScope) {
+    fun show(text: String) {
+        scope.launch { host.showSnackbar(text) }
+    }
+}
+
+val LocalNotifier = staticCompositionLocalOf<Notifier?> { null }
 
 /**
  * Loading, error and pull-to-refresh around a [LoadViewModel]'s data. Action messages go to the
@@ -52,9 +63,9 @@ fun <T> LoadableScreen(vm: LoadViewModel<T>, content: @Composable (T) -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
-    val snackbar = LocalSnackbar.current
+    val notifier = LocalNotifier.current
     LaunchedEffect(message) {
-        message?.let { snackbar.showSnackbar(it); vm.messageShown() }
+        message?.let { notifier?.show(it); vm.messageShown() }
     }
     when (val s = state) {
         Loadable.Loading -> Centered { CircularProgressIndicator() }

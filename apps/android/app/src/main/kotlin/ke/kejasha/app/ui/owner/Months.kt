@@ -39,7 +39,7 @@ private val monthName = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
 @Composable
 fun MonthsScreen(vm: MonthsViewModel = hiltViewModel()) = LoadableScreen(vm) { d ->
     Page {
-        Text("${d.landlordName} · monthly summary", style = MaterialTheme.typography.titleMedium)
+        Text(d.landlordName?.let { "$it · monthly summary" } ?: "Monthly summary", style = MaterialTheme.typography.titleMedium)
         if (d.trend.isEmpty()) Empty("No months to show yet.")
         d.trend.sortedByDescending { it.period }.forEach { m ->
             Card(Modifier.fillMaxWidth()) {

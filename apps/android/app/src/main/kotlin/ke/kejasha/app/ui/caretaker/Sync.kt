@@ -87,7 +87,7 @@ fun SyncScreen(vm: SyncViewModel = hiltViewModel()) {
         if (u.running) LinearProgressIndicator(Modifier.fillMaxWidth())
         Row2("Last synced", u.state?.lastSyncedAt?.let { Instant.ofEpochMilli(it).atZone(NAIROBI).format(time) } ?: "Never")
         Row2("Waiting to send", u.pending.toString())
-        if (u.pending == 0 && u.state?.lastSyncedAt != null && !u.running) Text("All changes sent.", modifier = Modifier.testTag("all-sent"))
+        if (u.pending == 0 && u.state?.lastSyncedAt != null && !u.running) Text("Nothing waiting to send.", modifier = Modifier.testTag("all-sent"))
         u.state?.lastError?.let { Text("Last attempt: $it", color = MaterialTheme.colorScheme.error) }
         Button(onClick = vm::syncNow, enabled = !u.running, modifier = Modifier.fillMaxWidth().testTag("sync-now")) { Text("Sync now") }
         Text("Changes are sent automatically when the phone is online.", style = MaterialTheme.typography.bodySmall)

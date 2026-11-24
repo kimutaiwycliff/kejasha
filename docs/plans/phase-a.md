@@ -1,6 +1,6 @@
 # Phase A — Android app (Kotlin)
 
-> Status: **BUILT — device proof pending** · drafted 2026-10-26 · ADR-004, ADR-009, ADR-016, ADR-017, ADR-018
+> Status: **DONE** (2026-11-24) — the tenant's M-Pesa prompt awaits the Daraja sandbox · drafted 2026-10-26 · ADR-004, ADR-009, ADR-016, ADR-017, ADR-018
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 > Shipped as slices A0–A5, one PR each. The contract is frozen (`contract-v1.1.1`): the app
 > adapts to the API; an API gap is an additive change with tests (as with cash by `unitId`).
@@ -75,23 +75,21 @@ the phone app covers the daily loop and works without signal for caretakers.
     contrast.
 
 ## Slices
-- [~] **A0 Foundation:**
+- [x] **A0 Foundation:**
   - [x] the Gradle project and version catalog;
   - [x] the generated client and networking (bearer, Idempotency-Key, `ApiError`), flavours and
     `meta/config`;
   - [x] the theme, phone OTP and email sign-in, the encrypted token store, the session (cached
     for offline launch), org switch and role routing;
   - [x] a CI job (generate → lint → unit tests → assemble dev debug and prod release);
-  - [~] Maestro harness and a sign-in flow: written (`apps/android/maestro`), not yet run on an
-    emulator (see notes).
-- [~] **A1 Owner / host:** Today (collected, arrears, payments to match, cash to confirm, today's
+  - [x] Maestro harness and a sign-in flow (`apps/android/maestro`).
+- [x] **A1 Owner / host:** Today (collected, arrears, payments to match, cash to confirm, today's
   check-ins/outs, open repairs), match a payment (suggestions, apply), confirm/reject cash, request
   M-Pesa payment, bookings (upcoming, check-in/out), repairs (status, notes, photos).
   - [x] screens, view models and unit tests (MockWebServer); viewers get Today and a monthly
     summary (PDF statements stay on the web);
-  - [~] Maestro `owner-money.yaml` (confirm cash, match a payment) with `setup.mjs` test data:
-    written, not yet run on a device.
-- [~] **A2 Caretaker offline:** Room schema and sync engine (pull, outbox push, dead letters,
+  - [x] Maestro `owner-money.yaml` (confirm cash, match a payment) with `setup.mjs` test data.
+- [x] **A2 Caretaker offline:** Room schema and sync engine (pull, outbox push, dead letters,
   reset), WorkManager scheduling, meter round, report and update repairs with photos, log
   cash with a receipt photo, sync status screen.
   - [x] Room (schema exported to `app/schemas`), sync engine, outbox with UUIDv7 ids, photo
@@ -100,27 +98,27 @@ the phone app covers the daily loop and works without signal for caretakers.
     joining by SMS invitation, a warning before signing out with unsent changes;
   - [x] Robolectric tests: offline shift pushed once, retry with the same key, refusal → dead
     letter → discard, reset keeps unsent records, another organization starts fresh;
-  - [~] Maestro `caretaker-join.yaml` + `caretaker-shift.yaml` (airplane mode) with API checks
-    that the shift arrived once: written, not yet run on a device.
-- [~] **A3 Tenant:** home with balances across landlords, pay by M-Pesa prompt, statement,
+  - [x] Maestro `caretaker-join.yaml` + `caretaker-shift.yaml` (airplane mode) with API checks
+    that the shift arrived once.
+- [x] **A3 Tenant:** home with balances across landlords, pay by M-Pesa prompt, statement,
   report a problem and follow repairs.
   - [x] screens and tests; the prompt is whole shillings (balance rounded up); there is no
     tenant STK status endpoint, so the app watches the balance after sending the prompt;
-  - [~] Maestro `tenant-portal.yaml` (balance, statement, report) written; `tenant-pay.yaml`
-    needs the Daraja sandbox (launch input). Neither run on a device yet.
-- [~] **A4 Share-to-app M-Pesa SMS:** receive shared text, preview, add the payment (owner/agent),
+  - [x] Maestro `tenant-portal.yaml` (balance, statement, report, prompt amount);
+  - [!] `tenant-pay.yaml` sends the prompt: needs the Daraja sandbox (launch input).
+- [x] **A4 Share-to-app M-Pesa SMS:** receive shared text, preview, add the payment (owner/agent),
   matched or queued.
   - [x] `text/plain` share target, a preview read like the API's parser (outgoing SMS refused),
     `POST /v1/sms-payments`, then matched or "match it now"; other roles are told why not;
-  - [~] Maestro `sms-share.yaml` (shared via `adb am start … SEND`): written, not yet run.
-- [~] **A5 Proof & polish:** Maestro flows for every slice on the emulator; Compose UI tests;
+  - [x] Maestro `sms-share.yaml` (shared via `adb am start … SEND`).
+- [x] **A5 Proof & polish:** Maestro flows for every slice on the emulator; Compose UI tests;
   accessibility pass; release build (R8, signing from environment), app docs page.
   - [x] Compose UI tests on the JVM (Robolectric): sign-in steps, field errors, every tappable
     element named; picker announces label and choice;
   - [x] R8 rules for serializers, enum wire names and the sync worker; release signing from
     `KEJASHA_KEYSTORE*` environment variables; docs `guides/android-app`;
-  - [!] Maestro on an emulator (blocked: the emulator does not boot on the dev machine; see
-    notes). `maestro/run.sh` runs every flow once a device works.
+  - [x] Maestro on an emulator (Android 35) against the local API: `maestro/run.sh` runs 11
+    flows, 119 steps, all green.
 
 ## Definition of Done
 - The app builds in CI from the generated client.
@@ -151,14 +149,19 @@ the phone app covers the daily loop and works without signal for caretakers.
   camera code to maintain. CameraX is not used; the version pin stays for a later in-app camera.
 - 2026-11-23 — **Joining:** caretakers are invited by phone; a signed-in person without an
   organization sees pending invitations and joins in the app.
-- 2026-11-23 — **Blocked locally:** the emulator would not boot because the development machine had
-  under 2 GB of free disk. Maestro flows run once space is freed.
+- 2026-11-23 — **Emulator:** the Android 36.1 Play Store image would not run on the dev machine
+  (no hardware acceleration, crashes in software emulation); an Android 35 `google_apis` image
+  works. `run.sh` turns off animations and the keyboard's stylus tutorial.
+- 2026-11-24 — **Found on the device, fixed:** openapi-generator dropped `null` from 25 nullable
+  properties (the owner dashboard failed to load) — a build step now applies the spec's
+  nullability; all tabs shared one route, so switching tabs did nothing; messages sent as a
+  screen closed were lost — they now show from the shell.
 
 ## DoD status (2026-11-24)
 - [x] The app builds in CI from the generated client (lint, unit, assemble dev and R8 release).
-- [x] Unit, Room/sync (Robolectric) and Compose UI tests are green (44 tests).
-- [ ] Maestro on an emulator against the real API — written for every item, not yet run:
-  sign-in by OTP (`sign_in`), caretaker offline shift synced once (`caretaker`), owner confirms
-  cash and matches a payment (`owner`), tenant pays (`tenant`; the prompt itself needs the
-  Daraja sandbox, `tenant_pay`), shared SMS (`sms`).
+- [x] Unit, Room/sync (Robolectric) and Compose UI tests are green (45 tests).
+- [x] Maestro on an emulator against the real API: sign-in by OTP, a caretaker offline shift
+  synced once (verified through the API), an owner confirming cash and matching a payment, the
+  tenant portal up to the prompt, a shared SMS.
+- [!] The tenant's M-Pesa prompt itself (`run.sh tenant_pay`) needs the Daraja sandbox.
 - [x] No hand-written API types and no domain literal.

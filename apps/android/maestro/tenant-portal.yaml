@@ -12,7 +12,7 @@ appId: ke.kejasha.app.dev
 - extendedWaitUntil:
     visible: 'Closing balance'
     timeout: 10000
-- assertVisible: 'Service charge'
+- assertVisible: '.*Service charge'
 
 - tapOn:
     id: 'tab-repairs'

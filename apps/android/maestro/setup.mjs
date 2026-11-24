@@ -105,6 +105,14 @@ async function caretakerInvite() {
     token,
   );
   const meter = meters.find((m) => m.kind === 'water');
+  // Cash is recorded against the lease covering the day, so the unit is let.
+  const tenant = await call('POST', '/v1/tenants', { fullName: `Ca${word} Re${word}` }, token);
+  await call(
+    'POST',
+    '/v1/leases',
+    { unitId: unit.id, tenantId: tenant.id, startDate: yesterday, rentCents: 1_500_000 },
+    token,
+  );
   const local = `07${String(Math.floor(Math.random() * 1e8)).padStart(8, '0')}`;
   await call('POST', '/v1/invitations', { phone: local, role: 'caretaker' }, token);
   return {

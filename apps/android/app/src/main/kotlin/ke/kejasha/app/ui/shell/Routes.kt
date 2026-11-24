@@ -2,8 +2,8 @@ package ke.kejasha.app.ui.shell
 
 import kotlinx.serialization.Serializable
 
-/** A bottom-bar tab; [name] picks the screen. */
-@Serializable data class TabRoute(val name: String)
+/** Bottom-bar tabs are plain routes, one destination each ("single top" then tells them apart). */
+fun tabRoute(name: String) = "tab/$name"
 
 @Serializable data class PaymentRoute(val id: String)
 

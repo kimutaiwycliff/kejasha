@@ -8,6 +8,9 @@ cd "$(dirname "$0")"
 DB="${DATABASE_URL:-postgresql://app_owner:secret@localhost:5432/kejasha}"
 # Uploads go to object storage on the host: the emulator's localhost:9000 reaches it this way.
 adb reverse tcp:9000 tcp:9000 >/dev/null
+# A steady device: no animations, no keyboard stylus tutorial over the app.
+adb shell settings put secure stylus_handwriting_enabled 0
+for a in window_animation_scale transition_animation_scale animator_duration_scale; do adb shell settings put global "$a" 0; done
 
 latest_otp() { psql "$DB" -At -c "SELECT split_part(value, ':', 1) FROM verification WHERE identifier = '$1' ORDER BY created_at DESC LIMIT 1"; }
 
