@@ -17,6 +17,8 @@ import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.Today
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -56,6 +58,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import ke.kejasha.app.ui.caretaker.CaretakerRepairsScreen
+import ke.kejasha.app.ui.caretaker.CashScreen
+import ke.kejasha.app.ui.caretaker.LocalTicketScreen
+import ke.kejasha.app.ui.caretaker.LogCashScreen
+import ke.kejasha.app.ui.caretaker.ReportTicketScreen
+import ke.kejasha.app.ui.caretaker.RoundScreen
+import ke.kejasha.app.ui.caretaker.SyncScreen
+import ke.kejasha.app.ui.common.ConfirmDialog
 import ke.kejasha.app.ui.common.LocalSnackbar
 import ke.kejasha.app.ui.owner.MoneyScreen
 import ke.kejasha.app.ui.owner.MonthsScreen
@@ -116,7 +126,14 @@ fun StaffShell(account: Account.Staff, offline: Boolean, vm: SessionViewModel) {
                     onRequestPayment = { nav.open(RequestPaymentRoute()) },
                 )
                 "stays" -> StaysScreen(onRequestPayment = { nav.open(RequestPaymentRoute(bookingId = it.toString())) })
-                "repairs" -> RepairsScreen(onTicket = { nav.open(TicketRoute(it.toString())) })
+                "repairs" -> if (account.shell == Shell.CARETAKER) {
+                    CaretakerRepairsScreen(onReport = { nav.open(ReportTicketRoute) }, onTicket = { nav.open(LocalTicketRoute(it)) })
+                } else {
+                    RepairsScreen(onTicket = { nav.open(TicketRoute(it.toString())) })
+                }
+                "round" -> RoundScreen()
+                "cash" -> CashScreen(onLog = { nav.open(LogCashRoute) })
+                "sync" -> SyncScreen()
                 "months" -> MonthsScreen()
                 "more" -> AccountPane(account, vm)
                 else -> Upcoming(tabs.first { it.name == name }.label)
@@ -214,6 +231,9 @@ private fun ShellScaffold(
                     composable<PaymentRoute> { PaymentMatchScreen(onDone = { nav.back() }) }
                     composable<RequestPaymentRoute> { RequestPaymentScreen(onDone = { nav.back() }) }
                     composable<TicketRoute> { TicketScreen() }
+                    composable<LocalTicketRoute> { LocalTicketScreen() }
+                    composable<ReportTicketRoute> { ReportTicketScreen(onDone = { nav.back() }) }
+                    composable<LogCashRoute> { LogCashScreen(onDone = { nav.back() }) }
                 }
             }
         }
@@ -224,7 +244,9 @@ private fun detailTitle(destination: NavDestination?): String = when {
     destination == null -> ""
     destination.hasRoute(PaymentRoute::class) -> "Match payment"
     destination.hasRoute(RequestPaymentRoute::class) -> "Request payment"
-    destination.hasRoute(TicketRoute::class) -> "Repair"
+    destination.hasRoute(TicketRoute::class) || destination.hasRoute(LocalTicketRoute::class) -> "Repair"
+    destination.hasRoute(ReportTicketRoute::class) -> "Report a problem"
+    destination.hasRoute(LogCashRoute::class) -> "Log cash"
     else -> ""
 }
 
@@ -277,15 +299,41 @@ private fun AccountPane(account: Account, vm: SessionViewModel) {
         HorizontalDivider()
         OutlinedButton(onClick = { vm.signOut() }, modifier = Modifier.padding(16.dp).testTag("sign-out")) { Text("Sign out") }
     }
+    val unsynced by vm.confirmSignOut.collectAsStateWithLifecycle()
+    if (unsynced > 0) {
+        ConfirmDialog(
+            title = "Sign out and lose $unsynced unsent ${if (unsynced == 1) "change" else "changes"}?",
+            text = "They have not reached Kejasha yet. Connect to the internet and sync first to keep them.",
+            confirmLabel = "Sign out anyway",
+            onDismiss = vm::keepSignedIn,
+            onConfirm = { vm.signOut(force = true) },
+        )
+    }
 }
 
+/** Signed in without an organization: accept an invitation, or set one up on the web. */
 @Composable
-fun NoAccessScreen(account: Account.NoAccess, webUrl: String?, onSignOut: () -> Unit) = Centered {
-    Text("Welcome, ${account.user.name}", style = MaterialTheme.typography.headlineSmall)
-    Text(
-        "Your account isn't part of an organization yet. Set one up on the web app" +
-            (webUrl?.let { " at $it" } ?: "") + ", or ask your landlord or manager for an invitation.",
-        textAlign = TextAlign.Center,
-    )
-    OutlinedButton(onClick = onSignOut) { Text("Sign out") }
+fun NoAccessScreen(account: Account.NoAccess, vm: SessionViewModel) {
+    val invitations by vm.invitations.collectAsStateWithLifecycle()
+    val message by vm.message.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.loadInvitations() }
+    Centered {
+        Text("Welcome, ${account.user.name}", style = MaterialTheme.typography.headlineSmall)
+        val pending = invitations
+        when {
+            pending == null -> CircularProgressIndicator()
+            pending.isNotEmpty() -> pending.forEach { inv ->
+                Text("${inv.orgName} invited you as ${ROLE_LABEL[inv.role].orEmpty().lowercase()}.", textAlign = TextAlign.Center)
+                Button(onClick = { vm.accept(inv.id) }, modifier = Modifier.testTag("accept-invitation")) { Text("Join ${inv.orgName}") }
+            }
+            else -> Text(
+                "Your account isn't part of an organization yet. Set one up on the web app" +
+                    (vm.webUrl?.let { " at $it" } ?: "") + ", or ask your landlord or manager for an invitation.",
+                textAlign = TextAlign.Center,
+            )
+        }
+        message?.let { Text(it, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center) }
+        OutlinedButton(onClick = { vm.loadInvitations() }) { Text("Check again") }
+        OutlinedButton(onClick = { vm.signOut() }) { Text("Sign out") }
+    }
 }

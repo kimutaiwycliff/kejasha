@@ -49,7 +49,7 @@ fun AppRoot(vm: SessionViewModel = hiltViewModel()) {
             is SessionState.Ready -> when (val account = s.account) {
                 is Account.Staff -> StaffShell(account, s.offline, vm)
                 is Account.Tenant -> TenantShell(account, s.offline, vm)
-                is Account.NoAccess -> NoAccessScreen(account, vm.webUrl, onSignOut = { vm.signOut() })
+                is Account.NoAccess -> NoAccessScreen(account, vm)
             }
         }
     }

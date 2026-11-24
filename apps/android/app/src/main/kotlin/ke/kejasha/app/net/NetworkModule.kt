@@ -12,6 +12,7 @@ import ke.kejasha.api.endpoints.PlatformApi
 import ke.kejasha.api.endpoints.PortalApi
 import ke.kejasha.api.endpoints.ReportingApi
 import ke.kejasha.api.endpoints.ShortStayApi
+import ke.kejasha.api.endpoints.SyncApi
 import ke.kejasha.app.BuildConfig
 import ke.kejasha.app.session.TokenStore
 import okhttp3.MediaType.Companion.toMediaType
@@ -83,4 +84,5 @@ object NetworkModule {
     @Provides @Singleton fun maintenanceApi(r: Retrofit): MaintenanceApi = r.create(MaintenanceApi::class.java)
     @Provides @Singleton fun shortStayApi(r: Retrofit): ShortStayApi = r.create(ShortStayApi::class.java)
     @Provides @Singleton fun leasingApi(r: Retrofit): LeasingApi = r.create(LeasingApi::class.java)
+    @Provides @Singleton fun syncApi(r: Retrofit): SyncApi = r.create(SyncApi::class.java)
 }

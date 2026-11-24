@@ -1,0 +1,16 @@
+# The invited caretaker signs in with the code and joins the organization.
+appId: ke.kejasha.app.dev
+---
+- tapOn:
+    id: 'code'
+- inputText: ${OTP}
+- tapOn: 'Verify'
+- extendedWaitUntil:
+    visible:
+      id: 'accept-invitation'
+    timeout: 15000
+- tapOn:
+    id: 'accept-invitation'
+- extendedWaitUntil:
+    visible: 'Round'
+    timeout: 15000

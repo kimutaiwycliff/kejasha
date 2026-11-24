@@ -1,0 +1,70 @@
+# A2: a caretaker's shift without signal — a meter reading, a repair and cash — sent once back online.
+# run.sh has assigned the property (PROPERTY, UNIT) to the caretaker who joined in caretaker-join.yaml.
+appId: ke.kejasha.app.dev
+---
+# Download the property while online.
+- tapOn:
+    id: 'tab-sync'
+- tapOn:
+    id: 'sync-now'
+- extendedWaitUntil:
+    visible:
+      id: 'all-sent'
+    timeout: 30000
+
+# No signal from here.
+- setAirplaneMode: enabled
+
+- tapOn:
+    id: 'tab-round'
+- scrollUntilVisible:
+    element: '${UNIT} · Water.*'
+- tapOn:
+    id: 'reading-${UNIT}-water'
+- inputText: '112.5'
+- tapOn: 'Save reading'
+- assertVisible: 'Not sent yet'
+
+- tapOn:
+    id: 'tab-repairs'
+- tapOn:
+    id: 'report-problem'
+- tapOn:
+    id: 'unit'
+- tapOn: '${UNIT}'
+- tapOn:
+    id: 'title'
+- inputText: 'Leaking tap ${UNIT}'
+- hideKeyboard
+- tapOn:
+    id: 'submit-ticket'
+- assertVisible: 'New · Leaking tap ${UNIT}'
+
+- tapOn:
+    id: 'tab-cash'
+- tapOn:
+    id: 'log-cash'
+- tapOn:
+    id: 'unit'
+- tapOn: '${UNIT}'
+- tapOn:
+    id: 'amount'
+- inputText: '${CASH_AMOUNT}'
+- hideKeyboard
+- tapOn:
+    id: 'submit-cash'
+
+- tapOn:
+    id: 'tab-sync'
+- assertVisible: 'Waiting to send'
+- assertNotVisible:
+    id: 'all-sent'
+
+# Signal is back: everything goes once.
+- setAirplaneMode: disabled
+- tapOn:
+    id: 'sync-now'
+- extendedWaitUntil:
+    visible:
+      id: 'all-sent'
+    timeout: 60000

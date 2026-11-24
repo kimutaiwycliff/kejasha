@@ -1,0 +1,533 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "8bf19fb282573e5f4a43e8f39c127313",
+    "entities": [
+      {
+        "tableName": "property",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `county` TEXT NOT NULL, `area` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "county",
+            "columnName": "county",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "area",
+            "columnName": "area",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        }
+      },
+      {
+        "tableName": "unit",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `propertyId` TEXT NOT NULL, `code` TEXT NOT NULL, `label` TEXT, `mode` TEXT NOT NULL, `status` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "propertyId",
+            "columnName": "propertyId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "label",
+            "columnName": "label",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mode",
+            "columnName": "mode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_unit_propertyId",
+            "unique": false,
+            "columnNames": ["propertyId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_unit_propertyId` ON `${TABLE_NAME}` (`propertyId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "meter",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `unitId` TEXT NOT NULL, `kind` TEXT NOT NULL, `serial` TEXT, `unitLabel` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitId",
+            "columnName": "unitId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serial",
+            "columnName": "serial",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "unitLabel",
+            "columnName": "unitLabel",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_meter_unitId",
+            "unique": false,
+            "columnNames": ["unitId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_meter_unitId` ON `${TABLE_NAME}` (`unitId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "meter_reading",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `meterId` TEXT NOT NULL, `readOn` TEXT NOT NULL, `reading` TEXT NOT NULL, `note` TEXT, `local` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "meterId",
+            "columnName": "meterId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "readOn",
+            "columnName": "readOn",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reading",
+            "columnName": "reading",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "local",
+            "columnName": "local",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_meter_reading_meterId",
+            "unique": false,
+            "columnNames": ["meterId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_meter_reading_meterId` ON `${TABLE_NAME}` (`meterId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "ticket",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `number` TEXT NOT NULL, `propertyId` TEXT NOT NULL, `unitId` TEXT, `title` TEXT NOT NULL, `description` TEXT, `category` TEXT NOT NULL, `priority` TEXT NOT NULL, `status` TEXT NOT NULL, `costCents` INTEGER, `createdAt` TEXT NOT NULL, `local` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "number",
+            "columnName": "number",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "propertyId",
+            "columnName": "propertyId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitId",
+            "columnName": "unitId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "priority",
+            "columnName": "priority",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "costCents",
+            "columnName": "costCents",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "local",
+            "columnName": "local",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_ticket_propertyId",
+            "unique": false,
+            "columnNames": ["propertyId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_ticket_propertyId` ON `${TABLE_NAME}` (`propertyId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "ticket_update",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `ticketId` TEXT NOT NULL, `note` TEXT, `statusFrom` TEXT, `statusTo` TEXT, `photoCount` INTEGER NOT NULL, `createdAt` TEXT NOT NULL, `local` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ticketId",
+            "columnName": "ticketId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "statusFrom",
+            "columnName": "statusFrom",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "statusTo",
+            "columnName": "statusTo",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "photoCount",
+            "columnName": "photoCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "local",
+            "columnName": "local",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_ticket_update_ticketId",
+            "unique": false,
+            "columnNames": ["ticketId"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_ticket_update_ticketId` ON `${TABLE_NAME}` (`ticketId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "cash_collection",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `unitId` TEXT, `leaseId` TEXT, `amountCents` INTEGER NOT NULL, `receivedOn` TEXT NOT NULL, `payerName` TEXT, `note` TEXT, `status` TEXT NOT NULL, `rejectReason` TEXT, `createdAt` TEXT NOT NULL, `local` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitId",
+            "columnName": "unitId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "leaseId",
+            "columnName": "leaseId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "amountCents",
+            "columnName": "amountCents",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "receivedOn",
+            "columnName": "receivedOn",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payerName",
+            "columnName": "payerName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rejectReason",
+            "columnName": "rejectReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "local",
+            "columnName": "local",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        }
+      },
+      {
+        "tableName": "outbox",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `orgId` TEXT NOT NULL, `type` TEXT NOT NULL, `payload` TEXT NOT NULL, `photoPaths` TEXT NOT NULL, `photoKeys` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `state` TEXT NOT NULL, `errorCode` TEXT, `error` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "orgId",
+            "columnName": "orgId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payload",
+            "columnName": "payload",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "photoPaths",
+            "columnName": "photoPaths",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "photoKeys",
+            "columnName": "photoKeys",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "errorCode",
+            "columnName": "errorCode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "error",
+            "columnName": "error",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["id"]
+        },
+        "indices": [
+          {
+            "name": "index_outbox_orgId_state",
+            "unique": false,
+            "columnNames": ["orgId", "state"],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_outbox_orgId_state` ON `${TABLE_NAME}` (`orgId`, `state`)"
+          }
+        ]
+      },
+      {
+        "tableName": "sync_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`orgId` TEXT NOT NULL, `cursor` TEXT, `lastSyncedAt` INTEGER, `lastError` TEXT, PRIMARY KEY(`orgId`))",
+        "fields": [
+          {
+            "fieldPath": "orgId",
+            "columnName": "orgId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursor",
+            "columnName": "cursor",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastSyncedAt",
+            "columnName": "lastSyncedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastError",
+            "columnName": "lastError",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": ["orgId"]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8bf19fb282573e5f4a43e8f39c127313')"
+    ]
+  }
+}
