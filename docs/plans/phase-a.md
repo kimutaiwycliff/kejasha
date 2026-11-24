@@ -108,8 +108,11 @@ the phone app covers the daily loop and works without signal for caretakers.
     tenant STK status endpoint, so the app watches the balance after sending the prompt;
   - [~] Maestro `tenant-portal.yaml` (balance, statement, report) written; `tenant-pay.yaml`
     needs the Daraja sandbox (launch input). Neither run on a device yet.
-- [ ] **A4 Share-to-app M-Pesa SMS:** receive shared text, preview, add the payment (owner/agent),
+- [~] **A4 Share-to-app M-Pesa SMS:** receive shared text, preview, add the payment (owner/agent),
   matched or queued.
+  - [x] `text/plain` share target, a preview read like the API's parser (outgoing SMS refused),
+    `POST /v1/sms-payments`, then matched or "match it now"; other roles are told why not;
+  - [~] Maestro `sms-share.yaml` (shared via `adb am start … SEND`): written, not yet run.
 - [ ] **A5 Proof & polish:** Maestro flows for every slice on the emulator; Compose UI tests;
   accessibility pass; release build (R8, signing from environment), app docs page.
 

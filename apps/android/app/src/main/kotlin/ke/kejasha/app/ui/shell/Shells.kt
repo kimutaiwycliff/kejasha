@@ -65,7 +65,10 @@ import ke.kejasha.app.ui.caretaker.LogCashScreen
 import ke.kejasha.app.ui.caretaker.ReportTicketScreen
 import ke.kejasha.app.ui.caretaker.RoundScreen
 import ke.kejasha.app.ui.caretaker.SyncScreen
+import androidx.hilt.navigation.compose.hiltViewModel
 import ke.kejasha.app.ui.common.ConfirmDialog
+import ke.kejasha.app.ui.share.SharedTextViewModel
+import ke.kejasha.app.ui.share.SmsPaymentScreen
 import ke.kejasha.app.ui.tenant.TenantHomeScreen
 import ke.kejasha.app.ui.tenant.TenantPayScreen
 import ke.kejasha.app.ui.tenant.TenantRepairsScreen
@@ -115,9 +118,18 @@ fun StaffShell(account: Account.Staff, offline: Boolean, vm: SessionViewModel) {
         Shell.CARETAKER -> listOf(ROUND, REPAIRS, CASH, SYNC, MORE)
         Shell.VIEWER -> listOf(TODAY, MONTHS, MORE)
     }
+    val shared: SharedTextViewModel = hiltViewModel()
+    val sharedText by shared.text.collectAsStateWithLifecycle()
+    val canAddPayments = account.shell == Shell.OWNER
+    LaunchedEffect(sharedText, canAddPayments) {
+        if (sharedText != null && !canAddPayments) {
+            shared.discard()
+            vm.say("Only owners, managers and agents can add M-Pesa payments.")
+        }
+    }
     // A new org (and so maybe a new shell) starts a fresh navigation graph.
     key(account.active.orgId) {
-        ShellScaffold(account.active.orgName, offline, tabs, vm) { name, nav ->
+        ShellScaffold(account.active.orgName, offline, tabs, vm, incoming = SmsPaymentRoute.takeIf { canAddPayments && sharedText != null }) { name, nav ->
             when (name) {
                 "today" -> TodayScreen(
                     onMoney = { nav.tab("money") },
@@ -147,6 +159,14 @@ fun StaffShell(account: Account.Staff, offline: Boolean, vm: SessionViewModel) {
 /** Tenant portal: balances and pay (A3) across every landlord that holds this phone. */
 @Composable
 fun TenantShell(account: Account.Tenant, offline: Boolean, vm: SessionViewModel) {
+    val shared: SharedTextViewModel = hiltViewModel()
+    val sharedText by shared.text.collectAsStateWithLifecycle()
+    LaunchedEffect(sharedText) {
+        if (sharedText != null) {
+            shared.discard()
+            vm.say("M-Pesa messages are added by your landlord. Pay from Home instead.")
+        }
+    }
     ShellScaffold("My home", offline, listOf(HOME, STATEMENT, REPAIRS, MORE), vm) { name, nav ->
         when (name) {
             "home" -> TenantHomeScreen(account.user.name, onPay = { nav.open(TenantPayRoute(it.toString())) })
@@ -177,10 +197,13 @@ private fun ShellScaffold(
     offline: Boolean,
     tabs: List<Tab>,
     vm: SessionViewModel,
+    /** A screen to open as soon as the shell is shown (e.g. a shared SMS). */
+    incoming: Any? = null,
     tabContent: @Composable (name: String, nav: ShellNav) -> Unit,
 ) {
     val controller = rememberNavController()
     val nav = remember(controller) { ShellNav(controller) }
+    LaunchedEffect(incoming) { incoming?.let(nav::open) }
     val entry by controller.currentBackStackEntryAsState()
     val destination = entry?.destination
     val onTab = destination?.hasRoute(TabRoute::class) != false
@@ -238,6 +261,9 @@ private fun ShellScaffold(
                     composable<ReportTicketRoute> { ReportTicketScreen(onDone = { nav.back() }) }
                     composable<LogCashRoute> { LogCashScreen(onDone = { nav.back() }) }
                     composable<TenantPayRoute> { TenantPayScreen(onDone = { nav.back() }) }
+                    composable<SmsPaymentRoute> {
+                        SmsPaymentScreen(onMatch = { nav.back(); nav.open(PaymentRoute(it.toString())) }, onDone = { nav.back() })
+                    }
                 }
             }
         }
@@ -252,6 +278,7 @@ private fun detailTitle(destination: NavDestination?): String = when {
     destination.hasRoute(ReportTicketRoute::class) -> "Report a problem"
     destination.hasRoute(LogCashRoute::class) -> "Log cash"
     destination.hasRoute(TenantPayRoute::class) -> "Pay rent"
+    destination.hasRoute(SmsPaymentRoute::class) -> "Add M-Pesa payment"
     else -> ""
 }
 

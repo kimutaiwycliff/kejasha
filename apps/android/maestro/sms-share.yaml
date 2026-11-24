@@ -1,0 +1,17 @@
+# A4: an M-Pesa SMS shared from the messages app (run.sh sends it with `adb am start … SEND`).
+# The owner previews it, adds it, and it waits to be matched (no tenant has that account number).
+appId: ke.kejasha.app.dev
+---
+- extendedWaitUntil:
+    visible: 'Add M-Pesa payment'
+    timeout: 15000
+- assertVisible: '${AMOUNT}'
+- assertVisible: '${CODE}'
+- tapOn:
+    id: 'add-sms-payment'
+- extendedWaitUntil:
+    visible: 'Waiting to be matched'
+    timeout: 15000
+- tapOn:
+    id: 'match-now'
+- assertVisible: 'Match payment'

@@ -21,3 +21,6 @@ import kotlinx.serialization.Serializable
 
 /** A tenant pays rent on one lease by M-Pesa prompt. */
 @Serializable data class TenantPayRoute(val leaseId: String)
+
+/** An M-Pesa SMS shared into the app (see SharedText). */
+@Serializable data object SmsPaymentRoute

@@ -66,4 +66,7 @@ class SessionViewModel @Inject constructor(private val session: SessionRepositor
         }
     }
     fun messageShown() { _message.value = null }
+
+    /** A one-line notice in the shell's snackbar. */
+    fun say(text: String) { _message.value = text }
 }
