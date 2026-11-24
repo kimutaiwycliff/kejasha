@@ -6,6 +6,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -168,13 +169,16 @@ function OrgSwitcher({ me }: { me: Me }) {
         <ChevronsUpDown className="ml-auto size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="min-w-56" align="start">
-        <DropdownMenuLabel>Organizations</DropdownMenuLabel>
-        {me.memberships.map((m) => (
-          <DropdownMenuItem key={m.orgId} onClick={() => void switchOrg(m.orgId)}>
-            <span className="flex-1 truncate">{m.orgName}</span>
-            {m.orgId === me.activeOrg?.orgId && <Check className="size-4" />}
-          </DropdownMenuItem>
-        ))}
+        {/* Base UI requires a label to sit inside its group. */}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Organizations</DropdownMenuLabel>
+          {me.memberships.map((m) => (
+            <DropdownMenuItem key={m.orgId} onClick={() => void switchOrg(m.orgId)}>
+              <span className="flex-1 truncate">{m.orgName}</span>
+              {m.orgId === me.activeOrg?.orgId && <Check className="size-4" />}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => router.push('/onboarding?new=1')}>
           <Plus className="size-4" /> New organization

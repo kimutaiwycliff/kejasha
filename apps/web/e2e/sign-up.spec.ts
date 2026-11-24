@@ -17,6 +17,10 @@ test('sign up, create an organization, sign out and back in', async ({ page }) =
   await expect(page.getByRole('button', { name: 'Switch organization' })).toContainText(
     'Amina Rentals',
   );
+  // The switcher opens and lists the organization (a label outside its group used to crash it).
+  await page.getByRole('button', { name: 'Switch organization' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Amina Rentals' })).toBeVisible();
+  await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Account menu' }).click();
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/sign-in/);
