@@ -133,7 +133,7 @@ fun PropertyScreen(canEdit: Boolean, onSetLocation: (UUID) -> Unit, vm: Property
             val at = p.latitude?.let { lat -> p.longitude?.let { LngLat(it, lat) } }
             if (at != null) {
                 val state = rememberKejashaMapState(CameraPosition(center = at.position, zoom = 15.0))
-                val pins = remember(at) { listOf(MapPin("p", at, PinColors.Brand, "", p.name)) }
+                val pins = remember(at) { listOf(MapPin("p", at, PinColors.Brand, "", p.name, detail = listOfNotNull(p.area, p.county.value).joinToString(", ").ifEmpty { null })) }
                 KejashaMap(state, pins, Modifier.fillMaxWidth().height(180.dp).clip(MaterialTheme.shapes.medium))
                 if (canEdit) OutlinedButton(onClick = { onSetLocation(p.id) }) { Text("Move pin") }
             } else if (canEdit) {

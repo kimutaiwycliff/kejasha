@@ -203,6 +203,36 @@ async function tenant() {
   };
 }
 
-const scenarios = { owner, caretakerInvite, caretakerAssign, caretakerVerify, tenant };
+// A property pinned on the map with one let unit, for the map callout flow.
+async function mapPin() {
+  const token = await landlord();
+  // Earlier runs' pins would sit on top of this one: take them off the map first.
+  const old = await call('GET', '/v1/properties?q=Pin%20Court&limit=100', undefined, token);
+  for (const p of old.items.filter((p) => p.name.startsWith('Pin Court ') && p.latitude !== null)) {
+    await call('PATCH', `/v1/properties/${p.id}`, { latitude: null, longitude: null }, token);
+  }
+  const property = await call(
+    'POST',
+    '/v1/properties',
+    {
+      name: `Pin Court ${tag}`,
+      county: 'Lamu',
+      area: 'Shela',
+      // A spot of its own on the coast, so other test pins do not cover it.
+      latitude: Number((-2.29 + Number(tag.slice(-3)) / 100000).toFixed(6)),
+      longitude: 40.91,
+    },
+    token,
+  );
+  await call(
+    'POST',
+    `/v1/properties/${property.id}/units`,
+    { code: `PC${tag}`, mode: 'long_term', rentCents: 2_500_000 },
+    token,
+  );
+  return { NAME: property.name };
+}
+
+const scenarios = { owner, mapPin, caretakerInvite, caretakerAssign, caretakerVerify, tenant };
 const out = await scenarios[process.argv[2]](...process.argv.slice(3));
 for (const [k, v] of Object.entries(out)) console.log(`${k}=${v}`);

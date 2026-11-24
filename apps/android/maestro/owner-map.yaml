@@ -1,0 +1,21 @@
+# D: on Homes → Map, tapping a pin shows a callout with the property's name; tapping the callout
+# opens the property. Data from `node setup.mjs mapPin` (run.sh passes NAME).
+appId: ke.kejasha.app.dev
+---
+- runFlow: owner-sign-in.yaml
+- tapOn:
+    id: 'tab-homes'
+- tapOn: 'Map'
+- extendedWaitUntil:
+    visible: '${NAME}: 0 of 1 long-term units let'
+    timeout: 20000
+- tapOn: '${NAME}: 0 of 1 long-term units let'
+- assertVisible:
+    id: 'pin-callout'
+- assertVisible: '${NAME}'
+- assertVisible: '0 of 1 units let'
+- tapOn:
+    id: 'pin-callout'
+- extendedWaitUntil:
+    visible: 'Units'
+    timeout: 10000

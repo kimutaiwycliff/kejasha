@@ -20,6 +20,25 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import ke.kejasha.app.BuildConfig
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.map.MaplibreMap
@@ -38,7 +57,19 @@ data class LngLat(val lng: Double, val lat: Double) {
     val position: Position get() = Position(lng, lat)
 }
 
-data class MapPin(val id: String, val at: LngLat, val color: Color, val label: String, val description: String)
+/**
+ * A pin. [description] is what TalkBack reads; [name] and [detail] fill the callout shown when the
+ * pin is tapped.
+ */
+data class MapPin(
+    val id: String,
+    val at: LngLat,
+    val color: Color,
+    val label: String,
+    val description: String,
+    val name: String = description,
+    val detail: String? = null,
+)
 
 /** Kenya as a whole, for owners whose properties are not pinned yet. */
 val KENYA = CameraPosition(center = Position(37.9, 0.2), zoom = 5.4)
@@ -60,16 +91,19 @@ fun rememberKejashaMapState(camera: CameraPosition): MapState =
 
 /**
  * MapLibre with Kejasha pins: each pin is a composable placed at its coordinates, so it is
- * focusable and read by TalkBack ([MapPin.description]). Attribution stays on.
+ * focusable and read by TalkBack ([MapPin.description]). Tapping a pin shows a callout with its
+ * name (tap the pin again to hide it); when [onPin] is set, tapping the callout opens the pin.
+ * Attribution stays on.
  */
 @Composable
 fun KejashaMap(
     state: MapState,
     pins: List<MapPin>,
     modifier: Modifier = Modifier,
-    onPin: (String) -> Unit = {},
+    onPin: ((String) -> Unit)? = null,
     extra: @Composable () -> Unit = {},
 ) {
+    var selected by remember { mutableStateOf<String?>(null) }
     MaplibreMap(modifier = modifier, state = state, overlay = {
         include(MapOverlay.Default)
         pins.forEach { pin ->
@@ -80,15 +114,65 @@ fun KejashaMap(
                     .defaultMinSize(minWidth = 32.dp, minHeight = 32.dp)
                     .background(pin.color, CircleShape)
                     .border(2.dp, Color.White, CircleShape)
-                    .clickable(role = Role.Button) { onPin(pin.id) }
+                    .clickable(role = Role.Button) { selected = if (selected == pin.id) null else pin.id }
                     .semantics { contentDescription = pin.description; role = Role.Button },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(pin.label, color = Color.White, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 8.dp))
             }
         }
+        // The callout is drawn after the pins so it sits on top; its bottom edge is just above the pin.
+        pins.firstOrNull { it.id == selected }?.let { pin ->
+            key(pin.id) {
+                PinCallout(
+                    pin = pin,
+                    onOpen = onPin?.let { open -> { open(pin.id) } },
+                    modifier = Modifier.placedAt(pin.at.position, Alignment.BottomCenter).padding(bottom = 24.dp),
+                )
+            }
+        }
         extra()
     })
+}
+
+@Composable
+private fun PinCallout(pin: MapPin, onOpen: (() -> Unit)?, modifier: Modifier = Modifier) {
+    val shown = remember { MutableTransitionState(false) }.apply { targetState = true }
+    AnimatedVisibility(
+        visibleState = shown,
+        enter = fadeIn() + scaleIn(initialScale = 0.9f, transformOrigin = TransformOrigin(0.5f, 1f)),
+        modifier = modifier,
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            shadowElevation = 6.dp,
+            tonalElevation = 2.dp,
+            modifier = Modifier
+                .widthIn(max = 240.dp)
+                .testTag("pin-callout")
+                .then(
+                    if (onOpen != null) Modifier.clickable(role = Role.Button, onClickLabel = "Open ${pin.name}") { onOpen() }
+                    else Modifier,
+                ),
+        ) {
+            Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f, fill = false)) {
+                    Text(pin.name, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    pin.detail?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                if (onOpen != null) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 4.dp),
+                    )
+                }
+            }
+        }
+    }
 }
 
 /** Pin colours: fixed in both themes so white pin text stays readable (≥ 4.5:1). */
