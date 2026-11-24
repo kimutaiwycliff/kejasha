@@ -47,7 +47,7 @@ import ke.kejasha.app.data.db.UnitEntity
 import ke.kejasha.app.data.sync.CaretakerRepository
 import ke.kejasha.app.session.SessionRepository
 import ke.kejasha.app.ui.common.Empty
-import ke.kejasha.app.ui.common.LocalSnackbar
+import ke.kejasha.app.ui.common.LocalNotifier
 import ke.kejasha.app.ui.common.Page
 import ke.kejasha.app.ui.common.PhotoButtons
 import ke.kejasha.app.ui.common.Picker
@@ -139,8 +139,8 @@ class ReportTicketViewModel @Inject constructor(
 fun ReportTicketScreen(onDone: () -> Unit, vm: ReportTicketViewModel = hiltViewModel()) {
     val (props, units) = vm.places.collectAsStateWithLifecycle().value
     val saved by vm.saved.collectAsStateWithLifecycle()
-    val snackbar = LocalSnackbar.current
-    LaunchedEffect(saved) { if (saved) { snackbar.showSnackbar("Problem reported. It is sent when you are online."); onDone() } }
+    val notifier = LocalNotifier.current
+    LaunchedEffect(saved) { if (saved) { notifier?.show("Problem reported. It is sent when you are online."); onDone() } }
     var property by rememberSaveable { mutableStateOf<String?>(null) }
     var unit by rememberSaveable { mutableStateOf<String?>(null) }
     var title by rememberSaveable { mutableStateOf("") }
@@ -203,9 +203,9 @@ fun LocalTicketScreen(vm: LocalTicketViewModel = hiltViewModel()) {
     val data by vm.ticket.collectAsStateWithLifecycle()
     val (t, updates) = data ?: return
     var note by rememberSaveable { mutableStateOf("") }
-    val snackbar = LocalSnackbar.current
+    val notifier = LocalNotifier.current
     var saved by remember { mutableIntStateOf(0) }
-    LaunchedEffect(saved) { if (saved > 0) snackbar.showSnackbar("Update saved. It is sent when you are online.") }
+    LaunchedEffect(saved) { if (saved > 0) notifier?.show("Update saved. It is sent when you are online.") }
     val s = status(t.status)
     Page {
         Text(t.title, style = MaterialTheme.typography.headlineSmall)

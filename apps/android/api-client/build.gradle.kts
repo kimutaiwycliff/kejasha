@@ -46,7 +46,42 @@ kotlin {
     }
 }
 
-tasks.named("compileKotlin") { dependsOn("openApiGenerate") }
+// The spec's content is the input (inputSpec is a URI string Gradle cannot track).
+tasks.named("openApiGenerate") { inputs.file(spec).withPathSensitivity(PathSensitivity.NONE) }
+
+/**
+ * openapi-generator 7.14 drops `null` from some OpenAPI 3.1 nullable properties (`type: [T, "null"]`
+ * or `anyOf: [T, {type: null}]`), so the API's null would fail to decode. The spec is the truth:
+ * every property it marks nullable becomes nullable in the generated model.
+ */
+val markNullable by tasks.registering {
+    dependsOn("openApiGenerate")
+    val specFile = spec.asFile
+    val models = generatedDir.map { it.dir("src/main/kotlin/ke/kejasha/api/models").asFile }
+    inputs.file(specFile).withPathSensitivity(PathSensitivity.NONE)
+    outputs.dir(models)
+    doLast {
+        @Suppress("UNCHECKED_CAST")
+        val schemas = ((groovy.json.JsonSlurper().parse(specFile) as Map<String, Any?>)["components"] as Map<String, Any?>)["schemas"] as Map<String, Map<String, Any?>>
+        fun nullable(p: Map<*, *>): Boolean =
+            (p["type"] as? List<*>)?.contains("null") == true ||
+                listOf("anyOf", "oneOf").any { k -> (p[k] as? List<*>)?.any { (it as? Map<*, *>)?.get("type") == "null" } == true }
+        schemas.forEach { (name, schema) ->
+            val file = models.get().resolve("$name.kt")
+            val props = schema["properties"] as? Map<*, *> ?: return@forEach
+            if (!file.exists()) return@forEach
+            var text = file.readText()
+            props.filter { (_, v) -> v is Map<*, *> && nullable(v) }.keys.forEach { prop ->
+                text = Regex("""(@SerialName\(value = "$prop"\)\s+val $prop: )([^,\n?=]+?)(\s*[,\n])""").replace(text) { m ->
+                    "${m.groupValues[1]}${m.groupValues[2]}?${m.groupValues[3]}"
+                }
+            }
+            file.writeText(text)
+        }
+    }
+}
+
+tasks.named("compileKotlin") { dependsOn(markNullable) }
 
 dependencies {
     api(libs.retrofit)

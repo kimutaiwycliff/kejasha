@@ -82,7 +82,8 @@ fun TodayScreen(onMoney: () -> Unit, onStays: () -> Unit, onRepairs: () -> Unit,
     LoadableScreen(vm) { t ->
         val d = t.dashboard
         Page {
-            Text(d.landlordName)
+            // Only set when the view is limited to one landlord (an agency's client).
+            d.landlordName?.let { Text(it) }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Stat("Collected this month", formatKes(d.collectedCents), Modifier.weight(1f))
                 Stat("Arrears", formatKes(d.arrearsCents), Modifier.weight(1f))

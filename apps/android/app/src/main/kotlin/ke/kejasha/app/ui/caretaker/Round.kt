@@ -41,7 +41,7 @@ import ke.kejasha.app.data.sync.SyncScheduler
 import ke.kejasha.app.session.SessionRepository
 import ke.kejasha.app.ui.Centered
 import ke.kejasha.app.ui.common.ConfirmDialog
-import ke.kejasha.app.ui.common.LocalSnackbar
+import ke.kejasha.app.ui.common.LocalNotifier
 import ke.kejasha.app.ui.common.StatusChip
 import ke.kejasha.app.ui.common.Tone
 import ke.kejasha.app.util.formatDate
@@ -100,8 +100,8 @@ class RoundViewModel @Inject constructor(
 fun RoundScreen(vm: RoundViewModel = hiltViewModel()) {
     val ui by vm.ui.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
-    val snackbar = LocalSnackbar.current
-    LaunchedEffect(message) { message?.let { snackbar.showSnackbar(it); vm.messageShown() } }
+    val notifier = LocalNotifier.current
+    LaunchedEffect(message) { message?.let { notifier?.show(it); vm.messageShown() } }
     var property by rememberSaveable { mutableStateOf<String?>(null) }
     val u = ui ?: return
     if (u.properties.isEmpty()) {

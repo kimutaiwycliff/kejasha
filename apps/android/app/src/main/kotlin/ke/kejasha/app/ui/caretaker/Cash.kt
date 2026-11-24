@@ -29,7 +29,7 @@ import ke.kejasha.app.data.db.UnitEntity
 import ke.kejasha.app.data.sync.CaretakerRepository
 import ke.kejasha.app.session.SessionRepository
 import ke.kejasha.app.ui.common.Empty
-import ke.kejasha.app.ui.common.LocalSnackbar
+import ke.kejasha.app.ui.common.LocalNotifier
 import ke.kejasha.app.ui.common.MoneyField
 import ke.kejasha.app.ui.common.Page
 import ke.kejasha.app.ui.common.PhotoButtons
@@ -108,8 +108,8 @@ class LogCashViewModel @Inject constructor(
 fun LogCashScreen(onDone: () -> Unit, vm: LogCashViewModel = hiltViewModel()) {
     val units by vm.units.collectAsStateWithLifecycle()
     val saved by vm.saved.collectAsStateWithLifecycle()
-    val snackbar = LocalSnackbar.current
-    LaunchedEffect(saved) { if (saved) { snackbar.showSnackbar("Cash logged. The owner confirms it."); onDone() } }
+    val notifier = LocalNotifier.current
+    LaunchedEffect(saved) { if (saved) { notifier?.show("Cash logged. The owner confirms it."); onDone() } }
     var unit by rememberSaveable { mutableStateOf<String?>(null) }
     var amount by rememberSaveable { mutableStateOf("") }
     var payer by rememberSaveable { mutableStateOf("") }

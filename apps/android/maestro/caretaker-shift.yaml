@@ -68,3 +68,4 @@ appId: ke.kejasha.app.dev
     visible:
       id: 'all-sent'
     timeout: 60000
+- assertVisible: 'Nothing was refused.'
