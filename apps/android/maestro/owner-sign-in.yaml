@@ -1,0 +1,16 @@
+# The demo landlord signs in by email (setup for flows that start from outside the app).
+appId: ke.kejasha.app.dev
+---
+- launchApp:
+    clearState: true
+- tapOn: 'Email'
+- tapOn:
+    id: 'email'
+- inputText: 'landlord@demo.test'
+- tapOn:
+    id: 'password'
+- inputText: 'demo-password-123'
+- tapOn: 'Sign in'
+- extendedWaitUntil:
+    visible: 'Collected this month'
+    timeout: 20000

@@ -46,5 +46,15 @@ tenant() {
 }
 tenant_pay() { tenant pay; }
 
-flows=("${@:-sign_in owner caretaker tenant}")
+# A4: share an M-Pesa SMS into the app as the messages app would.
+sms() {
+  maestro test owner-sign-in.yaml
+  local code="S$(LC_ALL=C tr -dc 'A-Z0-9' </dev/urandom | head -c 9)"
+  local text="$code Confirmed. You have received Ksh3,250.00 from PETER OTIENO 0722000111 on 5/11/26 at 9:14 AM New M-PESA balance is Ksh80,500.00. Account number NOPE1"
+  adb shell am start -a android.intent.action.SEND -t text/plain --es android.intent.extra.TEXT "'$text'" \
+    -n ke.kejasha.app.dev/ke.kejasha.app.MainActivity >/dev/null
+  maestro test -e AMOUNT="Ksh 3,250.00" -e CODE="$code" sms-share.yaml
+}
+
+flows=("${@:-sign_in owner caretaker tenant sms}")
 for f in ${flows[@]}; do "$f"; done
