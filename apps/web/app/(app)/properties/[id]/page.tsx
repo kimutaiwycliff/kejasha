@@ -3,7 +3,9 @@ import { Badge } from '@kejasha/ui/components/badge';
 import { Button } from '@kejasha/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kejasha/ui/components/card';
 import { useQuery } from '@tanstack/react-query';
-import { ListPlus, Pencil, Plus, Users } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@kejasha/ui/components/tabs';
+import { LayoutGrid, ListPlus, MapPin, Pencil, Plus, Table2, Users } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
@@ -14,17 +16,34 @@ import { QueryFallback } from '@/components/query-fallback';
 import { PropertyDialog } from '@/components/portfolio/property-dialog';
 import { StaffDialog } from '@/components/portfolio/staff-dialog';
 import { BulkUnitsDialog, UnitDialog } from '@/components/portfolio/unit-dialogs';
+import { UnitBoard } from '@/components/portfolio/unit-board';
 import { UnitTable } from '@/components/portfolio/unit-table';
 import { api, unwrap } from '@/lib/api';
 import { useCan, useOrgKind, useWrite } from '@/lib/hooks';
 import { PROPERTY_KIND_LABEL } from '@/lib/labels';
+
+// MapLibre loads only on pages that show a map.
+const PropertyMap = dynamic(
+  () => import('@/components/portfolio/property-map').then((m) => m.PropertyMap),
+  {
+    ssr: false,
+    loading: () => <div className="h-48 animate-pulse rounded-lg bg-muted" />,
+  },
+);
+const LocationDialog = dynamic(
+  () => import('@/components/portfolio/location-dialog').then((m) => m.LocationDialog),
+  { ssr: false },
+);
 
 export default function PropertyPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const canEdit = useCan('manager');
   const agency = useOrgKind() === 'agency';
-  const [dialog, setDialog] = useState<'edit' | 'unit' | 'bulk' | 'staff' | null>(null);
+  const [dialog, setDialog] = useState<'edit' | 'unit' | 'bulk' | 'staff' | 'location' | null>(
+    null,
+  );
+  const [unitView, setUnitView] = useState<'board' | 'table'>('board');
   const close = (o: boolean) => !o && setDialog(null);
   const pQuery = useQuery({
     queryKey: ['property', id],
@@ -70,7 +89,7 @@ export default function PropertyPage() {
         </Badge>
       )}
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card>
           <CardContent>
             <Details
               items={[
@@ -99,6 +118,26 @@ export default function PropertyPage() {
             />
           </CardContent>
         </Card>
+        <Card id="location" className="gap-3">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Location</CardTitle>
+            {canEdit && live && (
+              <Button size="sm" variant="outline" onClick={() => setDialog('location')}>
+                <MapPin /> {p.latitude !== null ? 'Move pin' : 'Set location'}
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent>
+            {p.latitude !== null && p.longitude !== null ? (
+              <PropertyMap name={p.name} at={[p.longitude, p.latitude]} />
+            ) : (
+              <div className="flex h-48 flex-col items-center justify-center gap-2 rounded-lg bg-muted text-center text-sm text-muted-foreground">
+                <MapPin className="size-6 text-murram" aria-hidden />
+                Not on the map yet.
+              </div>
+            )}
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Staff</CardTitle>
@@ -122,22 +161,39 @@ export default function PropertyPage() {
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
           <CardTitle>Units</CardTitle>
-          {canEdit && live && (
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => setDialog('bulk')}>
-                <ListPlus /> Add many
-              </Button>
-              <Button size="sm" onClick={() => setDialog('unit')}>
-                <Plus /> Add unit
-              </Button>
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2">
+            <Tabs value={unitView} onValueChange={(v) => setUnitView(v as typeof unitView)}>
+              <TabsList>
+                <TabsTrigger value="board">
+                  <LayoutGrid /> Board
+                </TabsTrigger>
+                <TabsTrigger value="table">
+                  <Table2 /> Table
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {canEdit && live && (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setDialog('bulk')}>
+                  <ListPlus /> Add many
+                </Button>
+                <Button size="sm" onClick={() => setDialog('unit')}>
+                  <Plus /> Add unit
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          <UnitTable filter={{ propertyId: p.id }} hideProperty />
+          {unitView === 'board' ? (
+            <UnitBoard propertyId={p.id} />
+          ) : (
+            <UnitTable filter={{ propertyId: p.id }} hideProperty />
+          )}
         </CardContent>
       </Card>
       <PropertyDialog open={dialog === 'edit'} onOpenChange={close} property={p} />
+      {dialog === 'location' && <LocationDialog open onOpenChange={close} property={p} />}
       <UnitDialog
         open={dialog === 'unit'}
         onOpenChange={close}

@@ -37,7 +37,7 @@ a visual board of every unit.
 - [x] **D2 Web polish & motion:** dashboard with coloured KPI cards, count-up figures, a
   six-month chart and occupancy rings; page-enter and list stagger animations; semantic badges;
   empty states; org switcher search; reduced-motion respected.
-- [ ] **D3 Maps & unit board:** properties list ↔ map (clustered pins coloured by occupancy);
+- [x] **D3 Maps & unit board:** properties list ↔ map (clustered pins coloured by occupancy);
   property page with its map and a unit board (floors × units, coloured by status, tenant and
   balance on hover, legend); set a property's pin by tapping the map or "use my location".
   Android: a Homes tab with list ↔ map and the same unit board.
@@ -50,3 +50,13 @@ a visual board of every unit.
 - Android: lint, unit and Compose UI tests green; Maestro suite green on the emulator.
 - Contrast ≥ 4.5:1 for text in both themes; motion off under reduced-motion settings.
 - Docs: brand section and map configuration documented.
+
+## Notes
+- 2026-11-24 — **Generated Kotlin client fixes found by the maps:** coordinates are JSON numbers,
+  so OpenAPI `number` maps to `Double`; `anyOf: [primitive, null]` is normalised to
+  `type: [primitive, "null"]` before generation (it produced empty classes), and nullability is
+  applied to nested inline objects as well.
+- 2026-11-24 — **MapLibre Compose needs its renderer** as an explicit dependency
+  (`maplibre-native-ffi-runtime-opengl-android`, OpenGL ES for the widest device support).
+- 2026-11-24 — **MapLibre GL 6 worker** is served from `public/maplibre/worker-<version>.mjs`
+  (copied before dev/build); bundlers cannot follow its runtime worker URL.

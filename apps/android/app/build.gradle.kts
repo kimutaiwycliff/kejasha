@@ -9,6 +9,9 @@ plugins {
 /** Production API URL from configuration (ADR-016): -PkejashaApiUrl=https://api.<APP_DOMAIN>. */
 val prodApiUrl: String = (findProperty("kejashaApiUrl") as String?).orEmpty()
 
+/** Map style (ADR-022): OpenFreeMap unless -PkejashaMapStyleUrl points elsewhere. */
+val mapStyleUrl: String = (findProperty("kejashaMapStyleUrl") as String?) ?: "https://tiles.openfreemap.org/styles/liberty"
+
 android {
     namespace = "ke.kejasha.app"
     compileSdk = 37
@@ -20,6 +23,7 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "MAP_STYLE_URL", "\"$mapStyleUrl\"")
     }
 
     flavorDimensions += "env"
@@ -122,6 +126,9 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.serialization.json)
     implementation(libs.coil.compose)
+    implementation(libs.maplibre.compose)
+    // MapLibre's renderer (OpenGL ES: widest device support, works on emulators).
+    runtimeOnly(libs.maplibre.native.opengl)
     implementation(libs.coil.network)
 
     debugImplementation(libs.compose.ui.tooling)

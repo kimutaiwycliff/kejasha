@@ -406,6 +406,9 @@ DARAJA_CALLBACK_IPS=                   # Safaricom callback IPs (required in pro
 SYNC_LAG_SECONDS=10
 BACKUP_RETENTION_DAYS=30
 
+# Maps (ADR-022): style URL for MapLibre; OpenFreeMap when unset. Android: -PkejashaMapStyleUrl
+NEXT_PUBLIC_MAP_STYLE_URL=
+
 CRON_SECRET=
 GLITCHTIP_DSN=
 OTEL_EXPORTER_OTLP_ENDPOINT=

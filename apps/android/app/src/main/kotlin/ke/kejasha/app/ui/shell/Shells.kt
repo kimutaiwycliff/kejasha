@@ -65,7 +65,15 @@ import ke.kejasha.app.ui.caretaker.ReportTicketScreen
 import ke.kejasha.app.ui.caretaker.RoundScreen
 import ke.kejasha.app.ui.caretaker.SyncScreen
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.MapsHomeWork
+import androidx.compose.ui.Alignment
 import ke.kejasha.app.ui.common.ConfirmDialog
+import ke.kejasha.app.ui.common.KejashaMark
+import ke.kejasha.app.ui.homes.HomesScreen
+import ke.kejasha.app.ui.homes.LocationPickerScreen
+import ke.kejasha.app.ui.homes.PropertyScreen
 import ke.kejasha.app.ui.share.SharedTextViewModel
 import ke.kejasha.app.ui.share.SmsPaymentScreen
 import ke.kejasha.app.ui.tenant.TenantHomeScreen
@@ -108,6 +116,7 @@ private val ROUND = Tab("round", "Round", Icons.Outlined.Speed)
 private val CASH = Tab("cash", "Cash", Icons.Outlined.Payments)
 private val SYNC = Tab("sync", "Sync", Icons.Outlined.Sync)
 private val MONTHS = Tab("months", "Months", Icons.AutoMirrored.Outlined.ReceiptLong)
+private val HOMES = Tab("homes", "Homes", Icons.Outlined.MapsHomeWork)
 private val HOME = Tab("home", "Home", Icons.Outlined.Home)
 private val STATEMENT = Tab("statement", "Statement", Icons.AutoMirrored.Outlined.ReceiptLong)
 
@@ -115,9 +124,9 @@ private val STATEMENT = Tab("statement", "Statement", Icons.AutoMirrored.Outline
 @Composable
 fun StaffShell(account: Account.Staff, offline: Boolean, vm: SessionViewModel) {
     val tabs = when (account.shell) {
-        Shell.OWNER -> listOf(TODAY, MONEY, STAYS, REPAIRS, MORE)
+        Shell.OWNER -> listOf(TODAY, MONEY, HOMES, STAYS, REPAIRS)
         Shell.CARETAKER -> listOf(ROUND, REPAIRS, CASH, SYNC, MORE)
-        Shell.VIEWER -> listOf(TODAY, MONTHS, MORE)
+        Shell.VIEWER -> listOf(TODAY, HOMES, MONTHS, MORE)
     }
     val shared: SharedTextViewModel = hiltViewModel()
     val sharedText by shared.text.collectAsStateWithLifecycle()
@@ -130,7 +139,18 @@ fun StaffShell(account: Account.Staff, offline: Boolean, vm: SessionViewModel) {
     }
     // A new org (and so maybe a new shell) starts a fresh navigation graph.
     key(account.active.orgId) {
-        ShellScaffold(account.active.orgName, offline, tabs, vm, incoming = SmsPaymentRoute.takeIf { canAddPayments && sharedText != null }) { name, nav ->
+        val canEdit = account.active.role == MemberRole.OWNER || account.active.role == MemberRole.MANAGER
+        ShellScaffold(
+            account.active.orgName,
+            offline,
+            tabs,
+            vm,
+            incoming = SmsPaymentRoute.takeIf { canAddPayments && sharedText != null },
+            // Owners have five working tabs; their account opens from the top bar.
+            accountInTopBar = account.shell == Shell.OWNER,
+            canEditProperties = canEdit,
+            account = { AccountPane(account, vm) },
+        ) { name, nav ->
             when (name) {
                 "today" -> TodayScreen(
                     onMoney = { nav.tab("money") },
@@ -151,6 +171,7 @@ fun StaffShell(account: Account.Staff, offline: Boolean, vm: SessionViewModel) {
                 "cash" -> CashScreen(onLog = { nav.open(LogCashRoute) })
                 "sync" -> SyncScreen()
                 "months" -> MonthsScreen()
+                "homes" -> HomesScreen(onProperty = { nav.open(PropertyRoute(it.toString())) })
                 else -> AccountPane(account, vm)
             }
         }
@@ -200,6 +221,10 @@ private fun ShellScaffold(
     vm: SessionViewModel,
     /** A screen to open as soon as the shell is shown (e.g. a shared SMS). */
     incoming: Any? = null,
+    /** Owners: an account button in the top bar instead of a "More" tab. */
+    accountInTopBar: Boolean = false,
+    canEditProperties: Boolean = false,
+    account: @Composable () -> Unit = {},
     tabContent: @Composable (name: String, nav: ShellNav) -> Unit,
 ) {
     val controller = rememberNavController()
@@ -220,11 +245,27 @@ private fun ShellScaffold(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(if (onTab) title else detailTitle(destination)) },
+                    title = {
+                        if (onTab) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                KejashaMark(28.dp)
+                                Text(title, maxLines = 1)
+                            }
+                        } else {
+                            Text(detailTitle(destination))
+                        }
+                    },
                     navigationIcon = {
                         if (!onTab) {
                             IconButton(onClick = { nav.back() }) {
                                 Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
+                            }
+                        }
+                    },
+                    actions = {
+                        if (onTab && accountInTopBar) {
+                            IconButton(onClick = { nav.open(AccountRoute) }, modifier = Modifier.testTag("account")) {
+                                Icon(Icons.Outlined.AccountCircle, contentDescription = "Account")
                             }
                         }
                     },
@@ -264,6 +305,11 @@ private fun ShellScaffold(
                     composable<ReportTicketRoute> { ReportTicketScreen(onDone = { nav.back() }) }
                     composable<LogCashRoute> { LogCashScreen(onDone = { nav.back() }) }
                     composable<TenantPayRoute> { TenantPayScreen(onDone = { nav.back() }) }
+                    composable<PropertyRoute> {
+                        PropertyScreen(canEdit = canEditProperties, onSetLocation = { nav.open(LocationRoute(it.toString())) })
+                    }
+                    composable<LocationRoute> { LocationPickerScreen(onDone = { nav.back() }) }
+                    composable<AccountRoute> { account() }
                     composable<SmsPaymentRoute> {
                         SmsPaymentScreen(onMatch = { nav.back(); nav.open(PaymentRoute(it.toString())) }, onDone = { nav.back() })
                     }
@@ -282,6 +328,9 @@ private fun detailTitle(destination: NavDestination?): String = when {
     destination.hasRoute(LogCashRoute::class) -> "Log cash"
     destination.hasRoute(TenantPayRoute::class) -> "Pay rent"
     destination.hasRoute(SmsPaymentRoute::class) -> "Add M-Pesa payment"
+    destination.hasRoute(PropertyRoute::class) -> "Property"
+    destination.hasRoute(LocationRoute::class) -> "Set location"
+    destination.hasRoute(AccountRoute::class) -> "Account"
     else -> ""
 }
 

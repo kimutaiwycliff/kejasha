@@ -8,5 +8,6 @@ appId: ke.kejasha.app.dev
 - tapOn:
     id: 'phone'
 - inputText: ${PHONE}
+- hideKeyboard
 - tapOn: 'Send code'
 - assertVisible: 'Verify'

@@ -11,6 +11,7 @@ appId: ke.kejasha.app.dev
 - tapOn:
     id: 'password'
 - inputText: 'demo-password-123'
+- hideKeyboard
 - tapOn: 'Sign in'
 - extendedWaitUntil:
     visible: 'Collected this month'
