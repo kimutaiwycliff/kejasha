@@ -13,6 +13,11 @@ const badgeVariants = cva(
         destructive:
           'bg-destructive/10 text-red-700 dark:text-red-300 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20',
         outline: 'border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground',
+        // Status colours (docs/plans/phase-d.md): same meaning on every screen.
+        success: 'bg-success-soft text-success-ink',
+        warning: 'bg-warning-soft text-warning-ink',
+        info: 'bg-info-soft text-info-ink',
+        murram: 'bg-murram-soft text-murram',
         ghost: 'hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50',
         link: 'text-primary underline-offset-4 hover:underline',
       },

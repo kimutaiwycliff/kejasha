@@ -31,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -40,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import ke.kejasha.app.ui.Centered
+import ke.kejasha.app.ui.theme.LocalStatusColors
 
 /**
  * One-line notices in the shell's snackbar. They run in the shell's scope, so a message sent just
@@ -109,21 +109,25 @@ fun Stat(label: String, value: String, modifier: Modifier = Modifier, onClick: (
     }
 }
 
-/** A small coloured label for a status. */
+/** A small coloured label for a status (same colours as the web: docs/plans/phase-d.md). */
 @Composable
 fun StatusChip(text: String, tone: Tone = Tone.NEUTRAL) {
+    val c = LocalStatusColors.current
     val (bg, fg) = when (tone) {
-        Tone.GOOD -> Color(0xFF047857) to Color.White
-        Tone.WARN -> Color(0xFFB45309) to Color.White
-        Tone.BAD -> Color(0xFFB91C1C) to Color.White
+        Tone.GOOD -> c.goodSoft to c.good
+        Tone.WARN -> c.warnSoft to c.warn
+        Tone.BAD -> c.badSoft to c.bad
+        Tone.INFO -> c.infoSoft to c.info
+        Tone.MURRAM -> c.murramSoft to c.murram
         Tone.NEUTRAL -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
     Surface(color = bg, contentColor = fg, shape = MaterialTheme.shapes.small) {
-        Text(text, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp))
+        Text(text, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
     }
 }
 
-enum class Tone { GOOD, WARN, BAD, NEUTRAL }
+/** Status meanings: good = paid/occupied, warn = due soon, bad = owing, info = short stays, murram = vacant. */
+enum class Tone { GOOD, WARN, BAD, INFO, MURRAM, NEUTRAL }
 
 /** A label and value on one line. */
 @Composable

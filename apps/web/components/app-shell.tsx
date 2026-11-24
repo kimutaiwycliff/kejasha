@@ -26,13 +26,16 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@kejasha/ui/components/sidebar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@kejasha/ui/components/dialog';
+import { Input } from '@kejasha/ui/components/input';
+import { KejashaLogo } from '@kejasha/ui/components/logo';
 import { Skeleton } from '@kejasha/ui/components/skeleton';
 import { useQuery } from '@tanstack/react-query';
-import { Check, ChevronsUpDown, LogOut, Moon, Plus, Sun } from 'lucide-react';
+import { Check, ChevronsUpDown, LogOut, Moon, Plus, Search, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { api, unwrap } from '@/lib/api';
 import { formatDate } from '@/lib/format';
 import { NAV } from '@/lib/nav';
@@ -95,12 +98,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <AppSidebar me={me} />
       <SidebarInset>
-        <header className="flex h-14 items-center gap-2 border-b px-4">
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur">
           <SidebarTrigger aria-label="Toggle navigation" />
           <span className="truncate font-medium">{me.activeOrg.orgName}</span>
         </header>
         <BillingBanner role={activeRole(me)} />
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        {/* Each page rises in gently (off under reduced motion). */}
+        <main key={pathname} className="animate-rise flex-1 p-4 md:p-6">
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );
@@ -120,7 +126,10 @@ function AppSidebar({ me }: { me: Me }) {
   })).filter((sec) => sec.items.length > 0);
   return (
     <Sidebar>
-      <SidebarHeader>
+      <SidebarHeader className="gap-3 pt-4">
+        <Link href="/dashboard" aria-label="Kejasha home" className="px-2">
+          <KejashaLogo inverse />
+        </Link>
         <OrgSwitcher me={me} />
       </SidebarHeader>
       <SidebarContent>
@@ -152,39 +161,138 @@ function AppSidebar({ me }: { me: Me }) {
   );
 }
 
+/** Shown in the menu before "All organizations…" opens a searchable list. */
+const MENU_ORGS = 6;
+
 function OrgSwitcher({ me }: { me: Me }) {
   const switchOrg = useSwitchOrg();
   const router = useRouter();
+  const [browsing, setBrowsing] = useState(false);
+  const active = me.activeOrg?.orgId;
+  // The active org first, then the rest; long lists move to the searchable dialog.
+  const ordered = [
+    ...me.memberships.filter((m) => m.orgId === active),
+    ...me.memberships.filter((m) => m.orgId !== active),
+  ];
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={<SidebarMenuButton size="lg" aria-label="Switch organization" />}
-      >
-        <div className="grid flex-1 text-left leading-tight">
-          <span className="truncate font-semibold">{me.activeOrg?.orgName}</span>
-          <span className="truncate text-xs capitalize text-muted-foreground">
-            {me.activeOrg?.kind} · {me.activeOrg?.role}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <SidebarMenuButton
+              size="lg"
+              aria-label="Switch organization"
+              className="bg-sidebar-accent/60 hover:bg-sidebar-accent"
+            />
+          }
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[#E8875F] text-sm font-bold text-[#1c1917]">
+            {initialsOf(me.activeOrg?.orgName ?? '?')}
           </span>
-        </div>
-        <ChevronsUpDown className="ml-auto size-4" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="min-w-56" align="start">
-        {/* Base UI requires a label to sit inside its group. */}
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Organizations</DropdownMenuLabel>
-          {me.memberships.map((m) => (
-            <DropdownMenuItem key={m.orgId} onClick={() => void switchOrg(m.orgId)}>
-              <span className="flex-1 truncate">{m.orgName}</span>
-              {m.orgId === me.activeOrg?.orgId && <Check className="size-4" />}
-            </DropdownMenuItem>
+          <div className="grid flex-1 text-left leading-tight">
+            <span className="truncate font-semibold">{me.activeOrg?.orgName}</span>
+            <span className="truncate text-xs capitalize text-sidebar-muted">
+              {me.activeOrg?.kind} · {me.activeOrg?.role}
+            </span>
+          </div>
+          <ChevronsUpDown className="ml-auto size-4" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="min-w-60" align="start">
+          {/* Base UI requires a label to sit inside its group. */}
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Organizations</DropdownMenuLabel>
+            {ordered.slice(0, MENU_ORGS).map((m) => (
+              <DropdownMenuItem key={m.orgId} onClick={() => void switchOrg(m.orgId)}>
+                <span className="flex-1 truncate">{m.orgName}</span>
+                {m.orgId === active && <Check className="size-4 text-primary" />}
+              </DropdownMenuItem>
+            ))}
+            {ordered.length > MENU_ORGS && (
+              <DropdownMenuItem onClick={() => setBrowsing(true)}>
+                <Search className="size-4" /> All organizations ({ordered.length})…
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => router.push('/onboarding?new=1')}>
+            <Plus className="size-4" /> New organization
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <OrgPicker
+        open={browsing}
+        onOpenChange={setBrowsing}
+        orgs={ordered}
+        active={active}
+        onPick={(id) => {
+          setBrowsing(false);
+          void switchOrg(id);
+        }}
+      />
+    </>
+  );
+}
+
+function initialsOf(name: string) {
+  const letters = name
+    .split(/\s+/)
+    .map((w) => w.match(/[A-Za-z0-9]/)?.[0] ?? '')
+    .join('');
+  return (letters.slice(0, 2) || '·').toUpperCase();
+}
+
+/** Every organization, searchable by name (agencies and staff can belong to many). */
+function OrgPicker({
+  open,
+  onOpenChange,
+  orgs,
+  active,
+  onPick,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  orgs: Me['memberships'];
+  active: string | undefined;
+  onPick: (orgId: string) => void;
+}) {
+  const [q, setQ] = useState('');
+  const shown = orgs
+    .filter((m) => m.orgName.toLowerCase().includes(q.trim().toLowerCase()))
+    .slice(0, 50);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Switch organization</DialogTitle>
+        </DialogHeader>
+        <Input
+          autoFocus
+          type="search"
+          placeholder="Search by name"
+          aria-label="Search organizations"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <ul className="max-h-80 space-y-1 overflow-y-auto">
+          {shown.map((m) => (
+            <li key={m.orgId}>
+              <button
+                type="button"
+                onClick={() => onPick(m.orgId)}
+                className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm hover:bg-accent"
+              >
+                <span className="flex-1 truncate">{m.orgName}</span>
+                <span className="text-xs capitalize text-muted-foreground">{m.role}</span>
+                {m.orgId === active && <Check className="size-4 text-primary" />}
+              </button>
+            </li>
           ))}
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push('/onboarding?new=1')}>
-          <Plus className="size-4" /> New organization
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {shown.length === 0 && (
+            <li className="px-2 py-6 text-center text-sm text-muted-foreground">No match.</li>
+          )}
+        </ul>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -205,7 +313,7 @@ function UserMenu({ me }: { me: Me }) {
         </Avatar>
         <div className="grid flex-1 text-left leading-tight">
           <span className="truncate text-sm font-medium">{me.user.name}</span>
-          <span className="truncate text-xs text-muted-foreground">
+          <span className="truncate text-xs text-sidebar-muted">
             {me.user.email ?? me.user.phone}
           </span>
         </div>
