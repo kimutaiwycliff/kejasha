@@ -46,6 +46,12 @@ test('a property is pinned on the map and its units show on the board', async ({
   await page.getByRole('tab', { name: 'Map' }).click();
   const pin = page.getByRole('button', { name: new RegExp(`^Map Court ${tag}`) });
   await expect(pin).toBeVisible({ timeout: 20_000 });
-  await pin.click();
+  // Hover or keyboard focus shows a popover with the property's name (focus is used here because
+  // other tests' pins can sit on the same spot).
+  await pin.focus();
+  const tip = pin.locator('xpath=following-sibling::div');
+  await expect(tip).toContainText(`Map Court ${tag}`);
+  await expect(tip).toHaveCSS('opacity', '1');
+  await pin.press('Enter');
   await expect(page).toHaveURL(new RegExp(`/properties/${property.id}`));
 });

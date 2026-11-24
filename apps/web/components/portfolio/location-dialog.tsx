@@ -53,7 +53,18 @@ export function LocationDialog({
   );
   const markers: MapMarker[] = useMemo(
     () =>
-      at ? [{ id: 'here', at, color: 'var(--murram)', title: `${property.name} goes here` }] : [],
+      at
+        ? [
+            {
+              id: 'here',
+              at,
+              color: 'var(--murram)',
+              title: `${property.name} goes here`,
+              heading: property.name,
+              detail: 'Pin goes here',
+            },
+          ]
+        : [],
     [at, property.name],
   );
   const locate = () => {

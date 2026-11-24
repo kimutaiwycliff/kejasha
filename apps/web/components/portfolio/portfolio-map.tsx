@@ -49,6 +49,15 @@ export function PortfolioMap() {
             title: o
               ? `${p.name}: ${o.occupied} of ${o.units} long-term units let${p.unitCounts.shortStay ? `, ${p.unitCounts.shortStay} short-stay` : ''}`
               : `${p.name}: ${p.unitCounts.total} units`,
+            heading: p.name,
+            detail: [
+              o && o.units > 0
+                ? `${o.occupied} of ${o.units} units let`
+                : `${p.unitCounts.total} units`,
+              p.unitCounts.shortStay ? `${p.unitCounts.shortStay} short-stay` : null,
+            ]
+              .filter(Boolean)
+              .join(' · '),
           };
         }),
     [props.data, byName],
