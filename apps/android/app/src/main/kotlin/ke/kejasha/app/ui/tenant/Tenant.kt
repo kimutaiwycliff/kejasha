@@ -6,6 +6,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.graphics.Color
+import ke.kejasha.app.ui.common.CountUp
+import ke.kejasha.app.ui.theme.LocalStatusColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
@@ -85,15 +90,24 @@ fun TenantHomeScreen(name: String, onPay: (UUID) -> Unit, vm: TenantHomeViewMode
         val leases = me.leases()
         if (leases.isEmpty()) Empty("No homes are linked to your phone number yet. Ask your landlord to add it to your tenancy.")
         leases.forEach { (landlord, l) ->
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            // Each home as a hero card on the brand's forest green: what you owe, front and centre.
+            Card(
+                colors = CardDefaults.cardColors(containerColor = LocalStatusColors.current.forest, contentColor = Color.White),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text("${l.unitCode} · ${l.propertyName}", style = MaterialTheme.typography.titleMedium)
-                    Text("Landlord: $landlord", style = MaterialTheme.typography.bodySmall)
-                    Row2("Rent", "${formatKes(l.currentRentCents)} a month")
-                    Row2("You owe", formatKes(maxOf(l.balanceCents, 0)))
+                    Text("Landlord: $landlord", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB9D3C9))
+                    Text("You owe", style = MaterialTheme.typography.labelLarge, color = Color(0xFFB9D3C9), modifier = Modifier.padding(top = 8.dp))
+                    CountUp(maxOf(l.balanceCents, 0), ::formatKes, MaterialTheme.typography.headlineMedium)
+                    Text("Rent ${formatKes(l.currentRentCents)} a month", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB9D3C9))
                     if (l.balanceCents < 0) Text("You have ${formatKes(-l.balanceCents)} in credit.")
                     if (l.status == PortalLease.Status.ACTIVE) {
-                        Button(onClick = { onPay(l.leaseId) }, modifier = Modifier.testTag("pay-${l.unitCode}")) { Text("Pay with M-Pesa") }
+                        Button(
+                            onClick = { onPay(l.leaseId) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE8875F), contentColor = Color(0xFF1C1917)),
+                            modifier = Modifier.padding(top = 8.dp).testTag("pay-${l.unitCode}"),
+                        ) { Text("Pay with M-Pesa") }
                     } else {
                         StatusChip("Ended", Tone.NEUTRAL)
                     }

@@ -6,7 +6,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.contentDescription
+import ke.kejasha.app.ui.common.KejashaMark
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,7 +42,7 @@ fun AppRoot(vm: SessionViewModel = hiltViewModel()) {
     // testTag → resource-id, so Maestro flows can find elements by id.
     Surface(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
         when (val s = state) {
-            SessionState.Loading -> Centered { CircularProgressIndicator() }
+            SessionState.Loading -> Centered { Launching() }
             SessionState.SignedOut -> SignInScreen()
             SessionState.UpdateRequired -> Centered {
                 Text("Update Kejasha", style = MaterialTheme.typography.headlineSmall)
@@ -62,4 +69,12 @@ fun Centered(content: @Composable () -> Unit) {
             content()
         }
     }
+}
+
+/** The mark breathing gently while the session loads (static when animations are off). */
+@Composable
+private fun Launching() {
+    val pulse = rememberInfiniteTransition(label = "launch")
+    val alpha by pulse.animateFloat(0.55f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "alpha")
+    Box(Modifier.alpha(alpha).semantics { contentDescription = "Loading Kejasha" }) { KejashaMark(72.dp) }
 }

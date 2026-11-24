@@ -65,6 +65,11 @@ import ke.kejasha.app.ui.caretaker.ReportTicketScreen
 import ke.kejasha.app.ui.caretaker.RoundScreen
 import ke.kejasha.app.ui.caretaker.SyncScreen
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.MapsHomeWork
@@ -296,7 +301,16 @@ private fun ShellScaffold(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     )
                 }
-                NavHost(controller, startDestination = tabRoute(tabs.first().name), modifier = Modifier.fillMaxSize()) {
+                NavHost(
+                    controller,
+                    startDestination = tabRoute(tabs.first().name),
+                    modifier = Modifier.fillMaxSize(),
+                    // Gentle motion: detail screens slide in a little; tabs cross-fade.
+                    enterTransition = { fadeIn(tween(220)) + slideInHorizontally(tween(220)) { it / 10 } },
+                    exitTransition = { fadeOut(tween(160)) },
+                    popEnterTransition = { fadeIn(tween(220)) },
+                    popExitTransition = { fadeOut(tween(160)) + slideOutHorizontally(tween(220)) { it / 10 } },
+                ) {
                     tabs.forEach { tab -> composable(tabRoute(tab.name)) { tabContent(tab.name, nav) } }
                     composable<PaymentRoute> { PaymentMatchScreen(onDone = { nav.back() }) }
                     composable<RequestPaymentRoute> { RequestPaymentScreen(onDone = { nav.back() }) }
