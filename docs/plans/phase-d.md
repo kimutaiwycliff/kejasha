@@ -1,6 +1,6 @@
 # Phase D — Design: brand, theme, motion and maps
 
-> Status: **IN PROGRESS** · drafted 2026-11-24 · ADR-022
+> Status: **DONE** (2026-11-24) · drafted 2026-11-24 · ADR-022
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 > UI only: the API contract does not change (properties already have latitude/longitude).
 
@@ -41,7 +41,7 @@ a visual board of every unit.
   property page with its map and a unit board (floors × units, coloured by status, tenant and
   balance on hover, legend); set a property's pin by tapping the map or "use my location".
   Android: a Homes tab with list ↔ map and the same unit board.
-- [ ] **D4 Android polish & motion:** brand sign-in, Today with coloured cards, count-up and a
+- [x] **D4 Android polish & motion:** brand sign-in, Today with coloured cards, count-up and a
   trend chart, animated tab and screen transitions, account moved to the top bar for owners,
   tenant home with a balance card.
 
@@ -60,3 +60,5 @@ a visual board of every unit.
   (`maplibre-native-ffi-runtime-opengl-android`, OpenGL ES for the widest device support).
 - 2026-11-24 — **MapLibre GL 6 worker** is served from `public/maplibre/worker-<version>.mjs`
   (copied before dev/build); bundlers cannot follow its runtime worker URL.
+- 2026-11-24 — **Verified on the emulator:** the full Maestro suite (11 flows, 127 steps) passes
+  on the redesigned app; the caretaker's offline shift is confirmed once through the API.

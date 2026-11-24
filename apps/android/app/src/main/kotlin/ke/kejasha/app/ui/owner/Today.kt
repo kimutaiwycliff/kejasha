@@ -25,7 +25,22 @@ import ke.kejasha.app.ui.common.LoadViewModel
 import ke.kejasha.app.ui.common.LoadableScreen
 import ke.kejasha.app.ui.common.Page
 import ke.kejasha.app.ui.common.SectionTitle
-import ke.kejasha.app.ui.common.Stat
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Build
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
+import ke.kejasha.app.ui.common.CountUp
+import ke.kejasha.app.ui.common.MetricCard
+import ke.kejasha.app.ui.common.PairedBars
+import ke.kejasha.app.ui.common.Tone
+import ke.kejasha.app.ui.theme.LocalStatusColors
 import ke.kejasha.app.ui.common.clickableRow
 import ke.kejasha.app.util.currentPeriod
 import ke.kejasha.app.util.formatKes
@@ -81,20 +96,56 @@ class TodayViewModel @Inject constructor(
 fun TodayScreen(onMoney: () -> Unit, onStays: () -> Unit, onRepairs: () -> Unit, vm: TodayViewModel = hiltViewModel()) =
     LoadableScreen(vm) { t ->
         val d = t.dashboard
+        val status = LocalStatusColors.current
         Page {
             // Only set when the view is limited to one landlord (an agency's client).
-            d.landlordName?.let { Text(it) }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Stat("Collected this month", formatKes(d.collectedCents), Modifier.weight(1f))
-                Stat("Arrears", formatKes(d.arrearsCents), Modifier.weight(1f))
+            d.landlordName?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+            // Hero: the month's collections on the brand's forest green.
+            Card(
+                colors = CardDefaults.cardColors(containerColor = status.forest, contentColor = Color.White),
+                onClick = onMoney,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Collected this month", style = MaterialTheme.typography.labelLarge, color = Color(0xFFB9D3C9))
+                    CountUp(d.collectedCents, ::formatKes, MaterialTheme.typography.headlineMedium)
+                    Text("Net ${formatKes(d.netCents)} after expenses", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB9D3C9))
+                }
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                t.toMatch?.let { Stat("Payments to match", count(it), Modifier.weight(1f), onClick = onMoney) }
-                t.cashPending?.let { Stat("Cash to confirm", count(it), Modifier.weight(1f), onClick = onMoney) }
+                MetricCard(
+                    "Arrears", d.arrearsCents, ::formatKes, Icons.Outlined.WarningAmber,
+                    if (d.arrearsCents > 0) Tone.BAD else Tone.GOOD, Modifier.weight(1f), onClick = onMoney,
+                )
+                MetricCard(
+                    "Open repairs", d.activeTickets.toLong(), { it.toString() }, Icons.Outlined.Build,
+                    if (d.activeTickets > 0) Tone.MURRAM else Tone.GOOD, Modifier.weight(1f), onClick = onRepairs,
+                )
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Stat("Open repairs", d.activeTickets.toString(), Modifier.weight(1f), onClick = onRepairs)
-                Stat("Net this month", formatKes(d.netCents), Modifier.weight(1f))
+            if (t.toMatch != null || t.cashPending != null) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    t.toMatch?.let {
+                        MetricCard("Payments to match", it.toLong(), { n -> count(n.toInt()) }, Icons.AutoMirrored.Outlined.ReceiptLong, if (it > 0) Tone.WARN else Tone.GOOD, Modifier.weight(1f), onClick = onMoney)
+                    }
+                    t.cashPending?.let {
+                        MetricCard("Cash to confirm", it.toLong(), { n -> count(n.toInt()) }, Icons.Outlined.Payments, if (it > 0) Tone.WARN else Tone.GOOD, Modifier.weight(1f), onClick = onMoney)
+                    }
+                }
+            }
+            if (d.trend.isNotEmpty()) {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Last six months", style = MaterialTheme.typography.titleMedium)
+                        PairedBars(
+                            months = d.trend.map { Triple(monthShort(it.period), it.collectedCents, it.expensesCents) },
+                            aLabel = "Collected",
+                            bLabel = "Expenses",
+                            a = MaterialTheme.colorScheme.primary,
+                            b = MaterialTheme.colorScheme.secondary,
+                            summary = d.trend.joinToString("; ") { "${monthShort(it.period)}: collected ${formatKes(it.collectedCents)}, expenses ${formatKes(it.expensesCents)}" },
+                        )
+                    }
+                }
             }
             SectionTitle("Arriving today")
             if (t.arrivals.isEmpty()) Empty("No check-ins today.")
@@ -104,6 +155,11 @@ fun TodayScreen(onMoney: () -> Unit, onStays: () -> Unit, onRepairs: () -> Unit,
             t.departures.forEach { BookingLine(it, onStays) }
         }
     }
+
+private val monthFormat = java.time.format.DateTimeFormatter.ofPattern("MMM", java.util.Locale.ENGLISH)
+
+/** "2026-11" → "Nov". */
+private fun monthShort(period: String) = runCatching { java.time.YearMonth.parse(period).format(monthFormat) }.getOrDefault(period)
 
 private fun count(n: Int) = if (n >= 100) "100+" else n.toString()
 
