@@ -12,8 +12,11 @@ export type MapMarker = {
   color: string;
   /** Short text inside the pin (e.g. "8/12"). */
   label?: string;
-  /** Read by screen readers and shown on hover. */
+  /** Read by screen readers. */
   title: string;
+  /** Hover/focus popover: a bold heading (defaults to `title`) and an optional detail line. */
+  heading?: string;
+  detail?: string;
 };
 
 type Maplibre = typeof MaplibreModule;
@@ -91,16 +94,32 @@ export function MapView({
     const placed: Marker[] = markers.map((m, i) => {
       // MapLibre positions the wrapper with a CSS transform; the pin inside it can animate freely.
       const wrap = document.createElement('div');
+      wrap.className = 'group relative hover:z-10 focus-within:z-10';
       const el = document.createElement('button');
       wrap.appendChild(el);
       el.type = 'button';
-      el.title = m.title;
       el.setAttribute('aria-label', m.title);
       el.className =
         'animate-pop flex min-w-8 h-8 items-center justify-center rounded-full border-2 border-white px-2 text-xs font-bold text-white shadow-lg transition-transform hover:scale-110 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring';
       el.style.background = m.color;
       el.style.setProperty('--i', String(i));
       el.textContent = m.label ?? '';
+      // Popover above the pin on hover or keyboard focus (decorative: the button's label says it).
+      const tip = document.createElement('div');
+      tip.setAttribute('aria-hidden', 'true');
+      tip.className =
+        'pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-56 -translate-x-1/2 translate-y-1 rounded-lg bg-popover px-3 py-2 text-left text-popover-foreground opacity-0 shadow-lg ring-1 ring-foreground/10 transition duration-150 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 motion-reduce:transition-none';
+      const head = document.createElement('p');
+      head.className = 'text-sm font-semibold leading-tight';
+      head.textContent = m.heading ?? m.title;
+      tip.appendChild(head);
+      if (m.detail) {
+        const sub = document.createElement('p');
+        sub.className = 'mt-0.5 text-xs text-muted-foreground';
+        sub.textContent = m.detail;
+        tip.appendChild(sub);
+      }
+      wrap.appendChild(tip);
       el.addEventListener('click', (e) => {
         e.stopPropagation();
         onMarkerClick?.(m.id);
