@@ -1,0 +1,43 @@
+# A1: the owner confirms a caretaker's cash and matches an M-Pesa payment to the tenant.
+# Data from `node setup.mjs owner` (run.sh passes CASH, PAYMENT, TENANT).
+appId: ke.kejasha.app.dev
+---
+- launchApp:
+    clearState: true
+- tapOn: 'Email'
+- tapOn:
+    id: 'email'
+- inputText: 'landlord@demo.test'
+- tapOn:
+    id: 'password'
+- inputText: 'demo-password-123'
+- tapOn: 'Sign in'
+- extendedWaitUntil:
+    visible: 'Collected this month'
+    timeout: 20000
+- tapOn:
+    id: 'tab-money'
+
+# Cash to confirm.
+- tapOn: 'Cash'
+- scrollUntilVisible:
+    element: ${CASH}
+- tapOn:
+    text: 'Confirm'
+    below: ${CASH}
+- tapOn: 'Confirm cash'
+- assertVisible: 'Cash confirmed and recorded as a payment'
+
+# A payment to match.
+- tapOn: 'To match'
+- scrollUntilVisible:
+    element: '${PAYMENT}.*'
+- tapOn: '${PAYMENT}.*'
+- extendedWaitUntil:
+    visible: 'Suggested tenants'
+    timeout: 10000
+- scrollUntilVisible:
+    element: 'Apply to ${TENANT}'
+- tapOn: 'Apply to ${TENANT}'
+- tapOn: 'Apply'
+- assertVisible: 'Applied to ${TENANT}.*'

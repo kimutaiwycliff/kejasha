@@ -43,6 +43,11 @@ class ApiErrorTest {
         assertEquals("http_502", e.code)
     }
 
+    @Test fun `an answer the app cannot decode is an error, not a crash`() {
+        val e = runCatching { runBlocking { api<Me> { throw kotlinx.serialization.SerializationException("bad") } } }.exceptionOrNull()
+        assertTrue(e is ApiError.Unreadable)
+    }
+
     @Test fun `no response is a network error`() {
         val e = runCatching { runBlocking { api<Me> { throw IOException("offline") } } }.exceptionOrNull()
         assertTrue(e is ApiError.Network)
