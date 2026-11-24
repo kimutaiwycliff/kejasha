@@ -140,7 +140,12 @@ private fun HomeMap(homes: List<Home>, onProperty: (UUID) -> Unit) {
                 at = h.at!!,
                 color = occupancyColor(h.occupied, h.longTerm),
                 label = if (h.longTerm > 0) "${h.occupied}/${h.longTerm}" else "${h.property.unitCounts.total}",
-                description = "${h.property.name}: ${h.occupied} of ${h.longTerm} long-term units let. Opens the property.",
+                description = "${h.property.name}: ${h.occupied} of ${h.longTerm} long-term units let",
+                name = h.property.name,
+                detail = listOfNotNull(
+                    if (h.longTerm > 0) "${h.occupied} of ${h.longTerm} units let" else "${h.property.unitCounts.total} units",
+                    h.property.unitCounts.shortStay.takeIf { it > 0 }?.let { "$it short-stay" },
+                ).joinToString(" · "),
             )
         }
     }

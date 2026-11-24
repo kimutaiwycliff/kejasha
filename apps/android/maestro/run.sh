@@ -38,6 +38,11 @@ caretaker() {
   node setup.mjs caretakerVerify "$(val PROPERTY_ID)" "$(val METER_ID)" "$cents"
 }
 
+# D: tap a property's map pin to see its name, then tap the callout to open it.
+map() {
+  maestro test -e NAME="$(node setup.mjs mapPin | sed -n 's/^NAME=//p')" owner-map.yaml
+}
+
 # A3: a tenant whose phone is on a lease. tenant_pay also sends the prompt (needs Daraja sandbox).
 tenant() {
   local out; out="$(node setup.mjs tenant)"
@@ -59,5 +64,5 @@ sms() {
   maestro test -e AMOUNT="Ksh 3,250.00" -e CODE="$code" sms-share.yaml
 }
 
-flows=("${@:-sign_in owner caretaker tenant sms}")
+flows=("${@:-sign_in owner map caretaker tenant sms}")
 for f in ${flows[@]}; do "$f"; done
