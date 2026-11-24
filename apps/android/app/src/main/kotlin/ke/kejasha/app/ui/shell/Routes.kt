@@ -18,3 +18,6 @@ import kotlinx.serialization.Serializable
 @Serializable data object ReportTicketRoute
 
 @Serializable data object LogCashRoute
+
+/** A tenant pays rent on one lease by M-Pesa prompt. */
+@Serializable data class TenantPayRoute(val leaseId: String)

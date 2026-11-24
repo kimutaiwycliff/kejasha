@@ -1,0 +1,7 @@
+# Enter the code; a tenant (phone on a lease, no organization) lands on their home.
+appId: ke.kejasha.app.dev
+---
+- tapOn:
+    id: 'code'
+- inputText: ${OTP}
+- tapOn: 'Verify'

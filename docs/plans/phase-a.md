@@ -102,8 +102,12 @@ the phone app covers the daily loop and works without signal for caretakers.
     letter → discard, reset keeps unsent records, another organization starts fresh;
   - [~] Maestro `caretaker-join.yaml` + `caretaker-shift.yaml` (airplane mode) with API checks
     that the shift arrived once: written, not yet run on a device.
-- [ ] **A3 Tenant:** home with balances across landlords, pay by M-Pesa prompt, statement,
+- [~] **A3 Tenant:** home with balances across landlords, pay by M-Pesa prompt, statement,
   report a problem and follow repairs.
+  - [x] screens and tests; the prompt is whole shillings (balance rounded up); there is no
+    tenant STK status endpoint, so the app watches the balance after sending the prompt;
+  - [~] Maestro `tenant-portal.yaml` (balance, statement, report) written; `tenant-pay.yaml`
+    needs the Daraja sandbox (launch input). Neither run on a device yet.
 - [ ] **A4 Share-to-app M-Pesa SMS:** receive shared text, preview, add the payment (owner/agent),
   matched or queued.
 - [ ] **A5 Proof & polish:** Maestro flows for every slice on the emulator; Compose UI tests;

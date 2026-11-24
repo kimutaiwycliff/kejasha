@@ -147,6 +147,54 @@ async function caretakerVerify(propertyId, meterId, amountCents) {
   return { VERIFIED: 'readings=1 tickets=1 cash=1' };
 }
 
-const scenarios = { owner, caretakerInvite, caretakerAssign, caretakerVerify };
+/** A tenant whose phone is on their lease, owing a manual service-charge invoice. */
+async function tenant() {
+  const token = await landlord();
+  const local = `07${String(Math.floor(Math.random() * 1e8)).padStart(8, '0')}`;
+  const property = await call(
+    'POST',
+    '/v1/properties',
+    { name: `Tenant Court ${tag}`, county: 'Mombasa' },
+    token,
+  );
+  const unit = await call(
+    'POST',
+    `/v1/properties/${property.id}/units`,
+    { code: `TN${tag}`, mode: 'long_term', rentCents: 1_800_000 },
+    token,
+  );
+  const tenant = await call(
+    'POST',
+    '/v1/tenants',
+    { fullName: `Tenant Wa${word}`, phone: local },
+    token,
+  );
+  const lease = await call(
+    'POST',
+    '/v1/leases',
+    { unitId: unit.id, tenantId: tenant.id, startDate: today, rentCents: 1_800_000 },
+    token,
+  );
+  const owed = 250_050; // Ksh 2,500.50: the prompt rounds up to Ksh 2,501
+  await call(
+    'POST',
+    `/v1/leases/${lease.id}/invoices`,
+    {
+      dueOn: today,
+      lines: [{ kind: 'service_charge', description: 'Service charge', amountCents: owed }],
+    },
+    token,
+  );
+  const { balanceCents } = await call('GET', `/v1/leases/${lease.id}`, undefined, token);
+  return {
+    PHONE: local,
+    E164: `+254${local.slice(1)}`,
+    UNIT: unit.code,
+    OWES: ksh(balanceCents),
+    PROMPT: String(Math.ceil(balanceCents / 100)),
+  };
+}
+
+const scenarios = { owner, caretakerInvite, caretakerAssign, caretakerVerify, tenant };
 const out = await scenarios[process.argv[2]](...process.argv.slice(3));
 for (const [k, v] of Object.entries(out)) console.log(`${k}=${v}`);

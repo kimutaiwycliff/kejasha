@@ -1,0 +1,35 @@
+# A3: a tenant signs in by phone, sees what they owe, reads the statement and reports a problem.
+# Signed in already by sign-in-otp-request.yaml + tenant-verify (run.sh). Data from `setup.mjs tenant`.
+appId: ke.kejasha.app.dev
+---
+- extendedWaitUntil:
+    visible: '${UNIT} · .*'
+    timeout: 15000
+- assertVisible: '${OWES}'
+
+- tapOn:
+    id: 'tab-statement'
+- extendedWaitUntil:
+    visible: 'Closing balance'
+    timeout: 10000
+- assertVisible: 'Service charge'
+
+- tapOn:
+    id: 'tab-repairs'
+- tapOn:
+    id: 'title'
+- inputText: 'Broken window ${UNIT}'
+- hideKeyboard
+- tapOn:
+    id: 'submit-ticket'
+- assertVisible: 'Problem reported to your landlord'
+- assertVisible: '.*Broken window ${UNIT}'
+
+# Pay: the prompt amount is the balance rounded up to whole shillings.
+- tapOn:
+    id: 'tab-home'
+- tapOn:
+    id: 'pay-${UNIT}'
+- assertVisible:
+    id: 'amount'
+    text: '${PROMPT}'
