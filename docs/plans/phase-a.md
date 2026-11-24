@@ -1,6 +1,6 @@
 # Phase A — Android app (Kotlin)
 
-> Status: **IN PROGRESS** · drafted 2026-10-26 · ADR-004, ADR-009, ADR-016, ADR-017, ADR-018
+> Status: **BUILT — device proof pending** · drafted 2026-10-26 · ADR-004, ADR-009, ADR-016, ADR-017, ADR-018
 > Convention: `[ ]` todo · `[~]` in progress · `[x]` done & verified · `[!]` blocked (reason)
 > Shipped as slices A0–A5, one PR each. The contract is frozen (`contract-v1.1.1`): the app
 > adapts to the API; an API gap is an additive change with tests (as with cash by `unitId`).
@@ -113,8 +113,14 @@ the phone app covers the daily loop and works without signal for caretakers.
   - [x] `text/plain` share target, a preview read like the API's parser (outgoing SMS refused),
     `POST /v1/sms-payments`, then matched or "match it now"; other roles are told why not;
   - [~] Maestro `sms-share.yaml` (shared via `adb am start … SEND`): written, not yet run.
-- [ ] **A5 Proof & polish:** Maestro flows for every slice on the emulator; Compose UI tests;
+- [~] **A5 Proof & polish:** Maestro flows for every slice on the emulator; Compose UI tests;
   accessibility pass; release build (R8, signing from environment), app docs page.
+  - [x] Compose UI tests on the JVM (Robolectric): sign-in steps, field errors, every tappable
+    element named; picker announces label and choice;
+  - [x] R8 rules for serializers, enum wire names and the sync worker; release signing from
+    `KEJASHA_KEYSTORE*` environment variables; docs `guides/android-app`;
+  - [!] Maestro on an emulator (blocked: the emulator does not boot on the dev machine; see
+    notes). `maestro/run.sh` runs every flow once a device works.
 
 ## Definition of Done
 - The app builds in CI from the generated client.
@@ -147,3 +153,12 @@ the phone app covers the daily loop and works without signal for caretakers.
   organization sees pending invitations and joins in the app.
 - 2026-11-23 — **Blocked locally:** the emulator would not boot because the development machine had
   under 2 GB of free disk. Maestro flows run once space is freed.
+
+## DoD status (2026-11-24)
+- [x] The app builds in CI from the generated client (lint, unit, assemble dev and R8 release).
+- [x] Unit, Room/sync (Robolectric) and Compose UI tests are green (44 tests).
+- [ ] Maestro on an emulator against the real API — written for every item, not yet run:
+  sign-in by OTP (`sign_in`), caretaker offline shift synced once (`caretaker`), owner confirms
+  cash and matches a payment (`owner`), tenant pays (`tenant`; the prompt itself needs the
+  Daraja sandbox, `tenant_pay`), shared SMS (`sms`).
+- [x] No hand-written API types and no domain literal.

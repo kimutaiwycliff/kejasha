@@ -16,6 +16,7 @@
     "guides/reporting",
     "guides/billing",
     "guides/web-app",
+    "guides/android-app",
     "---Operations---",
     "operations/deployment",
     "operations/backups",

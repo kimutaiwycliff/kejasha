@@ -36,8 +36,22 @@ android {
         }
     }
 
+    // Release signing comes from the environment (CI secrets), never from the repository.
+    val keystore = System.getenv("KEJASHA_KEYSTORE")?.let(::file)?.takeIf { it.exists() }
+    signingConfigs {
+        if (keystore != null) {
+            create("release") {
+                storeFile = keystore
+                storePassword = System.getenv("KEJASHA_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEJASHA_KEY_ALIAS")
+                keyPassword = System.getenv("KEJASHA_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -119,6 +133,8 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.work.testing)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)
 }

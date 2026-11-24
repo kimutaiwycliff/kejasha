@@ -1,0 +1,98 @@
+---
+title: Android app
+description: The native Kotlin app for owners, caretakers and tenants — what each role does, how it works offline, and how to build and test it.
+---
+
+The Android app (`apps/android`) is a native Kotlin app (Jetpack Compose, ADR-017). Like the web
+app it is a **pure client of the API**: it calls the API through a Kotlin client generated from
+`apps/api/openapi.json` at build time, and the API checks every request on its own. The web app
+stays the place for setup and bulk work; the phone covers the daily loop.
+
+## Who sees what
+
+After sign-in the app reads `GET /v1/identity/me` and shows the shell for the role in the active
+organization (switchable under **More**).
+
+| Who | Tabs | What they do |
+|---|---|---|
+| Owner, manager, agent (and hosts) | Today, Money, Stays, Repairs, More | Today's figures; match M-Pesa payments; confirm or reject cash; send an M-Pesa prompt; check guests in and out; move repairs along with notes and photos |
+| Caretaker | Round, Repairs, Cash, Sync, More | Read meters, report and update repairs with photos, log cash with a receipt — **offline** |
+| Read-only owner (viewer) | Today, Months, More | Figures and a month-by-month summary |
+| Tenant (phone on a lease, no organization) | Home, Statement, Repairs, More | Balance with every landlord, pay by M-Pesa prompt, statement, report a problem |
+
+A signed-in person with no organization sees invitations sent to their phone or email and can
+join from the app; caretakers are usually invited by phone this way.
+
+## Sign-in and session
+
+- Phone number and SMS code first (caretakers and tenants), or email and password.
+- The API returns a bearer token (ADR-004). It is stored with the last known account, encrypted
+  with an Android Keystore key, so the app opens without signal. Nothing is backed up off the
+  phone.
+- On launch the app calls `GET /v1/meta/config`; when `minAndroidVersionCode` is above the
+  installed version it asks for an update.
+- A `401` on any request signs the phone out.
+
+## Conventions
+
+- **Generated client only.** No hand-written API types (`apps/android/api-client`, never edited).
+- **Idempotency.** An OkHttp interceptor adds an `Idempotency-Key` to every write. Repeating the
+  same request before it has a final answer (no connection, `5xx`, `409` still running) reuses
+  the key, so the API applies it once; a final answer retires it.
+- **Errors.** `problem+json` becomes a typed error: field messages show under the field,
+  anything else as a one-line message. `402` points to Billing on the web.
+- **Money and dates.** Cents as `Long`, shown as `Ksh 18,000.00`; typed amounts are parsed
+  exactly (no floating point). Business dates are calendar days in Africa/Nairobi. M-Pesa
+  prompts are whole shillings (a balance with cents rounds up).
+- **Domain.** The production API URL is a build property (`-PkejashaApiUrl=https://api.<APP_DOMAIN>`);
+  no domain appears in the source (ADR-016). A prod build without it fails.
+
+## Offline (caretakers)
+
+The caretaker shell works from a local Room copy of `GET /v1/sync/pull` (see
+[Offline sync](/docs/guides/offline-sync)):
+
+1. Every reading, repair, update and cash entry is saved on the phone at once and queued with a
+   client UUIDv7.
+2. When the phone is online (right after a change, and every 15 minutes) WorkManager pushes the
+   queue: photos are uploaded first through `POST /v1/uploads`, then `POST /v1/sync/push` in
+   batches of up to 200. A record pushed twice is applied once.
+3. Records the API refuses appear under **Sync → Not accepted** with the reason; the caretaker
+   can discard them. Then changes are pulled from the stored cursor.
+
+Signing out with unsent changes asks first; signing out removes everything from the phone.
+
+## Sharing an M-Pesa SMS
+
+Owners, managers and agents can share an M-Pesa confirmation SMS from their messages app to
+**Kejasha → Add M-Pesa payment**. The app previews it, refuses money leaving the account, and
+posts it to `POST /v1/sms-payments`; it is matched to a tenant or waits under **Money → To
+match**. The app never reads SMS itself (no `READ_SMS` permission, ADR-009).
+
+## Build and test
+
+```bash
+cd apps/android
+./gradlew :app:assembleDevDebug            # dev flavour → API at http://10.0.2.2:4000 (emulator)
+./gradlew :app:testDevDebugUnitTest        # unit, Room/sync (Robolectric) and Compose UI tests
+./gradlew :app:lintDevDebug                # Android Lint, warnings are errors
+./gradlew :app:assembleProdRelease -PkejashaApiUrl=https://api.<APP_DOMAIN>
+```
+
+Release signing reads `KEJASHA_KEYSTORE`, `KEJASHA_KEYSTORE_PASSWORD`, `KEJASHA_KEY_ALIAS` and
+`KEJASHA_KEY_PASSWORD` from the environment; without them the release APK is unsigned.
+
+### End-to-end flows (Maestro)
+
+With the local stack running (`make up && make db-seed && make dev-api`) and the dev build on a
+running emulator (`./gradlew :app:installDevDebug`):
+
+```bash
+apps/android/maestro/run.sh                 # sign_in owner caretaker tenant sms
+apps/android/maestro/run.sh caretaker       # one flow
+apps/android/maestro/run.sh tenant_pay      # also sends the M-Pesa prompt (needs Daraja sandbox)
+```
+
+`setup.mjs` creates each flow's data through the API as the demo landlord; OTPs are read from
+the dev database like the web e2e suite. The caretaker flow turns airplane mode on, works, turns
+it off and checks through the API that the shift arrived exactly once.
