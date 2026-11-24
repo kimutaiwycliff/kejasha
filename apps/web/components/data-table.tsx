@@ -19,7 +19,7 @@ import {
   type ColumnDef,
   type RowData,
 } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, Inbox } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { errorMessage } from '@/lib/hooks';
@@ -118,9 +118,15 @@ export function DataTable<T extends RowData>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
+                  className="py-12 text-center text-muted-foreground"
                 >
-                  {empty}
+                  {/* A friendly empty state: the roofline of the mark over the message. */}
+                  <div className="animate-pop flex flex-col items-center gap-3">
+                    <span className="flex size-12 items-center justify-center rounded-full bg-secondary text-primary">
+                      <Inbox className="size-5" aria-hidden />
+                    </span>
+                    <span className="max-w-sm text-sm whitespace-normal">{empty}</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -129,7 +135,9 @@ export function DataTable<T extends RowData>({
                 return (
                   <TableRow
                     key={row.id}
-                    className={href ? 'cursor-pointer' : undefined}
+                    className={
+                      href ? 'cursor-pointer transition-colors hover:bg-secondary/60' : undefined
+                    }
                     onClick={
                       href
                         ? (e) => {

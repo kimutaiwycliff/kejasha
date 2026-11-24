@@ -26,7 +26,7 @@ import { uploadFile } from '@/lib/upload';
 
 type Licence = Schemas['Licence'];
 type Values = z.input<typeof UpdateLicenceBody> & z.input<typeof CreateLicenceBody>;
-const TONE = { valid: 'default', expiring: 'secondary', expired: 'destructive' } as const;
+const TONE = { valid: 'success', expiring: 'warning', expired: 'destructive' } as const;
 const STATUS_LABEL = { valid: 'Valid', expiring: 'Expiring soon', expired: 'Expired' } as const;
 
 function DocumentField({

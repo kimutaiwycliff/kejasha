@@ -9,8 +9,8 @@ import { BOOKING_SOURCE_LABEL, BOOKING_STATUS_LABEL } from '@/lib/labels';
 
 type Booking = Schemas['Booking'];
 export const BOOKING_TONE = {
-  confirmed: 'default',
-  checked_in: 'default',
+  confirmed: 'info',
+  checked_in: 'success',
   checked_out: 'secondary',
   cancelled: 'outline',
   no_show: 'destructive',

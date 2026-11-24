@@ -121,7 +121,7 @@ function LogCashDialog({
   );
 }
 
-const TONE = { pending: 'secondary', confirmed: 'default', rejected: 'destructive' } as const;
+const TONE = { pending: 'warning', confirmed: 'success', rejected: 'destructive' } as const;
 const STATUS_LABEL = { pending: 'Waiting', confirmed: 'Confirmed', rejected: 'Rejected' } as const;
 
 export default function CashPage() {

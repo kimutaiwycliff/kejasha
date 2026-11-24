@@ -13,7 +13,7 @@ const when = new Intl.DateTimeFormat('en-KE', {
   timeStyle: 'short',
   timeZone: 'Africa/Nairobi',
 });
-const TONE = { unmatched: 'destructive', matched: 'default', ignored: 'outline' } as const;
+const TONE = { unmatched: 'warning', matched: 'success', ignored: 'outline' } as const;
 const col = columnsFor<Payment>();
 const columns = [
   col.accessor('paidAt', {
