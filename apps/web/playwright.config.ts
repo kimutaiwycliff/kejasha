@@ -20,10 +20,6 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    // Maps render with WebGL: headless runners have no GPU, so use the software renderer.
-    launchOptions: {
-      args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
-    },
   },
   projects: [
     { name: 'setup', testMatch: /auth\.setup\.ts/ },

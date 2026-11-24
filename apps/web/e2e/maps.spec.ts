@@ -1,7 +1,13 @@
 import { expect, test } from '@playwright/test';
 import { apiPost, DEMO, randomTag } from './helpers';
 
-test.use({ storageState: DEMO.landlord.file });
+test.use({
+  storageState: DEMO.landlord.file,
+  // Maps need WebGL; headless CI has no GPU. Software rendering is slow, so only this file uses it.
+  launchOptions: {
+    args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+  },
+});
 
 test('a property is pinned on the map and its units show on the board', async ({ page }, info) => {
   test.skip(info.project.name === 'mobile', 'Pin dropping is covered on desktop.');
