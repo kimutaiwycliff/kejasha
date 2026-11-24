@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kejasha brand (docs/plans/phase-d.md). Compose colours live in ui/theme/Theme.kt. -->
+<resources>
+    <color name="kj_acacia">#0F6B52</color>
+    <color name="kj_forest">#0B3D30</color>
+    <color name="kj_paper">#FAF8F4</color>
+    <color name="kj_night">#0D1311</color>
+</resources>
