@@ -1,0 +1,9 @@
+# A3 with Daraja: the tenant sends the M-Pesa prompt. Needs the landlord's sandbox Paybill
+# connected (launch input); run with `run.sh tenant_pay` after tenant-portal.yaml.
+appId: ke.kejasha.app.dev
+---
+- tapOn:
+    id: 'send-prompt'
+- extendedWaitUntil:
+    visible: 'Check your phone.*'
+    timeout: 20000

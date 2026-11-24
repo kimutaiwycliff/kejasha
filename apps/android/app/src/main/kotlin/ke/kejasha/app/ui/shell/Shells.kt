@@ -66,6 +66,10 @@ import ke.kejasha.app.ui.caretaker.ReportTicketScreen
 import ke.kejasha.app.ui.caretaker.RoundScreen
 import ke.kejasha.app.ui.caretaker.SyncScreen
 import ke.kejasha.app.ui.common.ConfirmDialog
+import ke.kejasha.app.ui.tenant.TenantHomeScreen
+import ke.kejasha.app.ui.tenant.TenantPayScreen
+import ke.kejasha.app.ui.tenant.TenantRepairsScreen
+import ke.kejasha.app.ui.tenant.TenantStatementScreen
 import ke.kejasha.app.ui.common.LocalSnackbar
 import ke.kejasha.app.ui.owner.MoneyScreen
 import ke.kejasha.app.ui.owner.MonthsScreen
@@ -80,7 +84,6 @@ import ke.kejasha.app.session.Account
 import ke.kejasha.app.session.Shell
 import ke.kejasha.app.ui.Centered
 import ke.kejasha.app.ui.SessionViewModel
-import ke.kejasha.app.util.formatKes
 
 private class Tab(val name: String, val label: String, val icon: ImageVector)
 
@@ -135,8 +138,7 @@ fun StaffShell(account: Account.Staff, offline: Boolean, vm: SessionViewModel) {
                 "cash" -> CashScreen(onLog = { nav.open(LogCashRoute) })
                 "sync" -> SyncScreen()
                 "months" -> MonthsScreen()
-                "more" -> AccountPane(account, vm)
-                else -> Upcoming(tabs.first { it.name == name }.label)
+                else -> AccountPane(account, vm)
             }
         }
     }
@@ -145,11 +147,12 @@ fun StaffShell(account: Account.Staff, offline: Boolean, vm: SessionViewModel) {
 /** Tenant portal: balances and pay (A3) across every landlord that holds this phone. */
 @Composable
 fun TenantShell(account: Account.Tenant, offline: Boolean, vm: SessionViewModel) {
-    ShellScaffold("My home", offline, listOf(HOME, STATEMENT, REPAIRS, MORE), vm) { name, _ ->
+    ShellScaffold("My home", offline, listOf(HOME, STATEMENT, REPAIRS, MORE), vm) { name, nav ->
         when (name) {
-            "home" -> TenantHome(account)
-            "more" -> AccountPane(account, vm)
-            else -> Upcoming(if (name == "repairs") "Repairs" else "Statement")
+            "home" -> TenantHomeScreen(account.user.name, onPay = { nav.open(TenantPayRoute(it.toString())) })
+            "statement" -> TenantStatementScreen()
+            "repairs" -> TenantRepairsScreen()
+            else -> AccountPane(account, vm)
         }
     }
 }
@@ -234,6 +237,7 @@ private fun ShellScaffold(
                     composable<LocalTicketRoute> { LocalTicketScreen() }
                     composable<ReportTicketRoute> { ReportTicketScreen(onDone = { nav.back() }) }
                     composable<LogCashRoute> { LogCashScreen(onDone = { nav.back() }) }
+                    composable<TenantPayRoute> { TenantPayScreen(onDone = { nav.back() }) }
                 }
             }
         }
@@ -247,30 +251,8 @@ private fun detailTitle(destination: NavDestination?): String = when {
     destination.hasRoute(TicketRoute::class) || destination.hasRoute(LocalTicketRoute::class) -> "Repair"
     destination.hasRoute(ReportTicketRoute::class) -> "Report a problem"
     destination.hasRoute(LogCashRoute::class) -> "Log cash"
+    destination.hasRoute(TenantPayRoute::class) -> "Pay rent"
     else -> ""
-}
-
-/** A tab whose screens arrive in a later slice of phase A. */
-@Composable
-private fun Upcoming(name: String) = Centered {
-    Text(name, style = MaterialTheme.typography.titleLarge)
-    Text("This screen is on its way. Use the web app for now.", textAlign = TextAlign.Center)
-}
-
-@Composable
-private fun TenantHome(account: Account.Tenant) {
-    Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Hello ${account.user.name}", style = MaterialTheme.typography.titleLarge)
-        account.portal.tenancies.forEach { tenancy ->
-            Text(tenancy.landlordName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
-            tenancy.leases.forEach { lease ->
-                ListItem(
-                    headlineContent = { Text("${lease.unitCode} · ${lease.propertyName}") },
-                    supportingContent = { Text("Balance ${formatKes(lease.balanceCents)}") },
-                )
-            }
-        }
-    }
 }
 
 /** Who is signed in, the org switch and sign out. */

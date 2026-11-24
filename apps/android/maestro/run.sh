@@ -35,5 +35,16 @@ caretaker() {
   node setup.mjs caretakerVerify "$(val PROPERTY_ID)" "$(val METER_ID)" "$cents"
 }
 
-flows=("${@:-sign_in owner caretaker}")
+# A3: a tenant whose phone is on a lease. tenant_pay also sends the prompt (needs Daraja sandbox).
+tenant() {
+  local out; out="$(node setup.mjs tenant)"
+  val() { printf '%s\n' "$out" | sed -n "s/^$1=//p"; }
+  maestro test -e PHONE="$(val PHONE)" sign-in-otp-request.yaml
+  maestro test -e OTP="$(latest_otp "$(val E164)")" tenant-verify.yaml
+  maestro test -e UNIT="$(val UNIT)" -e OWES="$(val OWES)" -e PROMPT="$(val PROMPT)" tenant-portal.yaml
+  if [ "${1:-}" = pay ]; then maestro test tenant-pay.yaml; fi
+}
+tenant_pay() { tenant pay; }
+
+flows=("${@:-sign_in owner caretaker tenant}")
 for f in ${flows[@]}; do "$f"; done
